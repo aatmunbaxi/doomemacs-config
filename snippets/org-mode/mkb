@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: Blog math env
+# uuid: mkb
+# key: mkb
+# condition: t
+# --
+\$latex $0 &bg=192833&fg=FFFFFF\$

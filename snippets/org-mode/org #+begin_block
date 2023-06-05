@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: org #+begin_block
+# key:  obeg
+# --
+#+begin_$1
+$0
+#+end_$1

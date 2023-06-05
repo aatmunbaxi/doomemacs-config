@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: dimension
+# key: dim
+# condition: (and (texmathp) 'auto)
+# group: math
+# --
+\\dim $0

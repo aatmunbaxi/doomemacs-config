@@ -1,0 +1,7 @@
+# key: <q
+# name: #+begin_equation block
+# --
+#+name: $1
+#+begin_equation
+$0
+#+end_equation

@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: lower dots
+# key: ...
+# condition: (and (texmathp) 'auto)
+# --
+\\ldots

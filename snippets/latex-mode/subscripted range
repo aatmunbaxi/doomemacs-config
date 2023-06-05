@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: subscripted range
+# key: subr
+# --
+$1_{$2} , \\ldots , $1_{$3}

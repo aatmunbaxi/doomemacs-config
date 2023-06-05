@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: superscript range
+# key: supr
+# --
+$1^{$2}, \\ldots , $1^{$3}

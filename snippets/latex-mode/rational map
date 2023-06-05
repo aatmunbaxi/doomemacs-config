@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: rational map
+# key: rrat
+# condition: (and (texmathp) 'auto)
+# --
+\\dashrightarrow

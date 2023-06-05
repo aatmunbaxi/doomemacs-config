@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: superscript
+# key: sup
+# group: math
+# --
+^{$1}$0

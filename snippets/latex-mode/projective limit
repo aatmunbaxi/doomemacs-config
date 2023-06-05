@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: projective limit
+# key: plim
+# condition: (and (texmathp) 'auto)
+# --
+\\varprojlim $0

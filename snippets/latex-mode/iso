@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: isomorphism
+# key: iso
+# condition: (and (texmathp) 'auto)
+# group: math
+# --
+\\simeq

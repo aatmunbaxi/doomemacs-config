@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# contributor: François Garillot <francois@garillot.net>
+# key: lim
+# group: math
+# name: \lim_{n}
+# condition: (and (texmathp) 'auto)
+# --
+\\lim${1:$$(yas/choose-value '(" " "sup" "inf"))}_{$3 \\${2:$$(yas/choose-value '("uparrow" "downarrow" "rightarrow" "\leftarrow")):} $4}$0

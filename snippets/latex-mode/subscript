@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: subscript
+# key: sub
+# group: math
+# --
+_{$1}$0

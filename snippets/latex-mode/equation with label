@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: equation with label
+# key: eqn
+# group: math
+# --
+\\begin{equation}
+\\label{$1}
+$0
+\\end{equation}

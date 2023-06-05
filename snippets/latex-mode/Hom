@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: Hom set
+# key: Hom
+# condition: (and (texmathp) 'auto)
+# --
+\\operatorname{Hom}

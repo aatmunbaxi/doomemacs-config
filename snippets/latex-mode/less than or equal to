@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: less than or equal to
+# key: leq
+# condition: (and (texmathp) 'auto)
+# group: math
+# --
+\\leqslant $0

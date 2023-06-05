@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: relatex
+# key: rename w latex attr
+# --
+#+name: ${1:$(downcase (replace-regexp-in-string " " "-" yas-text))}_`(replace-regexp-in-string  "^.*_" "" yas-selected-text)`
+#+attr_latex: :options [$1]

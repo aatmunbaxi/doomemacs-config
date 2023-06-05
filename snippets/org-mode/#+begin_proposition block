@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: #+begin_proposition block
+# key: proposition
+# --
+#+name: ${1:$$(replace-regexp-in-string " " "-" yas-text)}_prop
+#+begin_proposition
+$0
+#+end_proposition

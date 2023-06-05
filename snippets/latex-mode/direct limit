@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: direct limit
+# key: dlim
+# --
+\\varinjlim $0
