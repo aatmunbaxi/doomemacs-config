@@ -1,6 +1,6 @@
 #+title: DOOM Emacs Configuration
 
-My DOOM emacs configuration, modified for public consumption.
+My DOOM emacs configuration.
 * Reading the configuration
 The files provided are just what is required to replicate my DOOM emacs setup, modulo hard-coded paths that would otherwise cause an error if you copy it verbatim.
 
