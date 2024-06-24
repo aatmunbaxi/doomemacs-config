@@ -4,15 +4,6 @@
   (add-to-list 'load-path "~/.doom.d/"))
 
 ;;; * Some functions
-(defmacro find-in-dir (dir name)
-  `(defun ,(intern (concat "find-in-" name)) ()
-     (interactive)
-     (ido-find-file-in-dir ,dir)))
-
-(find-in-dir "~/Documents/org/" "org")
-(find-in-dir "~/Documents/books/" "books")
-(find-in-dir "~/Documents/bib/pdfs/" "articles")
-
 (defun my/close-other-window nil
   (interactive)
   (delete-window (ace-select-window)))

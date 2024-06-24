@@ -1,0 +1,16 @@
+#+title: DOOM Emacs Configuration
+
+My DOOM emacs configuration, modified for public consumption.
+* Reading the configuration
+The files provided are just what is required to replicate my DOOM emacs setup, modulo hard-coded paths that would otherwise cause an error if you copy it verbatim.
+
+You can read the =config.el= with =outline-minor-mode=, navigate up/down using =C-c @ C-p/C-n= (use the repeat map with =repeat-mode= for the health of your hands, please).
+The config is organized roughly by packages and/or groups of packages that go together.
+
+The config attempts to use 'idiomatic' DOOM-isms, such as =after!, add-hook!, setq!=, etc.
+Most of these functions are for convenience, and have close siblings in vanilla emacs.
+
+If you choose to use this config as a starting point, that's great!
+Though, it's probably less organized than some of the literate configs you'll certainly find out there; I haven't optimized it for public consumption.
+
+Happy hacking!
