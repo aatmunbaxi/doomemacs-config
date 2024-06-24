@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: binomial choose
-# key: binom
-# condition: (and (texmathp) 'auto)
-# group: math
-# --
-\\binom{$1}{$0}

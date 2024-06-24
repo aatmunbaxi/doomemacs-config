@@ -1,4 +1,0 @@
-# -*- mode: snippet -*-
-# name: relabel
-# --
-\\label{`(replace-regexp-in-string (rx ":" (zero-or-more not-newline))  "" (replace-regexp-in-string (rx (zero-or-more not-newline) "{" ) "" "\\label{eq:34}"))`:${1:$$(replace-regexp-in-string " " "-" yas-text)}}

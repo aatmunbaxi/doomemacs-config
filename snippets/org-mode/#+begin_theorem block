@@ -1,9 +1,0 @@
-# -*- mode: snippet -*-
-# name: #+begin_theorem block
-# key: theorem
-# --
-#+name: ${1:$(concat (downcase (replace-regexp-in-string " " "-" yas-text)) "_thm")}
-#+attr_latex: :options [$1]
-#+begin_theorem
-$0
-#+end_theorem

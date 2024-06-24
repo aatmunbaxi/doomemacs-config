@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: partial derivative
-# key: ptl
-# condition: (and (texmathp) 'auto)
-# group: math
-# --
-\\frac{\\partial $1}{\\partial $2} $0

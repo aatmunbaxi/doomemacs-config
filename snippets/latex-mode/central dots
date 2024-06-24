@@ -1,6 +1,0 @@
-# -*- mode: snippet -*-
-# name: central dots
-# key: :::
-# condition: (and (texmathp) 'auto)
-# --
-\\cdots

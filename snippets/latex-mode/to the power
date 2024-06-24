@@ -1,6 +1,0 @@
-# -*- mode: snippet -*-
-# name: to the power
-# key: td
-# condition: (and (texmathp) 'auto)
-# --
-`(backward-delete-char 1)`^{$1}

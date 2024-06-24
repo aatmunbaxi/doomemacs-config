@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: morphism template
-# key: mor
-# condition: (and (texmathp) 'auto)
-# group: math
-# --
-$0 :  \to

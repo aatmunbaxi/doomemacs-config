@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: greater than or equal to
-# key: geq
-# condition: (and (texmathp) 'auto)
-# group: math
-# --
-\\geqslant $0

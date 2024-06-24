@@ -1,5 +1,0 @@
-# -*- mode: snippet -*-
-# name: C infinity
-# key: c8
-# --
-C^{\infty}($1)$0

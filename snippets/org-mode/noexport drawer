@@ -1,8 +1,0 @@
-# -*- mode: snippet -*-
-# name: noexport drawer
-# key:  noex
-# --
-:noex:
-$1
-:END:
-$0

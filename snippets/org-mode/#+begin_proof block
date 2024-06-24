@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: #+begin_proof block
-# key: proof
-# --
-#+begin_proof
-$0
-#+end_proof

@@ -1,9 +1,0 @@
-# -*- mode: snippet -*-
-# name: #+begin_definition block
-# key: defn
-# --
-#+name: ${1:$(concat (downcase (replace-regexp-in-string " " "-" yas-text)) "_defn")}
-#+attr_latex: :options [$1]
-#+begin_definition
-$0
-#+end_definition

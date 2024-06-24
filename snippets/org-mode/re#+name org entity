@@ -1,5 +1,0 @@
-# -*- mode: snippet -*-
-# name: rename org entity
-# key: rename
-# --
-#+name: ${1:$$(replace-regexp-in-string " " "-" yas-text)}_`(replace-regexp-in-string  "^.*_" "" yas-selected-text)`

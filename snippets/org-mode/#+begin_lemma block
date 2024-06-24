@@ -1,8 +1,0 @@
-# -*- mode: snippet -*-
-# name: #+begin_lemma block
-# key: lemma
-# --
-#+name: ${1:$$(replace-regexp-in-string " " "-" yas-text)}_lemma
-#+begin_lemma
-$0
-#+end_lemma
