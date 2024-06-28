@@ -48,6 +48,7 @@
 (package! eldoc-box)
 
 ;;; $ Utilities
+(package! vlf)
 (package! consult-dir :recipe (:host github :repo "karthink/consult-dir"))
 (package! define-repeat-map :recipe (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el"))
 (package! casual-dired :recipe (:host github :repo "kickingvegas/casual-dired"))
@@ -65,6 +66,7 @@
            ("integration" "integration/*")
            (:exclude ".dir-locals.el" "*-tests.el"))))
 (package! activities)
+(unpin! activities)
 (package! elfeed-tube)
 (package! elfeed-tube-mpv)
 (package! keycast :recipe (:host github :repo "tarsius/keycast"))

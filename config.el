@@ -22,7 +22,9 @@
   (activities-mode))
 
 ;;; * Buffer related config
-;;; ** Popper
+;;; ** `ace-window'
+(setq! aw-scope 'global)
+;;; ** `popper'
 (setq! popper-reference-buffers
        '("\\*Messages\\*"
          "Output\\*$"
@@ -102,7 +104,6 @@
 
 ;;; * Editing
 (setq! kill-whole-line t)
-
 (defun my/find-bounds-of-regexps (open close)
   (let ((start (point))
         (parity 0)
@@ -126,30 +127,29 @@
       (when (= parity 0) (cons end (point))))))
 
 ;;; ** `easy-kill' and `expand-region' interop
-(after! (:and easy-kill expand-region)
-  (defun easy-kill-expand-region ()
-    "Expand kill according to expand-region."
-    (interactive)
-    (let* ((thing (easy-kill-get nil))
-           (bounds (easy-kill--bounds)))
-      (save-mark-and-excursion
-        (set-mark (cdr bounds))
-        (goto-char (car bounds))
-        (er/expand-region 1)
-        (deactivate-mark)
-        (easy-kill-adjust-candidate thing (point) (mark)))))
+(defun easy-kill-expand-region ()
+  "Expand kill according to expand-region."
+  (interactive)
+  (let* ((thing (easy-kill-get nil))
+         (bounds (easy-kill--bounds)))
+    (save-mark-and-excursion
+      (set-mark (cdr bounds))
+      (goto-char (car bounds))
+      (er/expand-region 1)
+      (deactivate-mark)
+      (easy-kill-adjust-candidate thing (point) (mark)))))
 
-  (defun easy-kill-contract-region ()
-    "Expand kill according to expand-region."
-    (interactive)
-    (let* ((thing (easy-kill-get nil))
-           (bounds (easy-kill--bounds)))
-      (save-mark-and-excursion
-        (set-mark (cdr bounds))
-        (goto-char (car bounds))
-        (er/contract-region 1)
-        (deactivate-mark)
-        (easy-kill-adjust-candidate thing (point) (mark))))))
+(defun easy-kill-contract-region ()
+  "Expand kill according to expand-region."
+  (interactive)
+  (let* ((thing (easy-kill-get nil))
+         (bounds (easy-kill--bounds)))
+    (save-mark-and-excursion
+      (set-mark (cdr bounds))
+      (goto-char (car bounds))
+      (er/contract-region 1)
+      (deactivate-mark)
+      (easy-kill-adjust-candidate thing (point) (mark)))))
 
 ;;; ** Mark utilities
 (defun push-mark-no-activate (&optional pt)
@@ -164,23 +164,6 @@
   "Jump to local mark, respecting `mark-ring' order."
   (interactive)
   (set-mark-command 1))
-;;; ** `easy-kill'
-;; (after! easy-kill
-;;   (require 'extra-things)
-;;   (add-to-list 'easy-kill-alist '(?W  WORD " ") t)
-;;   (add-to-list 'easy-kill-alist '(?\' squoted-string "") t)
-;;   (add-to-list 'easy-kill-alist '(?\" dquoted-string "") t)
-;;   (add-to-list 'easy-kill-alist '(?\` bquoted-string "") t)
-;;   (add-to-list 'easy-kill-alist '(?q  quoted-string "") t)
-;;   (add-to-list 'easy-kill-alist '(?Q  quoted-string-universal "") t)
-;;   (add-to-list 'easy-kill-alist '(?\) parentheses-pair-content "\n") t)
-;;   (add-to-list 'easy-kill-alist '(?\( parentheses-pair "\n") t)
-;;   (add-to-list 'easy-kill-alist '(?\] brackets-pair-content "\n") t)
-;;   (add-to-list 'easy-kill-alist '(?\[ brackets-pair "\n") t)
-;;   (add-to-list 'easy-kill-alist '(?}  curlies-pair-content "\n") t)
-;;   (add-to-list 'easy-kill-alist '(?{  curlies-pair "\n") t)
-;;   (add-to-list 'easy-kill-alist '(?>  angles-pair-content "\n") t)
-;;   (add-to-list 'easy-kill-alist '(?<  angles-pair "\n") t))
 
 ;;; ** Smartparens
 (add-hook! prog-mode #'sp-use-smartparens-bindings)
@@ -231,7 +214,7 @@
 
 
 ;;; * LaTeX
-(setq! LaTeX-always-use-Biber t
+(setq! math-delimiters-compressed-display-math nil
        bibtex-dialect 'biblatex)
 ;;; ** Helper functions
 (defun my/cdlatex-sub-superscript ()
@@ -351,35 +334,35 @@ When pressed twice, make the sub/superscript roman."
     (save-excursion
       (cond
        ;; `LaTeX-find-matching-begin' doesn't like being exactly on the \\begin
-       ((looking-at (regexp-quote "\\begin{"
-                                  t)))
+       ((looking-at (regexp-quote "\\begin{"))
+	t)
        ;; `LaTeX-find-matching-begin' doesn't like being near the } of \\end{}
-       ((or (= (char-before) ?))))
-      (= (char-after) ?
-         (backward-char 2)
-         (LaTeX-find-matching-begin
-          (t))
-         (LaTeX-find-matching-begin
-          ;; We are at backslash of \\begin
-          (setq outer-beg (point))
-          (forward-sexp)
-          (while (or))
-          (= (char-after) ?{})
-          (= (char-after) ?\[))
-         (forward-sexp
-          (when (and select-newlines-with-envs))
-          (looking-at "\n[ \t]*"))
-         (goto-char (match-end 0)
-                    (setq inner-beg (point))
-                    (goto-char (1+ outer-beg))
-                    (LaTeX-find-matching-end)        ; we are at closing brace
-                    (setq outer-end (point))
-                    (search-backward "\\end")        ; goto backslash
-                    (when (and select-newlines-with-envs))
-                    (looking-back "\n[ \t]*" (- (point) 10)))
-         (goto-char (match-beginning 0)
-                    (setq inner-end (point))
-                    (list outer-beg outer-end inner-beg inner-end))))))
+       ((or (= (char-before) ?})
+	    (= (char-after) ?}))
+	(backward-char 2)
+	(LaTeX-find-matching-begin))
+       (t
+	(LaTeX-find-matching-begin)))
+      ;; We are at backslash of \\begin
+      (setq outer-beg (point))
+      (forward-sexp)
+      (while (or
+	      (= (char-after) ?{)
+	      (= (char-after) ?\[))
+	(forward-sexp))
+      (when (and evil-tex-select-newlines-with-envs
+		 (looking-at "\n[ \t]*"))
+	(goto-char (match-end 0)))
+      (setq inner-beg (point))
+      (goto-char (1+ outer-beg))
+      (LaTeX-find-matching-end)        ; we are at closing brace
+      (setq outer-end (point))
+      (search-backward "\\end")        ; goto backslash
+      (when (and evil-tex-select-newlines-with-envs
+		 (looking-back "\n[ \t]*" (- (point) 10)))
+	(goto-char (match-beginning 0)))
+      (setq inner-end (point))
+      (list outer-beg outer-end inner-beg inner-end))))
 
 ;; Select inner and outer environment pairs
 (defun inner-of-latex-env-at-point ()
@@ -511,31 +494,25 @@ NEAR denotes if match should be inner or bounds"
 (defun inner-bounds-of-math-at-point ()
   (my/closest-delim-search math-delims t))
 
-(put 'delim-bounds 'bounds-of-thing-at-point 'bounds-of-latex-delim-at-point)
-(put 'delim-inner 'bounds-of-thing-at-point 'inner-bounds-of-latex-delim-at-point)
+;; (put 'delim-bounds 'bounds-of-thing-at-point 'bounds-of-latex-delim-at-point)
+;; (put 'delim-inner 'bounds-of-thing-at-point 'inner-bounds-of-latex-delim-at-point)
 
-(add-to-list 'thing-at-point-provider-alist '((delim-bounds . bounds-of-latex-delim-at-point)
-                                              (delim-inner . inner-of-latex-delim-at-point)))
+;; (add-to-list 'thing-at-point-provider-alist '((delim-bounds . bounds-of-latex-delim-at-point)
+;;                                               (delim-inner . inner-of-latex-delim-at-point)))
 
-(put 'math       'bounds-of-thing-at-point 'bounds-of-math-at-point)
-(put 'math-inner 'bounds-of-thing-at-point 'inner-bounds-of-math-at-point)
+;; (put 'math       'bounds-of-thing-at-point 'bounds-of-math-at-point)
+;; (put 'math-inner 'bounds-of-thing-at-point 'inner-bounds-of-math-at-point)
 
 
-(add-to-list 'thing-at-point-provider-alist '((math       . bounds-of-math-at-point)
-                                              (math-inner . inner-bounds-of-math-at-point)))
+;; (add-to-list 'thing-at-point-provider-alist '((math       . bounds-of-math-at-point)
+;;                                               (math-inner . inner-bounds-of-math-at-point)))
 
-(put 'env-bounds 'bounds-of-thing-at-point 'bounds-of-latex-env-at-point)
-(put 'env-inner 'bounds-of-thing-at-point 'inner-of-latex-env-at-point)
-(add-to-list 'thing-at-point-provider-alist '((env-bounds . bounds-of-latex-delim-at-point)
-                                              (env-inner . inner-of-latex-delim-at-point)))
-
+;; (put 'env-bounds 'bounds-of-thing-at-point 'bounds-of-latex-env-at-point)
+;; (put 'env-inner 'bounds-of-thing-at-point 'inner-of-latex-env-at-point)
+;; (add-to-list 'thing-at-point-provider-alist '((env-bounds . bounds-of-latex-delim-at-point)
+;;                                               (env-inner . inner-of-latex-delim-at-point)))
 (after! easy-kill
-  (add-to-list 'easy-kill-alist '(?p delim-inner))
-  (add-to-list 'easy-kill-alist '(?P delim-bounds))
-  (add-to-list 'easy-kill-alist '(?m math-inner))
-  (add-to-list 'easy-kill-alist '(?M math))
-  (add-to-list 'easy-kill-alist '(?o env-inner))
-  (add-to-list 'easy-kill-alist '(?O env-bounds)))
+  (add-to-list 'easy-kill-try-things 'sexp))
 
 ;;; ** laas-mode
 (add-hook! org-mode #'laas-mode)
@@ -580,7 +557,6 @@ It makes sense to do so if `laas-mode' is active and if the cursor is
   - inside a LaTeX fragment, or
   - after the first word in a line, where an abbreviation expansion could
     insert a LaTeX environment."
-  (require 'cdlatex)
   (if laas-mode
       (cond
        ;; Before any word on the line: No expansion possible.
@@ -594,72 +570,8 @@ It makes sense to do so if `laas-mode' is active and if the cursor is
          (cdlatex-tab ) t
          ((org-inside-LaTeX-fragment-p) (cdlatex-tab) t)
          (t (forward-word))
-         (forward-word))))
-
-;;; ** `expand-region' interop with `easy-kill'
-(defun er/mark-LaTeX-inside-math ()
-  "Mark text inside LaTeX math delimiters. See `er/mark-LaTeX-math'
-for details."
-  (when (texmathp)
-    (let* ((string (car texmathp-why))
-           (pos (cdr texmathp-why))
-           (reason (assoc string texmathp-tex-commands1))
-           (type (cadr reason)))
-      (cond
-       ((eq type 'sw-toggle) ;; $ and $$
-        (goto-char pos)
-        (set-mark (1+ (point)))
-        (forward-sexp 1)
-        (backward-char 1)
-        (exchange-point-and-mark))
-       ((or (eq type 'sw-on)
-            (equal string "Org mode embedded math")) ;; \( and \[
-        (re-search-forward texmathp-onoff-regexp)
-        (backward-char 2)
-        (set-mark (+ pos 2))
-        (exchange-point-and-mark))
-       (t (error (format "Unknown reason to be in math mode: %s" type)))))))
-(defun er/mark-latex-inside-pairs ()
-  (if (texmathp)
-      (cl-destructuring-bind (beg . end)
-          (my/find-bounds-of-regexps " *[{([|<]"
-                                     " *[]})|>]")
-        (when-let ((n (length (match-string-no-properties 0))))
-          (set-mark (save-excursion
-                      (goto-char beg)
-                      (forward-char n)
-                      (skip-chars-forward er--space-str)
-                      (point)))
-          (goto-char end)
-          (backward-char n)
-          (if (looking-back "\\\\right\\\\*\\|\\\\" (- (point) 7))
-              (backward-char (length (match-string-no-properties 0)))))
-        (skip-chars-backward er--space-str)
-        (exchange-point-and-mark))
-    (er/mark-inside-pairs)))
-
-(defun er/mark-latex-outside-pairs ()
-  (if (texmathp)
-      (cl-destructuring-bind (beg . end)
-          (my/find-bounds-of-regexps " *[{([|<]"
-                                     " *[]})|>]")
-        (set-mark (save-excursion
-                    (goto-char beg)
-                    ;; (forward-char 1)
-                    (if (looking-back "\\\\left\\\\*\\|\\\\" (- (point) 6))
-                        (backward-char (length (match-string-no-properties 0))))
-                    (skip-chars-forward er--space-str)
-                    (point)))
-        (goto-char end)
-        (skip-chars-backward er--space-str)
-        ;; (backward-char 1)
-        (exchange-point-and-mark))
-    (er/mark-outside-pairs)))
-
-
-
-
-
+         (forward-word))
+    (forward-word)))
 
 ;;; * org-mode
 ;;; ** Variables
@@ -866,6 +778,19 @@ REGEXP is non-nil, only return files that match REGEXP."
 
 ;;; ** `org' specific `expand-region' functionality
 (after! org
+  (defun my/org-beginning-of-defun (&optional arg)
+    ";TODO: "
+    (interactive "p")
+    (if (not (texmathp))
+        (org-backward-element)
+      (let ((lx (save-mark-and-excursion
+                  (LaTeX-backward-environment arg)
+                  (point)))
+            (beg (org-element-begin (org-element-context))))
+        (if (> beg lx) (goto-char beg)
+          (run-at-time 0 nil #'goto-char lx)
+          lx))))
+
   (defun my/org-end-of-defun (&optional arg)
     (interactive "p")
     (if (not (texmathp))
@@ -876,30 +801,8 @@ REGEXP is non-nil, only return files that match REGEXP."
                   (goto-char (min (save-mark-and-excursion
                                     (LaTeX-forward-environment (or arg 1))
                                     (point))
-                                  (org-element-end (org-element-context))))))
+                                  (org-element-end (org-element-context)))))))
 
-  (defun er/add-latex-in-org-mode-expansions ()
-    ;; Make Emacs recognize \ as an escape character in org
-    (modify-syntax-entry ?\\ "\\" org-mode-syntax-table)
-    ;; Paragraph end at end of math environment
-    (setq paragraph-start (concat paragraph-start "\\|\\\\end{\\([A-Za-z0-9*]+\\)}"))
-    ;; (setq paragraph-separate (concat paragraph-separate "\\|\\\\end{\\([A-Za-z0-9*]+\\)}"))
-    ;; Better forward/backward defun in Org
-    (setq-local beginning-of-defun-function 'my/org-beginning-of-defun)
-    ;; Latex mode expansions
-    (with-eval-after-load 'expand-region
-      (set (make-local-variable 'er/try-expand-list)
-           (append (cl-set-difference er/try-expand-list
-                                      '(er/mark-method-call
-                                        er/mark-inside-pairs
-                                        er/mark-outside-pairs)
-                                      '(LaTeX-mark-environment
-                                        er/mark-LaTeX-inside-math
-                                        er/mark-latex-inside-pairs
-                                        er/mark-latex-outside-pairs)
-                                      er/mark-LaTeX-math)))))
-
-  (add-hook! org-mode #'er/add-latex-in-org-mode-expansions))
 
 ;;; ** `org-mode-hook' main
 (add-hook! org-mode
@@ -912,41 +815,12 @@ REGEXP is non-nil, only return files that match REGEXP."
                   tab-width 8
                   smartparens-mode nil))
 
-;;; ** `org' navigation transient
-;; (transient-define-prefix org-nav-transient ()
-;;   "Main transient for lasgun."
-;;   [["Navigation"
-;;     ("l" "Forward LaTeX" forward-latex-math :transient t)
-;;     ("L" "Backward LaTeX" backward-latex-math :transient t)
-
-;;     ("e" "Up Subtree" org-previous-visible-heading :transient t)
-;;     ("n" "Down Subtree" org-next-visible-heading :transient t)
-
-;;     ("f" "Next block" org-next-block :transient t)
-;;     ("b" "Previous block" org-previous-block :transient t)
-;;     ("i" "Search heading" consult-org-heading :transient nil)
-;;     ("TAB" "Cycle" org-cycle :transient t)]
-
-;;    ["Structure Editing"
-;;     ("E" "Subtree up" org-move-subtree-up :transient t)
-;;     ("N" "Subtree down" org-move-subtree-down :transient t)
-;;     ("I" "Demote subtree" org-demote-subtree :transient t)
-;;     ("M" "Promote subtree" org-promote-subtree :transient t)
-;;     ("w" "Refile" org-refile :transient nil)]
-;;    ["Quit"
-;;     ("q" "Quit" transient-quit-one)
-;;     ("C-g" "Quit" transient-quit-one)]])
-
-
-(setq! rmh-elfeed-org-files '("~/Documents/org/notes.org"))
+(setq! rmh-org-files '("~/Documents/org/notes.org"))
 
 ;;; ** `org' keybindings
 (map! :map org-mode-map
-
-      "M-f"                                           #'my/org-try-cdlatex-tab
-
-      "M-m"                                        #'math-delimiters-insert
-
+      "M-f"                                           #'cdlatex-tab
+      "M-m"                                            #'math-delimiters-insert
       :desc "Search"                 "C-c s q s"                #'org-ql-search
       :desc "Find"                 "C-c s q f"                  #'org-ql-find
 
@@ -969,6 +843,113 @@ REGEXP is non-nil, only return files that match REGEXP."
 
       (:when (texmathp)
         "ESC"                                         #'org-try-cdlatex-tab))
+
+
+
+
+;;; * `expand-region'
+(setq! expand-region-fast-keys-enabled nil)
+(define-repeat-map expand-region
+  (:continue
+   "," er/expand-region
+   "." er/contract-region)
+  (:enter er/expand-region
+          er/contract-region))
+
+(advice-add 'er--first-invocation
+            :override
+            (defun my/er--first-invocation ()
+              "t if this is the first invocation of er/expand-region or er/contract-region"
+              (not (memq last-command
+                         '(er/expand-region er/contract-region
+                           easy-kill-expand-region easy-kill-contract-region)))))
+(add-to-list 'expand-region-exclude-text-mode-expansions 'org-mode)
+(add-to-list 'expand-region-exclude-text-mode-expansions 'latex-mode)
+
+;;; ** Helper functions
+;;; *** LaTeX stuff expansions
+(defun er/mark-LaTeX-inside-math ()
+  "Mark text inside LaTeX math delimiters. See `er/mark-LaTeX-math'
+for details."
+  (when (texmathp)
+    (let* ((string (car texmathp-why))
+           (pos (cdr texmathp-why))
+           (reason (assoc string texmathp-tex-commands1))
+           (type (cadr reason)))
+      (cond
+       ((eq type 'sw-toggle) ;; $ and $$
+        (goto-char pos)
+        (set-mark (1+ (point)))
+        (forward-sexp 1)
+        (backward-char 1)
+        (exchange-point-and-mark))
+       ((or (eq type 'sw-on)
+            (equal string "Org mode embedded math")) ;; \( and \[
+        (re-search-forward texmathp-onoff-regexp)
+        (backward-char 2)
+        (set-mark (+ pos 2))
+        (exchange-point-and-mark))
+       (t (error (format "Unknown reason to be in math mode: %s" type)))))))
+
+(defun er/mark-latex-inside-pairs ()
+  (if (texmathp)
+      (cl-destructuring-bind (beg . end)
+          (my/find-bounds-of-regexps " *[{([|<]"
+                                     " *[]})|>]")
+        (when-let ((n (length (match-string-no-properties 0))))
+          (set-mark (save-excursion
+                      (goto-char beg)
+                      (forward-char n)
+                      (skip-chars-forward er--space-str)
+                      (point)))
+          (goto-char end)
+          (backward-char n)
+          (if (looking-back "\\\\right\\\\*\\|\\\\" (- (point) 7))
+              (backward-char (length (match-string-no-properties 0)))))
+        (skip-chars-backward er--space-str)
+        (exchange-point-and-mark))
+    (er/mark-inside-pairs)))
+
+(defun er/mark-latex-outside-pairs ()
+  (if (texmathp)
+      (cl-destructuring-bind (beg . end)
+          (my/find-bounds-of-regexps " *[{([|<]"
+                                     " *[]})|>]")
+        (set-mark (save-excursion
+                    (goto-char beg)
+                    ;; (forward-char 1)
+                    (if (looking-back "\\\\left\\\\*\\|\\\\" (- (point) 6))
+                        (backward-char (length (match-string-no-properties 0))))
+                    (skip-chars-forward er--space-str)
+                    (point)))
+        (goto-char end)
+        (skip-chars-backward er--space-str)
+        ;; (backward-char 1)
+        (exchange-point-and-mark))
+    (er/mark-outside-pairs)))
+
+;;; ** `org-mode' expansion stuff
+(defun er/add-latex-in-org-mode-expansions ()
+  (require 'expand-region)
+  ;; Make Emacs recognize \ as an escape character in org
+  (modify-syntax-entry ?\\ "\\" org-mode-syntax-table)
+  ;; Paragraph end at end of math environment
+  (setq paragraph-start (concat paragraph-start "\\|\\\\end{\\([A-Za-z0-9*]+\\)}"))
+  ;; (setq paragraph-separate (concat paragraph-separate "\\|\\\\end{\\([A-Za-z0-9*]+\\)}"))
+  ;; Better forward/backward defun in Org
+  (setq-local beginning-of-defun-function 'my/org-beginning-of-defun)
+  ;; Latex mode expansions
+  (set (make-local-variable 'er/try-expand-list)
+       (append (cl-set-difference er/try-expand-list
+                                  '(er/mark-method-call
+                                    er/mark-inside-pairs
+                                    er/mark-outside-pairs))
+               '(LaTeX-mark-environment
+                 er/mark-LaTeX-inside-math
+                 er/mark-latex-inside-pairs
+                 er/mark-latex-outside-pairs
+                 er/mark-LaTeX-math))))
+(add-hook! org-mode #'er/add-latex-in-org-mode-expansions)
 
 
 
@@ -1005,57 +986,35 @@ REGEXP is non-nil, only return files that match REGEXP."
 
 ;;; * `org-roam'
 ;;; ** `Variables'
-(after! org
+(after! (:and org org-roam)
   (setq! org-roam-directory "~/Documents/org/roam/"
-         org-roam-dailies-directory "daily/"
+         org-roam-dailies-directory "~/Documents/org/roam/daily/"
          org-roam-node-display-template
          (concat "${title:*} "
                  (propertize "${tags:40}" 'face 'org-modern-tag))
 
          org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
          org-roam-capture-templates
-         '(("h" "default" plain
-            "%?"
-            :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
-                               "#+title: ${title}\n#+created: %U\n#+setupfile: ~/Documents/org/latex_template.org\n\n")
-            :unnarrowed t)
-           ("d" "definition" plain
-            "%?"
-            :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
-                               "#+title: ${title}\n#+filetags: :definition:\n#+created: %U\n#+setupfile: ~/Documents/org/latex_template.org\n\n")
-            :unnarrowed t)
-           ("t" "test" plain
-            "%?"
-            :if-new (file+head "test/%<%Y%m%d%H%M%S>-${slug}.org"
-                               "#+title: ${title}\n#+filetags[[id:86ae361a-cc04-4e42-8ab7-2dc230f8f4a4][test of thing]]: :definition:\n#+created: %U\n#+setupfile: ~/Documents/org/latex_template.org\n\n")
-            :unnarrowed t)
-           ("f" "fleeting" plain
-            "%?"
-            :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
-                               "#+title: ${title}\n#+filetags: :fleeting:\n#+created: %U\n#+setupfile: ~/Documents/org/latex_template.org\n\n")
-            :unnarrowed t)
-           ("r" "reference" plain
-            "%?"
-            :if-new (file+head "${citar-citekey}.org"
-                               "#+title: ${citar-author}: ${citar-title}\n#+filetags: :reference:\n#+created: %U\n#+setupfile: ~/Documents/org/latex_template.org\n\n")
-            :unnarrowed t)
-           ("n" "reference notes" plain
-            "%?"
-            :if-new (file+head "${citar-citekey}.org" "#+title: ${citar-author}: ${citar-title}\n#+filetags: :reference:\n#+created: %U\n#+setupfile: ~/Documents/org/latex_template.org\n\n* Notes\n:PROPERTIES:\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n") :unnarrowed t))
+         '(("h" "Information" entry
+            "* ${title}\n:PROPERTIES:\n:CREATED: %u\n:ID: %(org-id-new)\n:END:\n%?"
+            :if-new (file "~/Documents/org/roam/roam.org")
+            :unnarrowed nil
+            :empty-lines 1))
+
          org-roam-dailies-capture-templates
-         '(("i" "default" entry
+         '(("d" "default" entry
             "* %?"
-            :target (file+head "%<%Y%m%d>.org"
-                               "#+title: %<%Y-%m-%d>\n#+setupfile: ~/Documents/org/latex_template.org\n\n")
-            :unnarrowed t))))
+            :target (file+datetree "dailies.org" day)
+            ;; :if-new (file+datetree "dailies.org" day)
+            :unnarrowed nil)))
 
 ;;; ** `org-roam' interop with `org-ql'
-(defun my/org-ql-find-roam-dailies ()
-  (interactive)
-  (funcall #'org-ql-search  (org-ql-search-directories-files :directories  (list (concat org-roam-directory org-roam-dailies-directory))
-                                                             :recurse nil
-                                                             :regexp ".*?\\.org$")
-           (read-from-minibuffer "Query: ")))
+  (defun my/org-ql-find-roam-dailies ()
+    (interactive)
+    (funcall #'org-ql-search  (org-ql-search-directories-files :directories  (list (concat org-roam-directory org-roam-dailies-directory))
+                                                               :recurse nil
+                                                               :regexp ".*?\\.org$")
+             (read-from-minibuffer "Query: "))))
 (defun my/org-ql-find-roam ()
   (interactive)
   (funcall #'org-ql-search  (org-ql-search-directories-files :directories (list org-roam-directory)
@@ -1097,19 +1056,17 @@ REGEXP is non-nil, only return files that match REGEXP."
 
          citar-org-roam-capture-template-key "n"))
 
-;;; ** `citar' keybindings
+;;; ** `citar' related keybindings
 (map! :map org-mode-map
       "C-c ]" #'citar-insert-citation
 
       :map citar-embark-map
-      "p"     #'citar-org-update-prefix-suffix
-
-      :map citar-embark-citation-map
-      "p"     #'citar-org-update-prefix-suffix)
+      :desc "Prefix/Suffix" "p"     #'citar-org-update-prefix-suffix)
 
 ;;; * `pdf-view' mode
 (add-hook! pdf-tools-enabled #'pdf-view-themed-minor-mode
            #'pdf-view-auto-slice-minor-mode)
+
 ;;; ** `pdf'  keybindings
 (map! :map pdf-view-mode-map
       "M-m"                                           #'pdf-view-auto-slice-minor-mode
@@ -1117,8 +1074,10 @@ REGEXP is non-nil, only return files that match REGEXP."
       "n"                                             #'pdf-view-next-line-or-next-page
       "e"                                             #'pdf-view-previous-line-or-previous-page)
 
+
+
 ;;; * `avy'
-;;; * `avy' actions
+;;; ** `avy' actions
 (defun avy-action-easy-copy (pt)
   (unless (require 'easy-kill nil t)
     (user-error "Easy Kill not found, please install."))
@@ -1350,88 +1309,92 @@ REGEXP is non-nil, only return files that match REGEXP."
 
 
 ;;; * `lasgun'
+(require 'lasgun)
+
 (setq! lasgun-also-push-mark-ring t)
 
 ;;; ** `lasgun' actions
-(defun lasgun-action-teleport-separated-sexps (ARG)
-  "Kill words at lasgun selections and place them at point."
-  (interactive "p")
-  (let ((size (ring-length lasgun-mark-ring))
-        (lasgun-list (ring-elements lasgun-mark-ring)))
-    (save-excursion
-      (dolist (pos lasgun-list)
+(after!  lasgun
+  (define-lasgun-action lasgun-action-upcase-word t upcase-word)
+  (define-lasgun-action lasgun-action-downcase-word t downcase-word)
+  (define-lasgun-action lasgun-action-kill-word nil kill-word)
+  (define-lasgun-action lasgun-action-kill-whole-line nil kill-whole-line)
+  (define-lasgun-action lasgun-action-comment-line t comment-line)
+  (define-lasgun-action lasgun-action-jinx-correct t jinx-correct-nearest)
+  (defun lasgun-action-helpful ()
+    (interactive)
+    (dolist (pos (ring-elements lasgun-mark-ring))
+      (save-excursion
         (goto-char pos)
-        (kill-sexp ARG)))
-    ;; killed words now in `kill-ring'
-    (let ((separator (read-from-minibuffer "Separator: " nil nil nil nil " ")))
-      (dotimes (i size)
-        (insert (substring-no-properties (nth i kill-ring)))
-        (unless (eq i (1- size))
-          (insert separator)))))
-  ;; Positions would be messed up if we didn't clear the ring
-  (lasgun-clear-lasgun-mark-ring))
+        (helpful-at-point)
+        (popper--bury-all)))
+    (lasgun-clear-lasgun-mark-ring))
+  (defun lasgun-action-toggle-math-delims ()
+    (interactive)
+    (save-excursion
+      (dolist (pos (ring-elements lasgun-mark-ring))
+        (goto-char pos)
+        (forward-latex-math)
+        (math-delimiters-insert))))
 
-(defun lasgun-action-yank-separated-sexps (ARG)
-  "Kill words at lasgun selections and place them at point."
-  (interactive "p")
-  (let ((size (ring-length lasgun-mark-ring))
-        (lasgun-list (ring-elements lasgun-mark-ring)))
-    (unwind-protect
-        (save-excursion
-          (dolist (pos lasgun-list)
-            (let ((end nil))
-              (goto-char pos)
-              (forward-sexp ARG)
-              (setq end (point))
-              (kill-new (buffer-substring pos end)))))
-
-      ;;  sexps now in `kill-ring'
+  (defun lasgun-action-teleport-separated-sexps (ARG)
+    "Kill words at lasgun selections and place them at point."
+    (interactive "p")
+    (let ((size (ring-length lasgun-mark-ring))
+          (lasgun-list (ring-elements lasgun-mark-ring)))
+      (save-excursion
+        (dolist (pos lasgun-list)
+          (goto-char pos)
+          (kill-sexp ARG)))
+      ;; killed words now in `kill-ring'
       (let ((separator (read-from-minibuffer "Separator: " nil nil nil nil " ")))
         (dotimes (i size)
           (insert (substring-no-properties (nth i kill-ring)))
           (unless (eq i (1- size))
             (insert separator)))))
-    (lasgun-clear-lasgun-mark-ring)
-    (message "Error yanking sexps")))
+    ;; Positions would be messed up if we didn't clear the ring
+    (lasgun-clear-lasgun-mark-ring))
 
-(defun lasgun-action-cycleshift-sexps (ARG)
-  (interactive)
-  (let ((size (ring-length lasgun-mark-ring))
-        (lasgun-list (ring-elements lasgun-mark-ring)))
-    (unwind-protect
-        (save-excursion
-          (dolist (pos lasgun-list)
-            (let ((end nil))
+  (defun lasgun-action-copy-separated-sexps (ARG)
+    "Kill words at lasgun selections and place them at point."
+    (interactive "p")
+    (let ((size (ring-length lasgun-mark-ring))
+          (lasgun-list (ring-elements lasgun-mark-ring)))
+      (unwind-protect
+          (save-excursion
+            (dolist (pos lasgun-list)
+              (let ((end nil))
+                (goto-char pos)
+                (forward-sexp ARG)
+                (setq end (point))
+                (kill-new (buffer-substring pos end)))))
+
+        ;;  sexps now in `kill-ring'
+        (let ((separator (read-from-minibuffer "Separator: " nil nil nil nil " ")))
+          (dotimes (i size)
+            (insert (substring-no-properties (nth i kill-ring)))
+            (unless (eq i (1- size))
+              (insert separator)))))
+      (lasgun-clear-lasgun-mark-ring)
+      (message "Error yanking sexps")))
+
+  (defun lasgun-prompt-action ()
+    (interactive)
+    (let ((command (read-from-minibuffer "Command: ")))
+      (unwind-protect
+          (save-excursion
+            (dolist (pos (ring-elements lasgun-mark-ring))
               (goto-char pos)
-              (kill-sexp ARG)))))
-
-
-    (message "Error yanking sexps")))
-
-(defun lasgun-action-toggle-math-delims ()
-  (interactive)
-  (save-excursion
-    (dolist (pos (ring-elements lasgun-mark-ring))
-      (goto-char pos)
-      (forward-latex-math)
-      (math-delimiters-insert))))
-
-(defun lasgun-action-helpful ()
-  (interactive)
-  (dolist (pos (ring-elements lasgun-mark-ring))
-    (save-excursion
-      (goto-char pos)
-      (helpful-at-point)
-      (popper--bury-all)))
-  (lasgun-clear-lasgun-mark-ring))
-
-
-(define-lasgun-action lasgun-action-upcase-word t upcase-word)
-(define-lasgun-action lasgun-action-downcase-word t downcase-word)
-(define-lasgun-action lasgun-action-kill-word nil kill-word)
-(define-lasgun-action lasgun-action-kill-whole-line nil kill-whole-line)
-(define-lasgun-action lasgun-action-comment-line t comment-line)
-(define-lasgun-action lasgun-action-jinx-correct t jinx-correct-nearest)
+              (call-interactively (intern command) t)))
+        (lasgun-clear-lasgun-mark-ring))))
+  (defun lasgun-action-pop-and-jump ()
+    (interactive)
+    (unless (ring-empty-p lasgun-mark-ring)
+      (unless (ring-member lasgun-mark-ring (point))
+        (push-mark-no-activate (point)))
+      (goto-char (ring-ref lasgun-mark-ring 0))
+      (ring-remove lasgun-mark-ring 0))
+    (message "No lasgun marks")))
 
 ;;; ** `embark' menu for `lasgun'
 (after! embark
@@ -1450,6 +1413,7 @@ REGEXP is non-nil, only return files that match REGEXP."
   (map! :map embark-lasgun-mark-actions
         :desc "Upcase word"   "U" #'lasgun-action-upcase-word
         :desc "Downcase word" "l" #'lasgun-action-downcase-word
+        :desc "Pop ring and jump" "v" #'lasgun-action-pop-and-jump
         :desc "Make multiple cusors" "SPC" #'lasgun-make-multiple-cursors))
 
 
@@ -1460,44 +1424,35 @@ REGEXP is non-nil, only return files that match REGEXP."
     (avy-goto-char-timer)))
 
 
-(defun lasgun-prompt-action ()
-  (interactive)
-  (let ((command (read-from-minibuffer "Command: ")))
-    (unwind-protect
-        (save-excursion
-          (dolist (pos (ring-elements lasgun-mark-ring))
-            (goto-char pos)
-            (call-interactively (intern command) t)))
-      (lasgun-clear-lasgun-mark-ring))))
+
 
 ;;; ** `transient' menu for `lasgun'
 (transient-define-prefix lasgun-transient ()
   "Main transient for lasgun."
   [["Marks"
     ("c" "Char timer" lasgun-mark-char-timer :transient t)
-    ;; ("w" "Word" lasgun-mark-word-0 :transient t)
-    ;; ("l" "Begin of line" lasgun-mark-line :transient t)
+    ("l" "Begin of line" lasgun-mark-line :transient t)
     ("s" "Symbol" lasgun-mark-symbol-1 :transient t)
-    ("n" "Whitespace end" lasgun-mark-whitespace-end :transient t)
     ("x" "Clear lasgun mark ring" lasgun-clear-lasgun-mark-ring :transient t)
     ("u" "Undo lasgun mark" lasgun-pop-lasgun-mark :transient t)]
    ["Actions"
     ("SPC" "Make cursors" lasgun-make-multiple-cursors)
     ("." "Embark act" lasgun-embark-act-all)
-    ;; ("T" "Teleport sexps w/ delimiters" lasgun-action-teleport-separated-sexps :transient t)
-    ;; ("h" "Help" lasgun-action-helpful :transient t)
-    ;; ("Y" "Yank sexps w/ delimiters" lasgun-action-yank-separated-sexps :transient t)
-    ;; ("$" "Jinx correct" lasgun-action-jinx-correct :transient t)
-    ;; ("k" "Kill word" lasgun-action-kill-word :transient t)
-    ;; ("U" "upcase word" lasgun-action-upcase-word :transient t)
-    ("K" "Kill whole line" lasgun-action-kill-whole-line :transient t)
-    ;; ("m" "Toggle math delims" lasgun-action-toggle-math-delims :transient t)
+    ("$" "Jinx correct" lasgun-action-jinx-correct :transient t)
+    ("K" "Kill whole line" lasgun-action-kill-whole-line :transient t)]
+   ["Actions ctd."
+    ("m" "Toggle math delims" lasgun-action-toggle-math-delims :transient t)
     (";" "Comment line" lasgun-action-comment-line :transient t)
-    ("?" "Specify action" lasgun-prompt-action :transient t)
+    ("?" "Specify action" lasgun-prompt-action :transient t)]
+   ["Transient"
     ("q" "Quit" transient-quit-one)]])
+
+
+
 (add-hook! transient-exit #'lasgun-clear-lasgun-mark-ring)
 
 ;;; * Email configuration: `mu4e'
+;; Needs some personal stuff that I don't want to include publically
 (require 'setup-email)
 
 ;;; * TRAMP
@@ -1791,8 +1746,8 @@ MYTAG"
       "d"      (elfeed-tag-selection-as 'junk)
       "l"      (elfeed-tag-selection-as 'readlater))
 
-;;; * keybindings
-;;; ** global keybindings
+;;; * Global keybindings
+;;; ** Global keybindings
 (when (featurep 'activities)
   (setq! edebug-inhibit-emacs-lisp-mode-bindings t))
 
@@ -1876,7 +1831,6 @@ MYTAG"
 
 ;;; ** `easy-kill'  keybindings
 (map! :map easy-kill-base-map
-      "M-w"                                           #'copy-region-as-kill
       ","                                             #'easy-kill-expand-region
       "."                                             #'easy-kill-contract-region)
 
