@@ -1,20 +1,20 @@
-;;; * Setup load path
+;; -*- lexical-binding: t; -*-
+;;; * Setup load path.
 (if (equal (system-name) "pop-os")
     (add-to-list 'load-path "~/.config/doom/")
   (add-to-list 'load-path "~/.doom.d/"))
 
 ;;; * Some functions
-(defun my/close-other-window nil
-  (interactive)
-  (delete-window (ace-select-window)))
-
 (defun my/switch-buffer-other-window ()
   (interactive)
   (save-excursion
     (consult-buffer-other-window)))
 
 ;;; * Basic emacs stuff
-(when (equal (system-name) "EVA-02")
+(defun EVA-02-p ()
+  (when (equal (system-name) "EVA-02")))
+
+(when (EVA-02-p)
   (display-battery-mode))
 
 (display-time-mode)
@@ -24,17 +24,29 @@
 ;;; * Buffer related config
 ;;; ** `ace-window'
 (setq! aw-scope 'global)
+
+(defun my/open-eat-other-frame ()
+  (interactive)
+  (let ((buf (eat)))
+    (switch-to-buffer (other-buffer buf))
+    (switch-to-buffer-other-frame buf)))
+
 ;;; ** `popper'
-(setq! popper-reference-buffers
-       '("\\*Messages\\*"
-         "Output\\*$"
-         "\\*compilation\\*"
-         "\\*Async Shell Command\\*"
-         "\\*Bufler\\*"
-         "\\*sly-description\\*"
-         helpful-mode
-         compilation-mode
-         "\\*Outline .*?\\*"))
+(after! popper
+  (setq! popper-reference-buffers
+         '("\\*Messages\\*"
+           "Output\\*$"
+           "\\*compilation\\*"
+           "\\*Async Shell Command\\*"
+           "\\*Bufler\\*"
+           "\\*sly-description\\*"
+           "\\*Flycheck errors\\*"
+           pdf-outline-mode
+           help-mode
+           helpful-mode
+           compilation-mode)))
+;; "\\*Outline .*?\\*"
+
 
 (popper-mode +1)
 (popper-echo-mode)
@@ -104,6 +116,8 @@
 
 ;;; * Editing
 (setq! kill-whole-line t)
+(add-hook! text-mode #'jinx-mode)
+
 (defun my/find-bounds-of-regexps (open close)
   (let ((start (point))
         (parity 0)
@@ -170,52 +184,73 @@
 
 ;;; * Font config
 ;;; ** Doom font config
-(setq! font-of-choice (if (equal (system-name) "pop-os")
-                          (font-spec :family "JetBrains Mono" :size 18)
-                        (font-spec :family "JetBrains Mono Nerd Font" :size 18))
+;; (setq! fixed-font-of-choice (if (equal (system-name) "pop-os")
+;;                                 (font-spec :family "Iosevka Term" :size 16)
+;;                               (font-spec :family "Iosevka Term" :size 18))
+;;        variable-font-of-choice  (font-spec :family "Iosevka Slab" :size 16)
 
-       variable-font-of-choice  (font-spec :family "Iosevka Aile" :size 18)
+;;        big-font (font-spec :family "Iosevka Slab" :style "Bold"  :size 28)
+;;        font-sans-serif (font-spec :family "Iosevka Aile" :style "Regular" :size 16))
 
-       big-font (font-spec :family "Iosevka Aile" :style "Bold"  :size 28))
+;; (setq! doom-font fixed-font-of-choice
+;;        doom-variable-pitch-font variable-font-of-choice
+;;        doom-big-font big-font)
 
-(setq! doom-font font-of-choice
-       doom-variable-pitch-font variable-font-of-choice
-       doom-serif-font (font-spec :family "IBM Plex Serif" :size 19)
-       doom-big-font big-font)
+(setq! variable-font "Iosevka Slab"
+       fixed-font "Iosevka Fixed"
+       variable-sans-serif "Iosevka Aile")
 
 ;;; ** Fontaine
 (setq! fontaine-presets
-       '((regular
-          :variable-pitch-family variable-font-of-choice
-          :fixed-pitch-family font-of-choice
-          :default-height 100)
+       `((regular-serif
+          :variable-pitch-family ,variable-font
+          :fixed-pitch-family ,fixed-font
+          :default-height 110
+          :default-weight regular)
+
+         (regular-sans-serif
+          :variable-pitch-family ,variable-sans-serif
+          :inherit regular-serif)
+
          (medium
-          :inherit regular
+          :inherit regular-serif
           :default-height 140)
+
          (large
           :inherit medium
           :default-height 180)
 
          (t ; our shared fallback properties
-          :default-family variable-font-of-choice
-          :default-weight normal
-          :fixed-pitch-family font-of-choice  ; falls back to :default-family
+          :default-family ,variable-font
+          :default-weight light
+          :fixed-pitch-family ,fixed-font
           :fixed-pitch-height 1.0
-          :variable-pitch-family variable-font-of-choice
-          :variable-pitch-weight normal
-          :variable-pitch-height 1.05
+
+          :variable-pitch-family ,variable-font
+          :variable-pitch-weight regular
+          :variable-pitch-height 1.0
+
+          :fixed-pitch-serif-family ,fixed-font
+          :fixed-pitch-serif-weight nil
+          :fixed-pitch-serif-slant nil
+          :fixed-pitch-serif-height 1.0
+
           :bold-family nil ; use whatever the underlying face has
           :bold-weight bold
           :italic-family nil
           :italic-slant italic
           :line-spacing nil)))
 
-(variable-pitch-mode)
+(fontaine-mode)
+(fontaine-set-preset 'regular-serif)
+(add-hook! enable-theme-functions #'fontaine-apply-current-preset)
+(add-hook! text-mode #'variable-pitch-mode)
 
 
 ;;; * LaTeX
-(setq! math-delimiters-compressed-display-math nil
-       bibtex-dialect 'biblatex)
+(setq! math-delimiters-compressed-display-math nil)
+(setq! bibtex-dialect 'biblatex)
+
 ;;; ** Helper functions
 (defun my/cdlatex-sub-superscript ()
   "Insert ^{} or _{} unless the number of backslashes before point is odd.
@@ -240,19 +275,9 @@ When pressed twice, make the sub/superscript roman."
         (insert "{}")
         (forward-char -1)))))
 
-(defun newline-if-not-already ()
-  (unless (= (point) (pos-bol))
-    (newline)))
-
-(defun insert-newline-separated-text (beg end)
-  (interactive)
-  (newline-if-not-already)
-  (insert (concat beg "\n"))
-  (save-excursion
-    (insert (concat "\n" end))))
-
 (defun forward-latex-math ()
-  "Move forward across the next LaTeX equation. It is meant work like `forward-sexp' but for LaTeX math delimiters."
+  "Move forward across the next LaTeX equation.
+It is meant work like `forward-sexp' but for LaTeX math delimiters."
   (interactive)
   (require 'latex)
   (let ((count 1))
@@ -281,7 +306,8 @@ When pressed twice, make the sub/superscript roman."
       (re-search-forward "\\\\]" (eobp) t count)))))
 
 (defun backward-latex-math ()
-  "Move forward across the next LaTeX equation. It is meant work like `forward-sexp' but for LaTeX math delimiters."
+  "Move forward across the next LaTeX equation.
+It is meant work like `forward-sexp' but for LaTeX math delimiters."
   (interactive)
   (require 'latex)
   (let ((count 1))
@@ -325,253 +351,31 @@ When pressed twice, make the sub/superscript roman."
     (forward-line -1)
     (re-search-forward regexp (eobp) t)))
 
-
-(defvar select-newlines-with-envs)
-(setq!  select-newlines-with-envs nil)
-
-(defun evil-tex--select-env ()
-  (let (outer-beg outer-end inner-beg inner-end)
-    (save-excursion
-      (cond
-       ;; `LaTeX-find-matching-begin' doesn't like being exactly on the \\begin
-       ((looking-at (regexp-quote "\\begin{"))
-	t)
-       ;; `LaTeX-find-matching-begin' doesn't like being near the } of \\end{}
-       ((or (= (char-before) ?})
-	    (= (char-after) ?}))
-	(backward-char 2)
-	(LaTeX-find-matching-begin))
-       (t
-	(LaTeX-find-matching-begin)))
-      ;; We are at backslash of \\begin
-      (setq outer-beg (point))
-      (forward-sexp)
-      (while (or
-	      (= (char-after) ?{)
-	      (= (char-after) ?\[))
-	(forward-sexp))
-      (when (and evil-tex-select-newlines-with-envs
-		 (looking-at "\n[ \t]*"))
-	(goto-char (match-end 0)))
-      (setq inner-beg (point))
-      (goto-char (1+ outer-beg))
-      (LaTeX-find-matching-end)        ; we are at closing brace
-      (setq outer-end (point))
-      (search-backward "\\end")        ; goto backslash
-      (when (and evil-tex-select-newlines-with-envs
-		 (looking-back "\n[ \t]*" (- (point) 10)))
-	(goto-char (match-beginning 0)))
-      (setq inner-end (point))
-      (list outer-beg outer-end inner-beg inner-end))))
-
-;; Select inner and outer environment pairs
-(defun inner-of-latex-env-at-point ()
-  (let ((result (evil-tex--select-env)))
-    (cons (caddr result) (cadddr result))))
-
-(defun bounds-of-latex-env-at-point ()
-  (let ((result (evil-tex--select-env)))
-    (cons (car result) (cadr result))))
-
-(setq latex-delim-pairs
-      (cl-loop for (l r)
-               in '(( "(" ")")
-                    ( "\\[" "\\]")
-                    ( "\\\\{" "\\\\}")
-                    ( "\\\\lvert" "\\\\rvert")
-                    ( "\\\\lVert" "\\\\rVert")
-                    ( "\\\\langle" "\\\\rangle"))
-               nconc
-               (cl-loop for (pre-l pre-r)
-                        in '(  ;; ("" "")
-                             ( "\\\\left"  "\\\\right")
-                             ( "\\\\bigl"  "\\\\bigr")  ("\\\\big"  "\\\\big")
-                             ( "\\\\biggl" "\\\\biggr") ("\\\\bigg" "\\\\bigg")
-                             ( "\\\\Bigl"  "\\\\Bigr")  ("\\\\Big"  "\\\\Big")
-                             ( "\\\\Biggl" "\\\\Biggr") ("\\\\Bigg" "\\\\Bigg"))
-                        collect (cons (concat pre-l l) (concat pre-r r)))))
-
-(defun append-bounds-distance (pair)
-  (if pair
-      (cons pair (min  (- (point) (car pair))  (- (cdr pair) (point))))
-    nil))
-
-(defun find-min-distance-match (matches-with-distances)
-  (let ((nearest-match (cons (point) (point)))
-        (min-distance (float 1.0e+INF)))
-    (pcase-dolist (`(,delims . ,distance) matches-with-distances)
-      ;;      (message (format "%1$s with distance %2$s " delims distance))
-      (when distance
-        (when  (> min-distance distance)
-          (setq nearest-match delims)
-          (setq min-distance distance))))
-    nearest-match))
-
-
-(defun meow--thing-parse-pair-search (push-token pop-token back near)
-  (let* ((search-fn (if back #'re-search-backward #'re-search-forward))
-         (match-fn (if back #'match-end #'match-beginning))
-         (cmp-fn (if back #'> #'<))
-         (push-next-pos nil)
-         (pop-next-pos nil)
-         (push-pos (save-mark-and-excursion
-                     (when (funcall search-fn push-token nil t)
-                       (setq push-next-pos (point))
-                       (if near (funcall match-fn 0) (point)))))
-         (pop-pos (save-mark-and-excursion
-                    (when (funcall search-fn pop-token nil t)
-                      (setq pop-next-pos (point))
-                      (if near (funcall match-fn 0) (point))))))
-    (cond
-     ((and (not pop-pos) (not push-pos))
-      nil)
-     ((not pop-pos)
-      (goto-char push-next-pos)
-      (cons 'push push-pos))
-     ((not push-pos)
-      (goto-char pop-next-pos)
-      (cons 'pop pop-pos))
-     ((funcall cmp-fn push-pos pop-pos)
-      (goto-char push-next-pos)
-      (cons 'push push-pos))
-     (t
-      (goto-char pop-next-pos)
-      (cons 'pop pop-pos)))))
-
-
-
-(defun meow--thing-pair-function (push-token pop-token near)
-  (let* ((found nil)
-         (depth  0)
-         (beg (save-mark-and-excursion
-                (prog1
-                    (let ((case-fold-search nil))
-                      (while (and (<= depth 0)
-                                  (setq found (meow--thing-parse-pair-search push-token pop-token t near)))
-                        (let ((push-or-pop (car found)))
-                          (if (eq 'push push-or-pop)
-                              (cl-incf depth)
-                            (cl-decf depth))))
-                      (when (> depth 0) (cdr found)))
-                  (setq depth 0
-                        found nil))))
-         (end (save-mark-and-excursion
-                (let ((case-fold-search nil))
-                  (while (and (>= depth 0)
-                              (setq found (meow--thing-parse-pair-search push-token pop-token nil near)))
-                    (let ((push-or-pop (car found)))
-                      (if (eq 'push push-or-pop)
-                          (cl-incf depth)
-                        (cl-decf depth))))
-                  (when (< depth 0) (cdr found))))))
-    (when (and beg end)
-      (cons beg end))))
-
-(defun my/closest-delim-search (delims near)
-  "Find LaTeX parenthesis bounds.
-NEAR denotes if match should be inner or bounds"
-  (interactive)
-  (let ((found-pairs (list)))
-    (pcase-dolist (`(,left . ,right)  delims)
-      (push  (meow--thing-pair-function
-              left right near) found-pairs))
-    (let ((bounds-with-distances (mapcar #'append-bounds-distance found-pairs)))
-      (find-min-distance-match bounds-with-distances))))
-
-(defun bounds-of-latex-delim-at-point ()
-  (my/closest-delim-search latex-delim-pairs nil))
-
-(defun inner-bounds-of-latex-delim-at-point ()
-  (my/closest-delim-search latex-delim-pairs t))
-
-;;; ** Easy kill LaTeX delimiters
-(setq! math-delims '(("\\\\(" . "\\\\)")
-                     ("\\\\[[]" . "\\\\[]]")))
-
-(defun bounds-of-math-at-point ()
-  (my/closest-delim-search math-delims nil))
-
-(defun inner-bounds-of-math-at-point ()
-  (my/closest-delim-search math-delims t))
-
-;; (put 'delim-bounds 'bounds-of-thing-at-point 'bounds-of-latex-delim-at-point)
-;; (put 'delim-inner 'bounds-of-thing-at-point 'inner-bounds-of-latex-delim-at-point)
-
-;; (add-to-list 'thing-at-point-provider-alist '((delim-bounds . bounds-of-latex-delim-at-point)
-;;                                               (delim-inner . inner-of-latex-delim-at-point)))
-
-;; (put 'math       'bounds-of-thing-at-point 'bounds-of-math-at-point)
-;; (put 'math-inner 'bounds-of-thing-at-point 'inner-bounds-of-math-at-point)
-
-
-;; (add-to-list 'thing-at-point-provider-alist '((math       . bounds-of-math-at-point)
-;;                                               (math-inner . inner-bounds-of-math-at-point)))
-
-;; (put 'env-bounds 'bounds-of-thing-at-point 'bounds-of-latex-env-at-point)
-;; (put 'env-inner 'bounds-of-thing-at-point 'inner-of-latex-env-at-point)
-;; (add-to-list 'thing-at-point-provider-alist '((env-bounds . bounds-of-latex-delim-at-point)
-;;                                               (env-inner . inner-of-latex-delim-at-point)))
 (after! easy-kill
   (add-to-list 'easy-kill-try-things 'sexp))
 
-;;; ** laas-mode
+;;; ** laas-mode for auto expanding snippets
 (add-hook! org-mode #'laas-mode)
 
-(after! (:and laas aas)
+(after! laas
   (aas-set-snippets 'laas-mode
-    ";m" (lambda ()
-           (interactive)
-           (insert "\\(  ")
-           (save-excursion
-             (insert "  \\)")))
-
-
-    "dm" (lambda ()
-           (interactive)
-           (if (word-at-point)
-               (insert "dm")
-             (insert-newline-separated-text "\\[" "\\]\n")))
-
-    :cond #'laas-mathp
-    "opr" '(tempel "\\operatorname{" r "}" q)
-    "^" #'my/cdlatex-sub-superscript
-    "_" #'my/cdlatex-sub-superscript
-    "ox" "\\otimes"
-    "iso" "\\cong"
-    "hom" "\\hom"
-    "ker" "\\ker"
-    "ZZ" "\\mathbb{Z}"
-    "CC" "\\mathbb{C}"
-    "RR" "\\mathbb{R}"
-    "QQ" "\\mathbb{Q}"))
+                    :cond #'laas-mathp
+                    "opr" '(tempel "\\operatorname{" r "}" q)
+                    "^" #'my/cdlatex-sub-superscript
+                    "_" #'my/cdlatex-sub-superscript
+                    "ox" "\\otimes"
+                    "iso" "\\cong"
+                    "hom" "\\hom"
+                    "ker" "\\ker"
+                    "ZZ" "\\mathbb{Z}"
+                    "CC" "\\mathbb{C}"
+                    "RR" "\\mathbb{R}"
+                    "QQ" "\\mathbb{Q}"))
 
 ;; (add-hook 'aas-pre-snippet-expand-hook (setq! smartparens-mode nil)
 ;;           (setq! global-smartparens-mode nil))
 ;; (add-hook 'aas-post-snippet-expand-hook (setq! smartparens-mode t)
 ;;           (setq! global-smartparens-mode t))
-(require 'cdlatex)
-(defun my/org-try-cdlatex-tab ()
-  (interactive)
-  "Check if it makes sense to execute `cdlatex-tab', and do it if yes.
-It makes sense to do so if `laas-mode' is active and if the cursor is
-  - inside a LaTeX fragment, or
-  - after the first word in a line, where an abbreviation expansion could
-    insert a LaTeX environment."
-  (if laas-mode
-      (cond
-       ;; Before any word on the line: No expansion possible.
-       ((save-excursion (skip-chars-backward " \t") (bolp)) (forward-word))
-       ;; Just after first word on the line: Expand it.  Make sure it
-       ;; cannot happen on headlines, though.
-       ((save-excursion)))
-    (skip-chars-backward "a-zA-Z0-9*")
-    (skip-chars-backward " \t")
-    (and (bolp) (not (org-at-heading-p))
-         (cdlatex-tab ) t
-         ((org-inside-LaTeX-fragment-p) (cdlatex-tab) t)
-         (t (forward-word))
-         (forward-word))
-    (forward-word)))
 
 ;;; * org-mode
 ;;; ** Variables
@@ -590,13 +394,8 @@ It makes sense to do so if `laas-mode' is active and if the cursor is
          org-agenda-skip-deadline-if-done t
          org-agenda-start-day "-1d"
          org-agenda-todo-ignore-scheduled t
-         org-agenda-format-date (lambda (date) (concat "\n"
-                                                       (make-string (window-width) 9472)
-                                                       "\n"
-                                                       ;; Does this load org?
-                                                       (org-agenda-format-date-aligned date)))
 
-         org-refile-use-outline-path t
+         org-refile-use-outline-path 'file
          org-outline-path-complete-in-steps nil
          org-refile-targets '((("~/Documents/org/gtd.org")   :maxlevel . 1)
                               (("~/Documents/org/inbox.org")   :maxlevel . 2)
@@ -612,7 +411,7 @@ It makes sense to do so if `laas-mode' is active and if the cursor is
             "* RSCH %?\n%i\n%a\ncreated: %t\n")
            ("i" "idea" entry (file "~/Documents/org/readinglist.org")
             "* IDEA %?\n%i\n%a\ncreated: %t\n")
-           ("j" "Journal entry" entry (file+datetree "~/Documents/org/journal.org")
+           ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
             ;; Call with C-u C-u interactive argument to insert inactive stamp
             "* %? \n%(funcall 'org-timestamp '(16) 't)"
             :empty-lines 1)
@@ -625,13 +424,11 @@ It makes sense to do so if `laas-mode' is active and if the cursor is
             "* READ %:subject\nSCHEDULED: %t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n\n%i" :immediate-finish t))
 
          org-archive-location ".%s_archive::"
-
          org-file-apps (quote
                         ((auto-mode . emacs)
                          ("\\.m\\'" . default)
                          ("\\.?html?\\'" . /usr/bin/firefox)
                          ("\\.pdf\\'" . emacs)))
-
 
          org-export-with-drawers '(not "noex")
          org-structure-template-alist '(("a" . "export ascii")
@@ -676,32 +473,25 @@ It makes sense to do so if `laas-mode' is active and if the cursor is
          org-image-actual-width 400
          org-hide-emphasis-markers t))
 
-;; (defun my/org-edit-latex-if-appropriate ()
-;;   (interactive)
-;;   (cond ((texmathp-match-environment nil) (org-edit-latex-environment))
-;;         ((texmathp) (org-edit-latex-fragment))
-;;         (t nil)))
-;; (add-hook! org-ctrl-c-ctrl-c #'my/org-edit-latex-if-appropriate)
-
 ;;; ** ox-hugo
-(after! org
-  (with-eval-after-load 'ox
-    (defun my/org-ref-process-buffer--html (backend)
-      "Preprocess `org-ref' citations to HTML format. Do this only if the export backend is `html' or a derivative of that."
-      ;; `ox-hugo' is derived indirectly from `ox-html'.
-      ;; ox-hugo <- ox-blackfriday <- ox-md <- ox-html
-      (when (org-export-derived-backend-p backend 'html)
-        (org-ref-process-buffer 'html)))))
+(after! (:and org ox)
+  (defun my/org-ref-process-buffer--html (backend)
+    "Preprocess `org-ref' citations to HTML format.
+Do this only if the export backend is `html' or a derivative of that."
+    ;; `ox-hugo' is derived indirectly from `ox-html'.
+    ;; ox-hugo <- ox-blackfriday <- ox-md <- ox-html
+    (when (org-export-derived-backend-p backend 'html)
+      (org-ref-process-buffer 'html)))
+  (add-to-list 'org-export-before-parsing-functions #'my/org-ref-process-buffer--html))
 
 ;;; * bibtex
-(after! org
-  (setq! bibtex-autokey-year-length 4
-         bibtex-autokey-name-year-separator "-"
-         bibtex-autokey-year-title-separator "-"
-         bibtex-autokey-titleword-separator "-"
-         bibtex-autokey-titlewords 2
-         bibtex-autokey-titlewords-stretch 1
-         bibtex-autokey-titleword-length 5))
+(setq! bibtex-autokey-year-length 4
+       bibtex-autokey-name-year-separator "-"
+       bibtex-autokey-year-title-separator "-"
+       bibtex-autokey-titleword-separator "-"
+       bibtex-autokey-titlewords 2
+       bibtex-autokey-titlewords-stretch 1
+       bibtex-autokey-titleword-length 5)
 
 
 
@@ -727,7 +517,7 @@ REGEXP is non-nil, only return files that match REGEXP."
 
 
 ;;; ** `org-present'
-(after! org
+(after! org-present
   (setq! org-present-hide-stars-in-headings t
          org-present-text-scale 4.5)
 
@@ -745,10 +535,10 @@ REGEXP is non-nil, only return files that match REGEXP."
     (org-present-show-cursor)
     (setq-local spell-fu-mode 1)
     (org-remove-inline-images)
-    (setq! hide-mode-line-mode nil)))
+    (hide-mode-line-mode)))
 
 ;;; ** `org-super-agenda'
-(after! org
+(after! org-agenda
   (setq! org-agenda-custom-commands
          '(("n" "Super view"
             ((agenda "" ((org-super-agenda-groups
@@ -797,11 +587,11 @@ REGEXP is non-nil, only return files that match REGEXP."
         (if (not (org-at-heading-p)))
       (org-forward-element))
     (org-forward-element)
-    (forward-char -1
-                  (goto-char (min (save-mark-and-excursion
-                                    (LaTeX-forward-environment (or arg 1))
-                                    (point))
-                                  (org-element-end (org-element-context)))))))
+    (forward-char -1)
+    (goto-char (min (save-mark-and-excursion
+                      (LaTeX-forward-environment (or arg 1))
+                      (point))
+                    (org-element-end (org-element-context))))))
 
 
 ;;; ** `org-mode-hook' main
@@ -810,12 +600,12 @@ REGEXP is non-nil, only return files that match REGEXP."
            #'variable-pitch-mode
            #'org-latex-preview-auto-mode
            #'turn-off-smartparens-mode
+           (require 'cdlatex)
            (setq! display-line-numbers-mode nil
                   org-indent-mode nil
                   tab-width 8
                   smartparens-mode nil))
 
-(setq! rmh-org-files '("~/Documents/org/notes.org"))
 
 ;;; ** `org' keybindings
 (map! :map org-mode-map
@@ -831,6 +621,7 @@ REGEXP is non-nil, only return files that match REGEXP."
       :desc "Forward LaTeX math"   "C-c L f"          #'forward-latex-math
       :desc "Backward LaTeX math"  "C-c L b"          #'backward-latex-math
       :desc "Add note"             "C-c z"            #'org-add-note
+      :desc "Outline"               "C-c s ,"         #'consult-org-heading
 
       :desc "Make ink figure" "C-c i i"                                       #'ink-make-figure
       :desc "Make quiver (local)" "C-c i c l"                                     #'open-quiver-local
@@ -838,17 +629,15 @@ REGEXP is non-nil, only return files that match REGEXP."
 
       :desc "Org structure editing" "C-c t o"         #'org-nav-transient
       "M-TAB"                                         #'forward-latex-math
-      "M-<iso-lefttab>"                                        #'backward-latex-math
+      "M-<iso-lefttab>"                                        #'backward-latex-math)
 
-
-      (:when (texmathp)
-        "ESC"                                         #'org-try-cdlatex-tab))
 
 
 
 
 ;;; * `expand-region'
 (setq! expand-region-fast-keys-enabled nil)
+
 (define-repeat-map expand-region
   (:continue
    "," er/expand-region
@@ -868,67 +657,69 @@ REGEXP is non-nil, only return files that match REGEXP."
 
 ;;; ** Helper functions
 ;;; *** LaTeX stuff expansions
-(defun er/mark-LaTeX-inside-math ()
-  "Mark text inside LaTeX math delimiters. See `er/mark-LaTeX-math'
+(after! expand-region
+  (defun er/mark-LaTeX-inside-math ()
+    "Mark text inside LaTeX math delimiters. See `er/mark-LaTeX-math'
 for details."
-  (when (texmathp)
-    (let* ((string (car texmathp-why))
-           (pos (cdr texmathp-why))
-           (reason (assoc string texmathp-tex-commands1))
-           (type (cadr reason)))
-      (cond
-       ((eq type 'sw-toggle) ;; $ and $$
-        (goto-char pos)
-        (set-mark (1+ (point)))
-        (forward-sexp 1)
-        (backward-char 1)
-        (exchange-point-and-mark))
-       ((or (eq type 'sw-on)
-            (equal string "Org mode embedded math")) ;; \( and \[
-        (re-search-forward texmathp-onoff-regexp)
-        (backward-char 2)
-        (set-mark (+ pos 2))
-        (exchange-point-and-mark))
-       (t (error (format "Unknown reason to be in math mode: %s" type)))))))
+    (when (texmathp)
+      (let* ((string (car texmathp-why))
+             (pos (cdr texmathp-why))
+             (reason (assoc string texmathp-tex-commands1))
+             (type (cadr reason)))
+        (cond
+         ((eq type 'sw-toggle) ;; $ and $$
+          (goto-char pos)
+          (set-mark (1+ (point)))
+          (forward-sexp 1)
+          (backward-char 1)
+          (exchange-point-and-mark))
+         ((or (eq type 'sw-on)
+              (equal string "Org mode embedded math")) ;; \( and \[
+          (re-search-forward texmathp-onoff-regexp)
+          (backward-char 2)
+          (set-mark (+ pos 2))
+          (exchange-point-and-mark))
+         (t (error (format "Unknown reason to be in math mode: %s" type)))))))
 
-(defun er/mark-latex-inside-pairs ()
-  (if (texmathp)
-      (cl-destructuring-bind (beg . end)
-          (my/find-bounds-of-regexps " *[{([|<]"
-                                     " *[]})|>]")
-        (when-let ((n (length (match-string-no-properties 0))))
+  (defun er/mark-latex-inside-pairs ()
+    (if (texmathp)
+        (cl-destructuring-bind (beg . end)
+            (my/find-bounds-of-regexps " *[{([|<]"
+                                       " *[]})|>]")
+          (when-let ((n (length (match-string-no-properties 0))))
+            (set-mark
+             (save-excursion
+               (goto-char beg)
+               (forward-char n)
+               (skip-chars-forward er--space-str)
+               (point)))
+            (goto-char end)
+            (backward-char n)
+            (if (looking-back "\\\\right\\\\*\\|\\\\" (- (point) 7))
+                (backward-char (length (match-string-no-properties 0))))
+            (skip-chars-backward er--space-str)
+            (exchange-point-and-mark)))
+      (er/mark-inside-pairs)))
+
+  (defun er/mark-latex-outside-pairs ()
+    (if (texmathp)
+        (cl-destructuring-bind (beg . end)
+            (my/find-bounds-of-regexps " *[{([|<]"
+                                       " *[]})|>]")
           (set-mark (save-excursion
                       (goto-char beg)
-                      (forward-char n)
+                      ;; (forward-char 1)
+                      (if (looking-back "\\\\left\\\\*\\|\\\\" (- (point) 6))
+                          (backward-char (length (match-string-no-properties 0))))
                       (skip-chars-forward er--space-str)
                       (point)))
           (goto-char end)
-          (backward-char n)
-          (if (looking-back "\\\\right\\\\*\\|\\\\" (- (point) 7))
-              (backward-char (length (match-string-no-properties 0)))))
-        (skip-chars-backward er--space-str)
-        (exchange-point-and-mark))
-    (er/mark-inside-pairs)))
+          (skip-chars-backward er--space-str)
+          ;; (backward-char 1)
+          (exchange-point-and-mark))
+      (er/mark-outside-pairs))))
 
-(defun er/mark-latex-outside-pairs ()
-  (if (texmathp)
-      (cl-destructuring-bind (beg . end)
-          (my/find-bounds-of-regexps " *[{([|<]"
-                                     " *[]})|>]")
-        (set-mark (save-excursion
-                    (goto-char beg)
-                    ;; (forward-char 1)
-                    (if (looking-back "\\\\left\\\\*\\|\\\\" (- (point) 6))
-                        (backward-char (length (match-string-no-properties 0))))
-                    (skip-chars-forward er--space-str)
-                    (point)))
-        (goto-char end)
-        (skip-chars-backward er--space-str)
-        ;; (backward-char 1)
-        (exchange-point-and-mark))
-    (er/mark-outside-pairs)))
-
-;;; ** `org-mode' expansion stuff
+;;; **** `org-mode' and `expand-region' latex interop
 (defun er/add-latex-in-org-mode-expansions ()
   (require 'expand-region)
   ;; Make Emacs recognize \ as an escape character in org
@@ -950,7 +741,6 @@ for details."
                  er/mark-latex-outside-pairs
                  er/mark-LaTeX-math))))
 (add-hook! org-mode #'er/add-latex-in-org-mode-expansions)
-
 
 
 ;;; * `tempel'
@@ -994,18 +784,23 @@ for details."
                  (propertize "${tags:40}" 'face 'org-modern-tag))
 
          org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
+         citar-org-roam-note-title-template "${author} - ${title}"
+         citar-org-roam-capture-template-key "b"
          org-roam-capture-templates
          '(("h" "Information" entry
             "* ${title}\n:PROPERTIES:\n:CREATED: %u\n:ID: %(org-id-new)\n:END:\n%?"
             :if-new (file "~/Documents/org/roam/roam.org")
             :unnarrowed nil
+            :empty-lines 1)
+           ("b" "Annotated bibliography" entry
+            "* ${note-title} :bib:\n:PROPERTIES:\n:FILE: ${citar-file}\n:ID: %(org-id-new)\n:END:\n%?"
+            :if-new (file "~/Documents/org/roam/annot-bib.org")
+            :unnarrowed nil
             :empty-lines 1))
-
          org-roam-dailies-capture-templates
-         '(("d" "default" entry
-            "* %?"
+         '(("n" "default" entry
+            "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:"
             :target (file+datetree "dailies.org" day)
-            ;; :if-new (file+datetree "dailies.org" day)
             :unnarrowed nil)))
 
 ;;; ** `org-roam' interop with `org-ql'
@@ -1022,23 +817,53 @@ for details."
                                                              :regexp ".*\\.org")
            (read-from-minibuffer "Query: ")))
 
+;;; ** `org-roam' helper functions
+(defun org-roam-file-to-heading (file buff)
+  "Moves content from single `org-roam' node FILE to a top
+level heading in BUFF"
+  (org-with-file-buffer file
+    (let ((title (org-get-title))
+          (tags (mapcar #'substring-no-properties (org-roam-node-tags (org-roam-node-at-point))))
+          (props (cl-remove-if (lambda (x)  (member (car x) '("ALLTAGS" "FILE")))
+                               (org-roam-node-properties (org-roam-node-at-point))))
+          (content (progn (goto-char (point-min))
+                          (org-roam-end-of-meta-data t)
+                          (s-replace-regexp
+                           org-heading-regexp
+                           "*\\1 \\2"
+                           (buffer-substring-no-properties (point) (buffer-end 1))))))
+      (message (format "Copying file: %s" file))
+      (switch-to-buffer buff)
+      (org-insert-heading nil t 1)
+      (cl-loop for tag in tags
+               initially (insert title " :")
+               finally  (insert ":\n") do
+               (insert ":"  tag))
+      (cl-loop for (prop . val) in props
+               finally (insert "\n" content) do
+               (org-set-property prop val)))))
+
+(defun org-roam-files-to-headings (buff)
+  "Refactors all `org-roam' nodes in one-node-per-file
+format to top level headlines in `org' buffer BUFF"
+  (interactive)
+  (cl-loop for file in (directory-files org-roam-directory t "\\.org$")
+           do
+           (my/org-roam-file-to-heading file buff)))
 
 ;;; ** `org-roam' keybindings
 (map! :map global-map
       :leader
-      "n r i" #'org-roam-node-insert
-      "n r f" #'org-roam-node-find
-      "n r s" #'org-roam-db-sync
-      "n r w" #'org-roam-refile
-      "n r d n" #'org-roam-dailies-capture-today
-      "n r d y" #'org-roam-dailies-capture-yesterday
-      "n r d t" #'org-roam-dailies-capture-tomorrow
-      "n r d f" #'org-roam-dailies-goto-today)
-
-(map! :map org-mode-map
-      :desc "Search roam dailies"                 "C-c s q d"   #'my/org-ql-find-roam-dailies
-      :desc "Search roam directory"                 "C-c s q r" #'my/org-ql-find-roam)
-
+      (:prefix-map ("n r" . "roam")
+                   "i" #'org-roam-node-insert
+                   "f" #'org-roam-node-find
+                   "s" #'org-roam-db-sync
+                   "w" #'org-roam-refile
+                   (:prefix-map ("d" . "dailies")
+                                "n" #'org-roam-dailies-capture-today
+                                "y" #'org-roam-dailies-capture-yesterday
+                                "t" #'org-roam-dailies-capture-tomorrow
+                                "f" #'org-roam-dailies-goto-today)))
 
 ;;; * `citar'
 ;;; ** variables
@@ -1061,11 +886,28 @@ for details."
       "C-c ]" #'citar-insert-citation
 
       :map citar-embark-map
-      :desc "Prefix/Suffix" "p"     #'citar-org-update-prefix-suffix)
+      :desc "Prefix/Suffix" "p" #'citar-org-update-prefix-suffix
+      :desc "Open entry"  "e"                 #'citar-open-entry
+      :desc "Open files" "f"                 #'citar-open-files
+      :desc "Edit" "i"                 #'citar-insert-edit
+      :desc "Open link" "l"                 #'citar-open-links
+      :desc "Open notes" "n"                 #'citar-open-notes
+      :desc "Open" "o"                 #'citar-open
+      :desc "Copy reference" "r"                 #'citar-copy-reference
+
+      :map citar-embark-citation-map
+      :desc "Prefix/Suffix" "p" #'citar-org-update-prefix-suffix
+      :desc "Open entry"  "e"                 #'citar-open-entry
+      :desc "Open files" "f"                 #'citar-open-files
+      :desc "Edit" "i"                 #'citar-insert-edit
+      :desc "Open link" "l"                 #'citar-open-links
+      :desc "Open notes" "n"                 #'citar-open-notes
+      :desc "Open" "o"                 #'citar-open
+      :desc "Copy reference" "r"                 #'citar-copy-reference)
 
 ;;; * `pdf-view' mode
-(add-hook! pdf-tools-enabled #'pdf-view-themed-minor-mode
-           #'pdf-view-auto-slice-minor-mode)
+;; (add-hook! pdf-tools-enabled #'pdf-view-themed-minor-mode
+;;            #'pdf-view-auto-slice-minor-mode)
 
 ;;; ** `pdf'  keybindings
 (map! :map pdf-view-mode-map
@@ -1078,93 +920,28 @@ for details."
 
 ;;; * `avy'
 ;;; ** `avy' actions
-(defun avy-action-easy-copy (pt)
-  (unless (require 'easy-kill nil t)
-    (user-error "Easy Kill not found, please install."))
-  (goto-char pt)
-  (cl-letf (((symbol-function 'easy-kill-activate-keymap)
-             (lambda ()
-               (let ((map (easy-kill-map)))
-                 (set-transient-map
-                  map
-                  (lambda ()
-                    ;; Prevent any error from activating the keymap forever.
-                    (condition-case err
-                        (or (and (not (easy-kill-exit-p this-command))
-                                 (or (eq this-command
-                                         (lookup-key map (this-single-command-keys)))
-                                     (let ((cmd (key-binding
-                                                 (this-single-command-keys) nil t)))
-                                       (command-remapping cmd nil (list map)))))
-                            (ignore
-                             (easy-kill-destroy-candidate)
-                             (unless (or (easy-kill-get mark) (easy-kill-exit-p this-command))
-                               (easy-kill-save-candidate))))
-                      (error (message "%s:%s" this-command (error-message-string err))
-                             nil)))
-                  (lambda ()
-                    (let ((dat (ring-ref avy-ring 0)))
-                      (select-frame-set-input-focus
-                       (window-frame (cdr dat)))
-                      (select-window (cdr dat))
-                      (goto-char (car dat)))))))))
-    (easy-kill)))
+(defun my/avy-isearch (&optional arg)
+  "Goto isearch candidate in this window with hints."
+  (interactive "P")
+  (let ((avy-all-windows)
+        (current-prefix-arg (if arg 4)))
+    (call-interactively 'avy-isearch)))
 
-(defun avy-action-easy-kill (pt)
-  (unless (require 'easy-kill nil t)
-    (user-error "Easy Kill not found, please install."))
-  (cl-letf* ((bounds (if (use-region-p)
-                         (prog1 (cons (region-beginning) (region-end))
-                           (deactivate-mark))
-                       (bounds-of-thing-at-point 'sexp)))
-             (transpose-map
-              (define-keymap
-                "M-t" (lambda () (interactive "*")
-                        (pcase-let ((`(,beg . ,end) (easy-kill--bounds)))
-                          (transpose-regions (car bounds) (cdr bounds) beg end
-                                             'leave-markers)))))
-             ((symbol-function 'easy-kill-activate-keymap)
-              (lambda ()
-                (let ((map (easy-kill-map)))
-                  (set-transient-map
-                   (make-composed-keymap transpose-map map)
-                   (lambda ()
-                     ;; Prevent any error from activating the keymap forever.
-                     (condition-case err
-                         (or (and (not (easy-kill-exit-p this-command))
-                                  (or (eq this-command
-                                          (lookup-key map (this-single-command-keys)))
-                                      (let ((cmd (key-binding
-                                                  (this-single-command-keys) nil t)))
-                                        (command-remapping cmd nil (list map)))))
-                             (ignore
-                              (easy-kill-destroy-candidate)
-                              (unless (or (easy-kill-get mark) (easy-kill-exit-p this-command))
-                                (easy-kill-save-candidate))))
-                       (error (message "%s:%s" this-command (error-message-string err))
-                              nil)))
-                   (lambda ()
-                     (let ((dat (ring-ref avy-ring 0)))
-                       (select-frame-set-input-focus
-                        (window-frame (cdr dat)))
-                       (select-window (cdr dat))
-                       (goto-char (car dat)))))))))
-    (goto-char pt)
-    (easy-kill)))
 
 (defun avy-action-exchange (pt)
   "Exchange sexp at PT with the one at point."
   (set-mark pt)
   (transpose-sexps 0))
+
 (defun avy-action-helpful (pt)
   (save-excursion
     (goto-char pt)
     ;; (helpful-at-point)
     (my/describe-symbol-at-point))
-
   (select-window
    (cdr (ring-ref avy-ring 0)))
   t)
+
 (defun avy-action-define (pt)
   (cl-letf (((symbol-function 'keyboard-quit)
              #'abort-recursive-edit))
@@ -1174,6 +951,7 @@ for details."
     (select-window
      (cdr (ring-ref avy-ring 0))))
   t)
+
 (defun avy-action-tuxi (pt)
   (cl-letf (((symbol-function 'keyboard-quit)
              #'abort-recursive-edit))
@@ -1183,6 +961,7 @@ for details."
     (select-window
      (cdr (ring-ref avy-ring 0))))
   t)
+
 (defun avy-action-embark (pt)
   (unwind-protect
       (save-excursion
@@ -1191,6 +970,7 @@ for details."
     (select-window
      (cdr (ring-ref avy-ring 0))))
   t)
+
 (defun avy-action-kill-line (pt)
   (save-excursion
     (goto-char pt)
@@ -1198,6 +978,7 @@ for details."
   (select-window
    (cdr (ring-ref avy-ring 0)))
   t)
+
 (defun avy-action-copy-whole-line (pt)
   (save-excursion
     (goto-char pt)
@@ -1208,6 +989,7 @@ for details."
    (cdr
     (ring-ref avy-ring 0)))
   t)
+
 (defun avy-action-kill-whole-line (pt)
   (save-excursion
     (goto-char pt)
@@ -1216,13 +998,16 @@ for details."
    (cdr
     (ring-ref avy-ring 0)))
   t)
+
 (defun avy-action-yank-whole-line (pt)
   (avy-action-copy-whole-line pt)
   (save-excursion (yank))
   t)
+
 (defun avy-action-teleport-whole-line (pt)
   (avy-action-kill-whole-line pt)
   (save-excursion (yank)) t)
+
 (defun avy-action-mark-to-char (pt)
   (activate-mark)
   (goto-char pt))
@@ -1232,7 +1017,7 @@ for details."
 
 ;;; ** `avy' variables
 (setq! avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o)
-       avy-timeout-seconds 0.20
+       avy-timeout-seconds 0.30
        avy-all-windows t
        avy-all-windows-alt nil
 
@@ -1243,8 +1028,6 @@ for details."
 
                             (?l . avy-action-kill-line)
                             (?Y . avy-action-yank-line)
-
-                            (?w . avy-action-easy-kill)
 
                             (?k . avy-action-kill-stay)
                             (?y . avy-action-yank)
@@ -1262,24 +1045,24 @@ for details."
          corfu-auto-prefix 2
          corfu-auto-delay 0.5
          corfu-quit-at-boundary 'separator
-         corfu-preview-current 'insert))
+         corfu-preview-current 'insert)
 
-(defun my/eshell-corfu-settings ()
-  (setq-local corfu-quit-at-boundary nil
-              corfu-quit-no-match t
-              corfu-auto nil)
-  (corfu-mode))
+  (defun my/eshell-corfu-settings ()
+    (setq-local corfu-quit-at-boundary nil
+                corfu-quit-no-match t
+                corfu-auto nil)
+    (corfu-mode)))
 
 ;;; ** `corfu' hook
 (after! corfu
-  ;;  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file)
   (add-hook 'completion-at-point-functions #'cape-elisp-block)
   (add-hook 'completion-at-point-functions #'cape-keyword)
-  (add-hook 'completion-at-point-functions #'cape-tex))
-;; (add-to-list 'completion-at-point-functions (cape-capf-super #'tempel-complete)
+  (add-hook 'completion-at-point-functions #'cape-tex)
+  (add-to-list 'completion-at-point-functions (cape-capf-super #'tempel-complete))
 
-(add-hook! eshell-mode-hook #'my/eshell-corfu-settings)
+  (add-hook! eshell-mode-hook #'my/eshell-corfu-settings))
 
 ;;; ** `corfu'  keybindings
 (map! (:when (modulep! :completion corfu)
@@ -1290,8 +1073,44 @@ for details."
         "S-TAB"                                       #'corfu-previous))
 
 
-
 ;;; * `consult'
+;;; ** `consult-theme' bug fix
+;;; For whatever reason, selecting an already-loaded doom theme
+;;; with `consult-theme' does not updaet the variable
+;;; `doom-themes--colors', which is used by `doom-color' to
+;;; retrieve the palette's colors.
+(defadvice! my/consult-theme (theme)
+  :override #'consult-theme
+  (interactive
+   (list
+    (let* ((regexp (consult--regexp-filter
+                    (mapcar (lambda (x) (if (stringp x) x (format "\\`%s\\'" x)))
+                            consult-themes)))
+           (avail-themes (seq-filter
+                          (lambda (x) (string-match-p regexp (symbol-name x)))
+                          (cons 'default (custom-available-themes))))
+           (saved-theme (car custom-enabled-themes)))
+      (consult--read
+       (mapcar #'symbol-name avail-themes)
+       :prompt "Theme: "
+       :require-match t
+       :category 'theme
+       :history 'consult--theme-history
+       :lookup (lambda (selected &rest _)
+                 (setq selected (and selected (intern-soft selected)))
+                 (or (and selected (car (memq selected avail-themes)))
+                     saved-theme))
+       :state (lambda (action theme)
+                (pcase action
+                  ('return (consult-theme (or theme saved-theme)))
+                  ((and 'preview (guard theme)) (consult-theme theme))))
+       :default (symbol-name (or saved-theme 'default))))))
+  (when (eq theme 'default) (setq theme nil))
+  (unless (eq theme (car custom-enabled-themes))
+    (mapc #'disable-theme custom-enabled-themes)
+    (when theme
+      (load-theme theme :no-confirm))))
+
 ;;; ** `consult-dir'
 (after! consult-dir
   (defun consult-dir-reference-pdfs ()
@@ -1309,8 +1128,6 @@ for details."
 
 
 ;;; * `lasgun'
-(require 'lasgun)
-
 (setq! lasgun-also-push-mark-ring t)
 
 ;;; ** `lasgun' actions
@@ -1397,25 +1214,24 @@ for details."
     (message "No lasgun marks")))
 
 ;;; ** `embark' menu for `lasgun'
-(after! embark
-  (defun my-embark-lasgun-mark ()
-    (unless (ring-empty-p lasgun-mark-ring)
-      (let ((lgmark (ring-ref lasgun-mark-ring 0)))
-        `(lasgun-mark  ,(buffer-substring-no-properties lgmark lgmark)
-          ,lgmark . ,lgmark))))
+;; (after! embark
+;;   (defun my-embark-lasgun-mark ()
+;;     (unless (ring-empty-p lasgun-mark-ring)
+;;       (let ((lgmark (ring-ref lasgun-mark-ring 0)))
+;;         `(lasgun-mark  ,(buffer-substring-no-properties lgmark lgmark)
+;;           ,lgmark . ,lgmark)))))
 
-  (add-to-list 'embark-target-finders #'my-embark-lasgun-mark)
+;; (add-to-list 'embark-target-finders #'my-embark-lasgun-mark)
 
-  (defvar-keymap embark-lasgun-mark-actions
-    :doc "Keymap for embark actions on lasgun targets")
-  (add-to-list 'embark-keymap-alist '(lasgun-mark . embark-lasgun-mark-actions))
+;; (defvar-keymap embark-lasgun-mark-actions
+;;   :doc "Keymap for embark actions on lasgun targets")
+;; (add-to-list 'embark-keymap-alist '(lasgun-mark . embark-lasgun-mark-actions))
 
-  (map! :map embark-lasgun-mark-actions
-        :desc "Upcase word"   "U" #'lasgun-action-upcase-word
-        :desc "Downcase word" "l" #'lasgun-action-downcase-word
-        :desc "Pop ring and jump" "v" #'lasgun-action-pop-and-jump
-        :desc "Make multiple cusors" "SPC" #'lasgun-make-multiple-cursors))
-
+;; (map! :map embark-lasgun-mark-actions
+;;       :desc "Upcase word"   "U" #'lasgun-action-upcase-word
+;;       :desc "Downcase word" "l" #'lasgun-action-downcase-word
+;;       :desc "Pop ring and jump" "v" #'lasgun-action-pop-and-jump
+;;       :desc "Make multiple cusors" "SPC" #'lasgun-make-multiple-cursors))
 
 (defun my/avy-lg-mark-char-timer (ARG)
   (interactive "P")
@@ -1424,32 +1240,32 @@ for details."
     (avy-goto-char-timer)))
 
 
-
-
 ;;; ** `transient' menu for `lasgun'
-(transient-define-prefix lasgun-transient ()
-  "Main transient for lasgun."
-  [["Marks"
-    ("c" "Char timer" lasgun-mark-char-timer :transient t)
-    ("l" "Begin of line" lasgun-mark-line :transient t)
-    ("s" "Symbol" lasgun-mark-symbol-1 :transient t)
-    ("x" "Clear lasgun mark ring" lasgun-clear-lasgun-mark-ring :transient t)
-    ("u" "Undo lasgun mark" lasgun-pop-lasgun-mark :transient t)]
-   ["Actions"
-    ("SPC" "Make cursors" lasgun-make-multiple-cursors)
-    ("." "Embark act" lasgun-embark-act-all)
-    ("$" "Jinx correct" lasgun-action-jinx-correct :transient t)
-    ("K" "Kill whole line" lasgun-action-kill-whole-line :transient t)]
-   ["Actions ctd."
-    ("m" "Toggle math delims" lasgun-action-toggle-math-delims :transient t)
-    (";" "Comment line" lasgun-action-comment-line :transient t)
-    ("?" "Specify action" lasgun-prompt-action :transient t)]
-   ["Transient"
-    ("q" "Quit" transient-quit-one)]])
+(after! transient
+  (transient-define-prefix lasgun-transient ()
+    "Main transient for lasgun."
+    [["Marks"
+      ("c" "Char timer" lasgun-mark-char-timer :transient t)
+      ("l" "Begin of line" lasgun-mark-line :transient t)
+      ("s" "Symbol" lasgun-mark-symbol-1 :transient t)
+      ("x" "Clear lasgun mark ring" lasgun-clear-lasgun-mark-ring :transient t)
+      ("u" "Undo lasgun mark" lasgun-pop-lasgun-mark :transient t)]
+     ["Actions"
+      ("SPC" "Make cursors" lasgun-make-multiple-cursors)
+      ("." "Embark act" lasgun-embark-act-all)
+      ("$" "Jinx correct" lasgun-action-jinx-correct :transient t)
+      ("K" "Kill whole line" lasgun-action-kill-whole-line :transient t)]
+     ["Actions ctd."
+      ("m" "Toggle math delims" lasgun-action-toggle-math-delims :transient t)
+      (";" "Comment line" lasgun-action-comment-line :transient t)
+      ("?" "Specify action" lasgun-prompt-action :transient t)]
+     ["Transient"
+      ("q" "Quit" transient-quit-one)]])
+  (add-hook! transient-exit #'lasgun-clear-lasgun-mark-ring))
 
 
 
-(add-hook! transient-exit #'lasgun-clear-lasgun-mark-ring)
+
 
 ;;; * Email configuration: `mu4e'
 ;; Needs some personal stuff that I don't want to include publically
@@ -1461,7 +1277,8 @@ for details."
 (connection-local-set-profiles nil 'remote-path-with-local-cargo)
 
 ;;; * `embark'
-(setq! embark-confirm-act-all nil)
+(after! embark
+  (setq! embark-confirm-act-all nil))
 
 
 ;;; * quiver
@@ -1539,14 +1356,18 @@ for details."
           backward-latex-math))
 
 ;;; ** `flycheck' error repeat map
-(define-repeat-map flycheck
-  (:continue
-   "n" flycheck-next-error
-   "p" flycheck-previous-error
-   "h" flycheck-display-error-at-point
-   "e" flycheck-explain-error-at-point)
-  (:enter flycheck-buffer)
-  (:exit  "l" flycheck-list-errors))
+(when (modulep! :checkers syntax)
+  (define-repeat-map flycheck
+    (:continue
+     "n" flycheck-next-error
+     "p" flycheck-previous-error
+     "h" flycheck-display-error-at-point
+     "e" flycheck-explain-error-at-point)
+    (:enter flycheck-buffer
+            flycheck-previous-error
+            flycheck-display-error-at-point
+            flycheck-explain-error-at-point)
+    (:exit  "l" flycheck-list-errors)))
 
 ;;; ** `multiple-cursor' repeat map
 (define-repeat-map mc
@@ -1577,46 +1398,189 @@ for details."
                  mc/mark-pop|mc-repeat-map
                  jump-to-mark|mc-repeat-map))
     (add-to-list 'mc/cmds-to-run-once cmd)))
+
 ;;; * `haskell'
 (setq! haskell-compile-command "ghc -Wall -ferror-spans -fforce-recomp -dynamic -c %s")
 (add-to-list 'exec-path "/home/aatmun/.ghcup/bin")
-(setq! eglot-workspace-configuration '((haskell (plugin (stan (globalOn . :json-false))))))
+(when (and (modulep! :haskell +lsp) (modulep! :tools +eglot))
+  (setq! eglot-workspace-configuration '((haskell (plugin (stan (globalOn . :json-false)))))))
 
-;; (add-hook! haskell-mode #'hindent-mode)
-;; (add-hook 'haskell-mode-hook #'lsp-ui-mode)
+;;; * Eyecandy
+;;;
+;;; ** custom faces
 
-;;; * eyecandy
-;;; ** theme
-(setq! doom-theme 'doom-rouge)
-(setq! modus-themes-mixed-fonts t)
+
+
+;;; ** Theme
+(setq! doom-theme 'doom-earl-grey
+       modus-themes-mixed-fonts t)
+;;; ** make theme consistent with `qtile'
+(when (EVA-02-p)
+  (defun my/current-theme-type ()
+    "Return type of theme"
+    (let ((theme (symbol-name (car custom-enabled-themes))))
+      (intern (car (split-string theme "-")))))
+
+  (defvar qtile-colors-to-export
+    '(bg bg-alt grey
+      red orange green
+      teal yellow blue
+      dark-blue magenta violet
+      cyan dark-cyan fg-alt fg))
+
+
+  (defun my/gen-doom-colors ()
+    "Generates python-formatted doom colors"
+    (let ((colors '(bg bg-alt grey
+                    red orange green
+                    teal yellow blue
+                    dark-blue magenta violet
+                    cyan dark-cyan fg-alt fg))
+
+          (res "cs = {"))
+      (cl-loop for color in colors do
+               (setq res
+                     (concat res
+                             "\"" (symbol-name color) "\"" ": \""
+                             (if (doom-color color)
+                                 (doom-color color)
+                               (doom-color 'bg)) "\",\n"))
+               (setq res (concat res "}")))
+      res))
+
+  (setq! modus-to-universal-palette-translation
+         '((bg-main . bg)
+           (bg-dim . bg-alt)
+           (border . grey)
+           (red . red)
+           (red-intense . orange)
+           (green . green)
+           (cyan-faint . teal)
+           (yellow . yellow)
+           (blue . blue)
+           (blue-faint . dark-blue)
+           (magenta-faint . magenta)
+           (maroon . violet)
+           (cyan . cyan)
+           (cyan-faint . dark-cyan)
+           (fg-alt . fg-alt)
+           (fg-main . fg)))
+
+  (defun my/gen-modus-colors ()
+    "Generates python-formatted doom colors"
+    (let (
+          (colors '(bg-main bg-dim border
+                    red red-intense green
+                    cyan-faint yellow blue
+                    blue-faint magenta-faint maroon
+                    cyan cyan-faint fg-alt fg-main))
+          (res "cs = {"))
+      (cl-loop for color in colors do
+               (setq res
+                     (concat res
+                             "\"" (symbol-name
+                                   (alist-get color modus-to-universal-palette-translation)) "\"" ": \""
+                             (modus-themes-get-color-value color) "\",\n")))
+      (setq res (concat res "}"))
+      res))
+
+  (defun my/load-python-theme-colors (file)
+    "Load current Emacs theme colors to FILE in python syntax"
+    ;; workaround, doom does not set this variable when theme is switched-to
+    ;; if it has already been loaded
+    (setq doom-theme (car custom-enabled-themes))
+    (let ((theme-type (my/current-theme-type)))
+      (cond ((eql 'doom theme-type)
+             (write-region (my/gen-doom-colors) nil  file nil))
+            ((eql 'modus theme-type)
+             (write-region (my/gen-modus-colors) nil file nil))
+            (t (user-error (format "No way to convert colors in format %s" theme-type))))))
+
+
+  (defvar qtile-colors-file "/home/aatmun/.config/qtile/colors.py")
+
+  (defadvice! my/consult-theme-set-doom-theme (fn theme)
+    :around #'consult-theme
+    (setq! doom-theme theme)
+    (funcall fn theme)))
+
+
+
 ;;; ** global eyecandy
-
 (mood-line-mode)
 (spacious-padding-mode)
+
 (setq! display-line-numbers-type nil)
 
 (after! spacious-padding
   (setq! spacious-padding-widths
          '(:internal-border-width 15 :right-divider-width 10 :scroll-bar-width 0)))
 
-;;; ** `org-modern'
-(add-hook! org-agenda-finalize #'org-modern-agenda #'org-latex-preview-auto-mode)
+;;; ** `technicolor' configuration
+(after! technicolor
+  (setq! prot-theme-mappings
+         '((foreground . fg-main)
+           (background . bg-main)
+           (violet . magenta)
+           (green . green-warmer)
+           (teal . cyan-cooler)))
 
-(after! org
+  (setq! technicolor-color '(foreground background
+                             red blue
+                             green magenta
+                             violet teal)
+
+         technicolor-themes `(,technicolor-doom-themes-data
+                              ("^modus-.*" modus-themes-get-color-value
+                               ,prot-theme-mappings)
+
+                              ("^ef-.*" ef-themes-get-color-value
+                               ,prot-theme-mappings)
+
+                              ("^catppuccin" technicolor--get-catppuccin-color
+                               ((foreground . text)
+                                (background . base)
+                                (magenta . pink)
+                                (violet . mauve))))))
+
+
+;;; ** customizing faces
+(after! org-modern
+  (custom-set-faces!
+    `(org-modern-time-inactive :inherit org-modern-label
+      :background ,(technicolor-blend 'background 'red 95)
+      :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 100) 20))
+
+    `(org-modern-date-inactive :inherit org-modern-label
+      :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
+      :foreground ,(technicolor-blend 'foreground 'background 100))
+
+    `(org-modern-time-active :inherit org-modern-label :background ,(technicolor-blend 'background 'green 85)
+      :foreground ,(technicolor-blend 'foreground 'background 90))
+
+    `(org-modern-date-active :inherit org-modern-label :background ,(technicolor-blend 'background 'blue 85)
+      :foreground ,(technicolor-blend 'foreground 'background 90))))
+
+
+;;; ** `org-modern'
+(add-hook! org-agenda-finalize #'org-modern-agenda
+           #'org-latex-preview-auto-mode)
+
+(setq! org-src-block-faces nil)
+
+(after! org-modern
   (setq! org-modern-todo-faces
-         '(("PROG" . (:inherit org-modern-todo))
+         `(("PROG" . (:inherit org-modern-todo))
            ("NEXT" .  (:inherit org-modern-todo))
-           ("WAIT" . (:inherit org-modern-time-inactive))
-           ("RSCH" . (:inherit org-modern-priority))
-           ("PROJ" . (:inherit org-modern-todo))
-           ("MAYBE" .  (:inhert org-modern-todo))))
+           ("WAIT" . (:inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
+           ("MAYBE" .  ( :foreground ,(technicolor-blend 'foreground 'background 80) :inhert org-modern-todo))))
 
   (custom-set-faces!
-    '(org-level-1 :inherit outline-1 :height 2.0)
-    '(org-level-2 :inherit outline-2 :height 1.8)
-    '(org-level-3 :inherit outline-3 :height 1.5)
+    '(org-level-1 :inherit outline-1 :height 1.7)
+    '(org-level-2 :inherit outline-2 :height 1.5)
+    '(org-level-3 :inherit outline-3 :height 1.3)
     '(org-level-4 :inherit outline-4 :height 1.2)
-    '(org-level-5 :inherit outline-5 :height 1.0))
+    '(org-level-5 :inherit outline-5 :height 1.1))
 
   (setq! org-modern-list '((43 . "➤")
                            (45 . "–")
@@ -1669,51 +1633,54 @@ for details."
            ("name" . "⁍")
            ("header" . "›")
            ("caption" . "☰")
-           ("results" . "⮞")))
-  (global-org-modern-mode))
+           ("results" . "⮞"))))
+
+(add-hook! org-mode #'global-org-modern-mode)
 
 ;;; ** `visual-fill-column-mode'
-(setq! visual-fill-column-width 130
-       visual-fill-column-center-text t)
+(after! visual-fill-column
+  (setq! visual-fill-column-width 130
+         visual-fill-column-center-text t))
+
+(when (modulep! :ui zen)
+  (add-hook! (text-mode prog-mode) #'visual-fill-column-mode))
+
 ;;; * personal stuff
 (require 'setup-personal)
 
-;;; * `elfeed' and `elfeed'
+;;; * `elfeed' and `elfeed-tube'
+(setq! rmh-elfeed-org-files '("notes.org"))
 ;;; ** `elfeed' helper functions
-(defun elfeed-show-eww-open (&optional use-generic-p)
-  "open with eww"
-  (interactive "P")
-  (let ((browse-url-browser-function #'eww-browse-url))
-    (elfeed-show-visit use-generic-p)))
+(after! elfeed
+  (defun elfeed-show-eww-open (&optional use-generic-p)
+    "open with eww"
+    (interactive "P")
+    (let ((browse-url-browser-function #'eww-browse-url))
+      (elfeed-show-visit use-generic-p)))
 
-(defun elfeed-search-eww-open (&optional use-generic-p)
-  "open with eww"
-  (interactive "P")
-  (let ((browse-url-browser-function #'eww-browse-url))))
+  (defun elfeed-scroll-up-command (&optional arg)
+    "Scroll up or go to next feed item in Elfeed"
+    (interactive "^P")
+    (let ((scroll-error-top-bottom nil))
+      (condition-case-unless-debug nil
+          (scroll-up-command arg)
+        (error (elfeed-show-next)))))
 
-(defun elfeed-scroll-up-command (&optional arg)
-  "Scroll up or go to next feed item in Elfeed"
-  (interactive "^P")
-  (let ((scroll-error-top-bottom nil))
-    (condition-case-unless-debug nil
-        (scroll-up-command arg)
-      (error (elfeed-show-next)))))
+  (defun elfeed-scroll-down-command (&optional arg)
+    "Scroll up or go to next feed item in Elfeed"
+    (interactive "^P")
+    (let ((scroll-error-top-bottom nil))
+      (condition-case-unless-debug nil
+          (scroll-down-command arg)
+        (error (elfeed-show-prev)))))
 
-(defun elfeed-scroll-down-command (&optional arg)
-  "Scroll up or go to next feed item in Elfeed"
-  (interactive "^P")
-  (let ((scroll-error-top-bottom nil))
-    (condition-case-unless-debug nil
-        (scroll-down-command arg)
-      (error (elfeed-show-prev)))))
-
-(defun elfeed-tag-selection-as (mytag)
-  "Returns a function that tags an elfeed entry or selection as
+  (defun elfeed-tag-selection-as (mytag)
+    "Returns a function that tags an elfeed entry or selection as
 MYTAG"
-  (lambda ()
-    "Toggle a tag on an Elfeed search selection"
-    (interactive)
-    (elfeed-search-toggle-all mytag)))
+    (lambda ()
+      "Toggle a tag on an Elfeed search selection"
+      (interactive)
+      (elfeed-search-toggle-all mytag))))
 
 ;;; ** `elfeed-tube'
 (after! elfeed
@@ -1732,97 +1699,115 @@ MYTAG"
   (elfeed-tube-setup))
 
 ;;; ** `elfeed'  keybindings
-(map! :map elfeed-show-mode-map
-      "F" #'elfeed-tube-fetch
-      "C-c C-f" #'elfeed-tube-mpv-follow-mode
-      "B"      #'elfeed-show-eww-open
-      "S-SPC"    #'elfeed-scroll-down-command
-      "SPC"    #'elfeed-scroll-up-command
+(after! elfeed
+  (map! :map elfeed-show-mode-map
+        "F"       #'elfeed-tube-fetch
+        "C-c C-f" #'elfeed-tube-mpv-follow-mode
+        "B"       #'elfeed-show-eww-open
+        "S-SPC"   #'elfeed-scroll-down-command
+        "SPC"     #'elfeed-scroll-up-command
 
-      :map elfeed-search-mode-map
-      "F" #'elfeed-tube-fetch
-      "C-c C-w" #'elfeed-tube-mpv-where
-      "B"      #'elfeed-show-eww-open
-      "d"      (elfeed-tag-selection-as 'junk)
-      "l"      (elfeed-tag-selection-as 'readlater))
+        :map elfeed-search-mode-map
+        "F"       #'elfeed-tube-fetch
+        "C-c C-w" #'elfeed-tube-mpv-where
+        "B"       #'elfeed-show-eww-open
+        "d"      (elfeed-tag-selection-as 'junk)
+        "l"      (elfeed-tag-selection-as 'readlater)))
 
-;;; * Global keybindings
+;;; * Other Keybindings
 ;;; ** Global keybindings
 (when (featurep 'activities)
   (setq! edebug-inhibit-emacs-lisp-mode-bindings t))
 
-(map! :map global-map
-      (:when (modulep! :completion vertico)
-        :desc "Buffer list"           "M-u"           #'consult-buffer
-        :desc "Buffer other window"   "M-U"           #'my/switch-buffer-other-window
-        :desc "Recent files"        "M-r"             #'consult-recent-file)
+(map! :desc "Buffer list"           "M-u"           #'consult-buffer
+      :desc "Buffer other window"   "M-U"           #'my/switch-buffer-other-window
+      :desc "Recent files"        "M-r"             #'consult-recent-file
 
       :desc "Consult Dir"           "C-x C-d"         #'consult-dir
+      "C-M-,"                                         #'consult-mark
 
       :desc "Other window"          "M-o"             #'other-window
       :desc "Close window"          "M-0"             #'delete-window
-      :desc "Close other window"    "M-9"             #'my/close-other-window
-      :desc "Avy goto/Lasgun mark"         "M-n"             #'my/avy-lg-mark-char-timer
-      :desc "Lasgun mark char timer"         "C-M-n"       #'lasgun-mark-char-timer
+      :desc "Close other window"    "M-9"             #'ace-delete-window
+
+      :desc "Avy goto/Lasgun mark"         "M-n"      #'my/avy-lg-mark-char-timer
+      :desc "Lasgun mark char timer"         "C-M-n"  #'lasgun-mark-char-timer
       :desc "Backward kill sexp"    "C-M-<backspace>" #'backward-kill-sexp
 
       "M-l"                                           #'move-to-window-line-top-bottom
-      :desc "Goto line"            "M-g M-g"          #'avy-goto-line
-      :desc "Hippie expand"        "M-/"            #'hippie-expand
+
+
+
+      :desc "Hippie expand"        "M-/"              #'hippie-expand
 
       "C-."                                           #'embark-act
       "M-."                                           #'embark-dwim
       "C-h B"                                         #'embark-bindings
-      "C-c o T"                                     #'eat
-      "C-c o t"                                     #'eat
 
+      "C-c o T"                                       #'eat
+      "C-c o t"                                       #'eat
 
+      ;; `popper' bindings
+      "<escape>"                                      #'popper-toggle
+      "C-<escape>"                                    #'popper-cycle
+      "C-M-<escape>"                                  #'popper-toggle-type
 
-
-      "C-`"                                           #'popper-toggle
-      "M-`"                                           #'popper-cycle
-      "M-~"                                           #'popper-cycle-backwards
-      "C-M-`"                                         #'popper-toggle-type
-
-
+      ;; navigating marks
       "C-M-;"                                         #'better-jumper-set-jump
       "C-,"                                           #'push-mark-no-activate
       "M-,"                                           #'jump-to-mark
-      "C-M-,"                                         #'consult-mark
+
       "C-;"                                           #'iedit-mode
 
-      "C-M-SPC"                                           #'easy-mark
-      "M-SPC"                                           #'easy-kill
+      ;; `easy-mark' and `easy-kill'
+      "C-M-SPC"                                       #'easy-mark
+      "M-SPC"                                         #'easy-kill
 
+      ;; `tempel'
       "M-*"                                           #'tempel-insert
-      "C-<tab>"                                    #'tempel-expand
-
+      "C-<tab>"                                       #'tempel-expand
 
       :desc "Lasgun" "C-c t g"                        #'lasgun-transient
 
-
-      :desc "Magit" "C-c g"                           #'magit
-
-
       (:when (modulep! :editor multiple-cursors)
-        :desc "Mark extended"    "C-c m j"            #'mc/mark-more-like-this-extended
-        :desc "Pop and jump"     "C-c m ,"            #'mc/mark-pop)
+        :desc "Mark extended"    "C-c m j"                  #'mc/mark-more-like-this-extended
+        :desc "Pop and jump"     "C-c m ,"                  #'mc/mark-pop)
 
       (:when (modulep! :editor god)
-        :desc "God Mode" "<escape>"                   #'god-mode-all)
+        :desc "God Mode" "<escape>"                         #'god-mode-all)
 
 
       (:when (featurep 'activities)
         (:prefix-map ("C-x C-a" . "activities")
-         :desc "Switch activity" "RET"                #'activities-switch
-         :desc "New" "C-n"                            #'activities-new
-         :desc "Define" "C-d"                         #'activities-define
-         :desc "Kill" "C-k"                           #'activities-kill
-         :desc "Suspend" "C-s"                        #'activities-suspend
-         :desc "Resume activity" "C-a"                #'activities-resume
-         :desc "List activities" "l"                  #'activities-list
-         :desc "Switch to buffer with activity" "b"   #'activities-switch-buffer
-         :desc "Revert state" "g"                     #'activities-revert)))
+         :desc "Switch activity" "RET"                      #'activities-switch
+         :desc "New" "C-n"                                  #'activities-new
+         :desc "Define" "C-d"                               #'activities-define
+         :desc "Kill" "C-k"                                 #'activities-kill
+         :desc "Suspend" "C-s"                              #'activities-suspend
+         :desc "Resume activity" "C-a"                      #'activities-resume
+         :desc "List activities" "l"                        #'activities-list
+         :desc "Switch to buffer with activity" "b"         #'activities-switch-buffer
+         :desc "Revert state" "g"                           #'activities-revert)
+
+        ;; `avy' stuff
+        :desc "Goto line"            "M-g M-g"          #'avy-goto-line
+        :desc "Goto char"            "M-g i"            #'avy-goto-char
+        (:prefix "M-s"
+         :desc "Copy line" "y" #'avy-copy-line
+         :desc "Copy region" "M-y" #'avy-copy-region
+         :desc "Kill whole line" "M-k" #'avy-kill-whole-line
+         :desc "Goto line above" "M-p" #'avy-goto-line-above
+         :desc "Goto line below" "M-n" #'avy-goto-line-below
+         :desc "Kill region" "C-y" #'avy-kill-region
+         :desc "Kill region save region" "M-w" #'avy-kill-ring-save-region
+         :desc "Move line" "t" #'avy-move-line
+         :desc "Move region" "M-t" #'avy-move-region
+         :desc "End of line" "M-t" #'avy-goto-end-of-line)))
+
+
+(map! :map outline-mode-map
+      :leader
+      "s ," #'consult-outline)
 
 
 ;;; ** `dired' keybindings
@@ -1840,4 +1825,8 @@ MYTAG"
       "C-x C-d"                                       #'consult-dir)
 ;;; ** `outline-minor-mode'  map
 (map! :map outline-minor-mode-map
-      "C-c s ," #'consult-outline)
+      "C-c s ,"                                       #'consult-outline)
+
+;;; ** `embark' maps
+(map! :map embark-file-map
+      :desc "Find file read ony" "r"                  #'find-file-read-only)

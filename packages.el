@@ -1,5 +1,4 @@
 ;; -*- no-byte-compile: t; -*-
-
 ;;; $ Org related packages
 (package! org :recipe
   (:host nil
@@ -11,7 +10,6 @@
            :files (:defaults "extensions/*")))
 (package! org-present :recipe (:host github :repo "rlister/org-present"))
 (package! ox-hugo)
-(package! ox-hugo)
 (package! org-super-agenda)
 (package! org-ref)
 (package! org-appear)
@@ -20,7 +18,6 @@
 (package! org-contrib :recipe (:host nil :repo "https://git.sr.ht/~bzg/org-contrib"
                                :files ("lisp/*.el")) :pin "6422b265f1150204f024e33d54f2dcfd8323005c")
 (package! org-ql)
-(package! org-transclusion)
 (package! citar-org-roam :recipe (:host github :repo "emacs-citar/citar-org-roam"))
 
 ;;; $ Editing packages
@@ -35,18 +32,23 @@
 (package! easy-kill :recipe (:host github :repo "leoliu/easy-kill"))
 (package! cdlatex)
 (package! iedit)
-(package! math-delimiters :recipe
-  (:host github
-   :repo "oantolin/math-delimiters"))
-
+(package! math-delimiters :recipe (:host github
+                                   :repo "oantolin/math-delimiters"))
 ;;; $ Theming and Appearance
 (package! fontaine)
 (package! mood-line)
 (package! modus-themes)
-(package! standard-themes)
 (package! spacious-padding)
 (package! eldoc-box)
+(package! catppuccin-theme)
+(package! tao-theme)
+(package! moe-theme)
+(package! spacemacs-theme)
+(package! ef-themes)
+(package! standard-themes)
 
+(package! technicolor :recipe (:host github :repo "aatmunbaxi/technicolor"))
+(unpin! technicolor)
 ;;; $ Utilities
 (package! vlf)
 (package! consult-dir :recipe (:host github :repo "karthink/consult-dir"))
@@ -68,7 +70,9 @@
 (package! activities)
 (unpin! activities)
 (package! elfeed-tube)
+(package! org-roam-ui)
 (package! elfeed-tube-mpv)
 (package! keycast :recipe (:host github :repo "tarsius/keycast"))
+(package! no-littering)
 ;;; $ Disable packages
 (package! avy-migemo :disable t)
