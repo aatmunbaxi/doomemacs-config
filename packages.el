@@ -23,6 +23,7 @@
 ;;; $ Editing packages
 (package! jinx)
 (package! tempel)
+(package! tempel-collection)
 (package! auto-activating-snippets :recipe
   (:host github
    :repo "ymarco/auto-activating-snippets"))
@@ -55,7 +56,6 @@
 (package! define-repeat-map :recipe (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el"))
 (package! casual-dired :recipe (:host github :repo "kickingvegas/casual-dired"))
 (package! sage-shell-mode)
-(package! hy-mode)
 (package! pinentry)
 (package! gap-mode)
 (package! popper :recipe (:host github :repo "karthink/popper"))
@@ -68,11 +68,11 @@
            ("integration" "integration/*")
            (:exclude ".dir-locals.el" "*-tests.el"))))
 (package! activities)
-(unpin! activities)
 (package! elfeed-tube)
-(package! org-roam-ui)
 (package! elfeed-tube-mpv)
+(package! consult-org-roam)
 (package! keycast :recipe (:host github :repo "tarsius/keycast"))
 (package! no-littering)
+;;
 ;;; $ Disable packages
 (package! avy-migemo :disable t)

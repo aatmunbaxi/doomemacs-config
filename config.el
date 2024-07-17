@@ -39,6 +39,7 @@
            "\\*compilation\\*"
            "\\*Async Shell Command\\*"
            "\\*Bufler\\*"
+           "\\*cider-repl.*?"
            "\\*sly-description\\*"
            "\\*Flycheck errors\\*"
            pdf-outline-mode
@@ -359,18 +360,18 @@ It is meant work like `forward-sexp' but for LaTeX math delimiters."
 
 (after! laas
   (aas-set-snippets 'laas-mode
-                    :cond #'laas-mathp
-                    "opr" '(tempel "\\operatorname{" r "}" q)
-                    "^" #'my/cdlatex-sub-superscript
-                    "_" #'my/cdlatex-sub-superscript
-                    "ox" "\\otimes"
-                    "iso" "\\cong"
-                    "hom" "\\hom"
-                    "ker" "\\ker"
-                    "ZZ" "\\mathbb{Z}"
-                    "CC" "\\mathbb{C}"
-                    "RR" "\\mathbb{R}"
-                    "QQ" "\\mathbb{Q}"))
+    :cond #'laas-mathp
+    "opr" '(tempel "\\operatorname{" r "}" q)
+    "^" #'my/cdlatex-sub-superscript
+    "_" #'my/cdlatex-sub-superscript
+    "ox" "\\otimes"
+    "iso" "\\cong"
+    "hom" "\\hom"
+    "ker" "\\ker"
+    "ZZ" "\\mathbb{Z}"
+    "CC" "\\mathbb{C}"
+    "RR" "\\mathbb{R}"
+    "QQ" "\\mathbb{Q}"))
 
 ;; (add-hook 'aas-pre-snippet-expand-hook (setq! smartparens-mode nil)
 ;;           (setq! global-smartparens-mode nil))
@@ -378,6 +379,16 @@ It is meant work like `forward-sexp' but for LaTeX math delimiters."
 ;;           (setq! global-smartparens-mode t))
 
 ;;; * org-mode
+(defun +org/close-all-folds ()
+  "Close all folds in org buffer"
+  (interactive)
+  (org-map-entries #'org-fold-hide-entry ))
+
+(defun +org/open-all-folds ()
+  "Close all folds in org buffer"
+  (interactive)
+  (org-map-entries #'org-fold-show-entry ))
+
 ;;; ** Variables
 (after! org
   (setq! org-agenda-files '( "~/Documents/org/inbox.org"
@@ -759,7 +770,7 @@ for details."
 
 (add-hook! prog-mode #'tempel-setup-capf)
 (add-hook! text-mode #'tempel-setup-capf)
-(add-hook! org-mode #'tempel-setup-capf)
+;; (add-hook! org-mode #'tempel-setup-capf)
 
 
 (after! tempel
@@ -791,6 +802,7 @@ for details."
             "* ${title}\n:PROPERTIES:\n:CREATED: %u\n:ID: %(org-id-new)\n:END:\n%?"
             :if-new (file "~/Documents/org/roam/roam.org")
             :unnarrowed nil
+            :prepend nil
             :empty-lines 1)
            ("b" "Annotated bibliography" entry
             "* ${note-title} :bib:\n:PROPERTIES:\n:FILE: ${citar-file}\n:ID: %(org-id-new)\n:END:\n%?"
@@ -851,6 +863,19 @@ format to top level headlines in `org' buffer BUFF"
            do
            (my/org-roam-file-to-heading file buff)))
 
+
+(defun my/remove-file-level-org-ID ()
+  "Removes file-level org ID property
+
+`org-roam' forces new ID creation at the file level
+regardless of the type of capture template. I want to use
+headlines as entries, hence the adding of this function
+to the post-capture hook."
+  (save-excursion
+    (goto-char (point-min))
+    (org-delete-property "ID")))
+(add-hook! org-roam-capture-new-node #'my/remove-file-level-org-ID)
+
 ;;; ** `org-roam' keybindings
 (map! :map global-map
       :leader
@@ -906,8 +931,10 @@ format to top level headlines in `org' buffer BUFF"
       :desc "Copy reference" "r"                 #'citar-copy-reference)
 
 ;;; * `pdf-view' mode
-;; (add-hook! pdf-tools-enabled #'pdf-view-themed-minor-mode
-;;            #'pdf-view-auto-slice-minor-mode)
+(pdf-loader-install)
+(after! pdf-tools
+  (add-hook! pdf-tools-enabled #'pdf-view-themed-minor-mode
+             #'pdf-view-auto-slice-minor-mode))
 
 ;;; ** `pdf'  keybindings
 (map! :map pdf-view-mode-map
@@ -917,126 +944,123 @@ format to top level headlines in `org' buffer BUFF"
       "e"                                             #'pdf-view-previous-line-or-previous-page)
 
 
-
 ;;; * `avy'
 ;;; ** `avy' actions
-(defun my/avy-isearch (&optional arg)
-  "Goto isearch candidate in this window with hints."
-  (interactive "P")
-  (let ((avy-all-windows)
-        (current-prefix-arg (if arg 4)))
-    (call-interactively 'avy-isearch)))
+(after! avy
+  (defun my/avy-isearch (&optional arg)
+    "Goto isearch candidate in this window with hints."
+    (interactive "P")
+    (let ((avy-all-windows)
+          (current-prefix-arg (if arg 4)))
+      (call-interactively 'avy-isearch)))
 
 
-(defun avy-action-exchange (pt)
-  "Exchange sexp at PT with the one at point."
-  (set-mark pt)
-  (transpose-sexps 0))
+  (defun avy-action-exchange (pt)
+    "Exchange sexp at PT with the one at point."
+    (set-mark pt)
+    (transpose-sexps 0))
 
-(defun avy-action-helpful (pt)
-  (save-excursion
-    (goto-char pt)
-    ;; (helpful-at-point)
-    (my/describe-symbol-at-point))
-  (select-window
-   (cdr (ring-ref avy-ring 0)))
-  t)
-
-(defun avy-action-define (pt)
-  (cl-letf (((symbol-function 'keyboard-quit)
-             #'abort-recursive-edit))
+  (defun avy-action-helpful (pt)
     (save-excursion
       (goto-char pt)
-      (dictionary-search-dwim))
+      ;; (helpful-at-point)
+      (my/describe-symbol-at-point))
     (select-window
-     (cdr (ring-ref avy-ring 0))))
-  t)
+     (cdr (ring-ref avy-ring 0)))
+    t)
 
-(defun avy-action-tuxi (pt)
-  (cl-letf (((symbol-function 'keyboard-quit)
-             #'abort-recursive-edit))
-    (save-excursion
-      (goto-char pt)
-      (google-search-at-point))
-    (select-window
-     (cdr (ring-ref avy-ring 0))))
-  t)
-
-(defun avy-action-embark (pt)
-  (unwind-protect
+  (defun avy-action-define (pt)
+    (cl-letf (((symbol-function 'keyboard-quit)
+               #'abort-recursive-edit))
       (save-excursion
         (goto-char pt)
-        (embark-act))
+        (dictionary-search-dwim))
+      (select-window
+       (cdr (ring-ref avy-ring 0))))
+    t)
+
+  (defun avy-action-tuxi (pt)
+    (cl-letf (((symbol-function 'keyboard-quit)
+               #'abort-recursive-edit))
+      (save-excursion
+        (goto-char pt)
+        (google-search-at-point))
+      (select-window
+       (cdr (ring-ref avy-ring 0))))
+    t)
+
+  (defun avy-action-embark (pt)
+    (unwind-protect
+        (save-excursion
+          (goto-char pt)
+          (embark-act))
+      (select-window
+       (cdr (ring-ref avy-ring 0))))
+    t)
+
+  (defun avy-action-kill-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (kill-line))
     (select-window
-     (cdr (ring-ref avy-ring 0))))
-  t)
+     (cdr (ring-ref avy-ring 0)))
+    t)
 
-(defun avy-action-kill-line (pt)
-  (save-excursion
-    (goto-char pt)
-    (kill-line))
-  (select-window
-   (cdr (ring-ref avy-ring 0)))
-  t)
+  (defun avy-action-copy-whole-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (cl-destructuring-bind (start . end)
+          (bounds-of-thing-at-point 'line)
+        (copy-region-as-kill start end)))
+    (select-window
+     (cdr
+      (ring-ref avy-ring 0)))
+    t)
 
-(defun avy-action-copy-whole-line (pt)
-  (save-excursion
-    (goto-char pt)
-    (cl-destructuring-bind (start . end)
-        (bounds-of-thing-at-point 'line)
-      (copy-region-as-kill start end)))
-  (select-window
-   (cdr
-    (ring-ref avy-ring 0)))
-  t)
+  (defun avy-action-kill-whole-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (kill-whole-line))
+    (select-window
+     (cdr
+      (ring-ref avy-ring 0)))
+    t)
 
-(defun avy-action-kill-whole-line (pt)
-  (save-excursion
-    (goto-char pt)
-    (kill-whole-line))
-  (select-window
-   (cdr
-    (ring-ref avy-ring 0)))
-  t)
+  (defun avy-action-yank-whole-line (pt)
+    (avy-action-copy-whole-line pt)
+    (save-excursion (yank))
+    t)
 
-(defun avy-action-yank-whole-line (pt)
-  (avy-action-copy-whole-line pt)
-  (save-excursion (yank))
-  t)
+  (defun avy-action-teleport-whole-line (pt)
+    (avy-action-kill-whole-line pt)
+    (save-excursion (yank)) t)
 
-(defun avy-action-teleport-whole-line (pt)
-  (avy-action-kill-whole-line pt)
-  (save-excursion (yank)) t)
+  (defun avy-action-mark-to-char (pt)
+    (activate-mark)
+    (goto-char pt))
 
-(defun avy-action-mark-to-char (pt)
-  (activate-mark)
-  (goto-char pt))
-
-(defun avy-action-push-mark-no-activate (pt)
-  (push-mark-no-activate pt))
+  (defun avy-action-push-mark-no-activate (pt)
+    (push-mark-no-activate pt))
 
 ;;; ** `avy' variables
-(setq! avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o)
-       avy-timeout-seconds 0.30
-       avy-all-windows t
-       avy-all-windows-alt nil
+  (setq! avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o)
+         avy-timeout-seconds 0.30
+         avy-all-windows t
+         avy-all-windows-alt nil
 
-       avy-dispatch-alist '((?m . avy-action-mark)
-                            (?. . avy-action-embark)
-                            (?x . avy-action-exchange)
-                            (?, . avy-action-push-mark-no-activate)
-
-                            (?l . avy-action-kill-line)
-                            (?Y . avy-action-yank-line)
-
-                            (?k . avy-action-kill-stay)
-                            (?y . avy-action-yank)
-                            (?f . avy-action-teleport)
-
-                            (?L . avy-action-copy-whole-line)
-                            (?K . avy-action-kill-whole-line)
-                            (?Y . avy-action-yank-whole-line)
-                            (?T . avy-action-teleport-whole-line)))
+         avy-dispatch-alist '((?m . avy-action-mark)
+                              (?. . avy-action-embark)
+                              (?x . avy-action-exchange)
+                              (?, . avy-action-push-mark-no-activate)
+                              (?l . avy-action-kill-line)
+                              (?Y . avy-action-yank-line)
+                              (?k . avy-action-kill-stay)
+                              (?y . avy-action-yank)
+                              (?f . avy-action-teleport)
+                              (?L . avy-action-copy-whole-line)
+                              (?K . avy-action-kill-whole-line)
+                              (?Y . avy-action-yank-whole-line)
+                              (?T . avy-action-teleport-whole-line))))
 ;;; * `corfu'
 ;;; ** `corfu'  variables
 (after! corfu
@@ -1074,6 +1098,64 @@ format to top level headlines in `org' buffer BUFF"
 
 
 ;;; * `consult'
+;;; ** `consult-buffer' sources
+;;;
+(after! (:and consult org-roam)
+  (defvar org-source
+    (list :name     "Org Buffer"
+          :category 'buffer
+          :narrow   ?o
+          :face     'consult-buffer
+          :history  'buffer-name-history
+          :state    #'consult--buffer-state
+          :new
+          (lambda (name)
+            (with-current-buffer (get-buffer-create name)
+              (insert "#+title: " name "\n\n")
+              (org-mode)
+              (consult--buffer-action (current-buffer))))
+          :items
+          (lambda ()
+            (consult--buffer-query :mode 'org-mode :as #'consult--buffer-pair))))
+
+  (setq! org-roam-nodes-source
+         (list :name     "org-roam node"
+               :category 'org-heading
+               :face 'unspecified
+               :narrow   ?n
+               :require-match nil
+               :action (lambda (cand)
+                         (let ((node-name (replace-regexp-in-string
+                                           " \\(:.*?\\)+:*$"
+                                           ;; magic number 2 here to strip off nerd icon
+                                           "" (substring-no-properties cand 2))))
+                           (message node-name)
+                           (progn
+                             (org-roam-node-open (org-roam-node-from-title-or-alias
+                                                  node-name t))
+                             (when (org-at-heading-p)
+                               (org-fold-show-entry t)))))
+
+               :new
+               (lambda (name)
+                 (let ((info nil))
+                   (setq info (plist-put info 'title name))
+                   (org-roam-capture-  :goto nil
+                                       :keys "h"
+                                       :node (org-roam-node-create :title name)
+                                       ;; :filter-fn nil
+                                       :templates org-roam-capture-templates
+                                       :info info
+                                       :props info)))
+               :items
+               (lambda ()
+                 (mapcar
+                  (lambda (str)
+                    (concat (nerd-icons-faicon "nf-fae-brain") " " str))
+                  (org-roam--get-titles)))))
+
+  (add-to-list 'consult-buffer-sources 'org-roam-nodes-source 'append))
+
 ;;; ** `consult-theme' bug fix
 ;;; For whatever reason, selecting an already-loaded doom theme
 ;;; with `consult-theme' does not updaet the variable
@@ -1823,6 +1905,7 @@ MYTAG"
 (map! :map vertico-map
       "C-x C-j"                                       #'consult-dir-jump-file
       "C-x C-d"                                       #'consult-dir)
+
 ;;; ** `outline-minor-mode'  map
 (map! :map outline-minor-mode-map
       "C-c s ,"                                       #'consult-outline)
