@@ -117,7 +117,7 @@
 
        :lang
        ;; agda                      ; types of types of types of types...
-       ;; cc                        ; C/C++/Obj-C madness
+       (cc +lsp +tree-sitter)                        ; C/C++/Obj-C madness
        (clojure +lsp +tree-sitter)                   ; java with a lisp
        (common-lisp +lsp)           ; if you've seen one lisp, you've seen them all
        ;; coq                       ; proofs-as-programs
@@ -131,6 +131,7 @@
        ;; erlang                    ; an elegant language for a more civilized age
        ;; ess                       ; emacs speaks statistics
        ;; faust                     ; dsp, but you get to keep your soul
+       (fortran +lsp)
        ;; fsharp                    ; ML stands for Microsoft's Language
        ;; fstar                     ; (dependent) types and (monadic) effects and Z3
        ;; gdscript                  ; the language you waited for

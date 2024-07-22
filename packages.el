@@ -71,8 +71,9 @@
 (package! elfeed-tube)
 (package! elfeed-tube-mpv)
 (package! consult-org-roam)
+(package! ffmpeg-crop :recipe (:host github :repo "karthink/ffmpeg-crop"))
 (package! keycast :recipe (:host github :repo "tarsius/keycast"))
 (package! no-littering)
-;;
+
 ;;; $ Disable packages
 (package! avy-migemo :disable t)

@@ -12,7 +12,7 @@
 
 ;;; * Basic emacs stuff
 (defun EVA-02-p ()
-  (when (equal (system-name) "EVA-02")))
+  (when (equal (system-name) "EVA-02") t))
 
 (when (EVA-02-p)
   (display-battery-mode))
@@ -45,7 +45,8 @@
            pdf-outline-mode
            help-mode
            helpful-mode
-           compilation-mode)))
+           compilation-mode))
+  (setq! popper-mode-line '(:eval (propertize " POP " 'face 'highlight))))
 ;; "\\*Outline .*?\\*"
 
 
@@ -813,21 +814,8 @@ for details."
          '(("n" "default" entry
             "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:"
             :target (file+datetree "dailies.org" day)
-            :unnarrowed nil)))
+            :unnarrowed nil))))
 
-;;; ** `org-roam' interop with `org-ql'
-  (defun my/org-ql-find-roam-dailies ()
-    (interactive)
-    (funcall #'org-ql-search  (org-ql-search-directories-files :directories  (list (concat org-roam-directory org-roam-dailies-directory))
-                                                               :recurse nil
-                                                               :regexp ".*?\\.org$")
-             (read-from-minibuffer "Query: "))))
-(defun my/org-ql-find-roam ()
-  (interactive)
-  (funcall #'org-ql-search  (org-ql-search-directories-files :directories (list org-roam-directory)
-                                                             :recurse nil
-                                                             :regexp ".*\\.org")
-           (read-from-minibuffer "Query: ")))
 
 ;;; ** `org-roam' helper functions
 (defun org-roam-file-to-heading (file buff)
@@ -863,7 +851,6 @@ format to top level headlines in `org' buffer BUFF"
            do
            (my/org-roam-file-to-heading file buff)))
 
-
 (defun my/remove-file-level-org-ID ()
   "Removes file-level org ID property
 
@@ -874,21 +861,25 @@ to the post-capture hook."
   (save-excursion
     (goto-char (point-min))
     (org-delete-property "ID")))
+
 (add-hook! org-roam-capture-new-node #'my/remove-file-level-org-ID)
 
 ;;; ** `org-roam' keybindings
 (map! :map global-map
+
       :leader
       (:prefix-map ("n r" . "roam")
-                   "i" #'org-roam-node-insert
-                   "f" #'org-roam-node-find
-                   "s" #'org-roam-db-sync
-                   "w" #'org-roam-refile
-                   (:prefix-map ("d" . "dailies")
-                                "n" #'org-roam-dailies-capture-today
-                                "y" #'org-roam-dailies-capture-yesterday
-                                "t" #'org-roam-dailies-capture-tomorrow
-                                "f" #'org-roam-dailies-goto-today)))
+       :desc "Insert node" "i" #'org-roam-node-insert
+       :desc "Find node" "f" #'org-roam-node-find
+       :desc "Sync database" "s" #'org-roam-db-sync
+       :desc "Refile node" "w" #'org-roam-refile
+
+       (:prefix-map ("d" . "dailies")
+        :desc "Capture today" "n" #'org-roam-dailies-capture-today
+        :desc "Capture y'day" "y" #'org-roam-dailies-capture-yesterday
+        :desc "Capture tomorrow" "t" #'org-roam-dailies-capture-tomorrow
+        :desc "Goto today" "f" #'org-roam-dailies-goto-today
+        :desc "Goto date" "d" #'org-roam-dailies-goto-date)))
 
 ;;; * `citar'
 ;;; ** variables
@@ -1079,7 +1070,7 @@ to the post-capture hook."
 
 ;;; ** `corfu' hook
 (after! corfu
-  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+  ;; (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file)
   (add-hook 'completion-at-point-functions #'cape-elisp-block)
   (add-hook 'completion-at-point-functions #'cape-keyword)
@@ -1121,38 +1112,33 @@ to the post-capture hook."
   (setq! org-roam-nodes-source
          (list :name     "org-roam node"
                :category 'org-heading
-               :face 'unspecified
+               :face 'org-roam-title
                :narrow   ?n
                :require-match nil
                :action (lambda (cand)
-                         (let ((node-name (replace-regexp-in-string
-                                           " \\(:.*?\\)+:*$"
-                                           ;; magic number 2 here to strip off nerd icon
-                                           "" (substring-no-properties cand 2))))
-                           (message node-name)
+                         (let ((node-name (substring-no-properties cand 2)))
                            (progn
                              (org-roam-node-open (org-roam-node-from-title-or-alias
                                                   node-name t))
                              (when (org-at-heading-p)
-                               (org-fold-show-entry t)))))
+                               (org-fold-show-entry t)
+                               (recenter-top-bottom 0)))))
 
-               :new
-               (lambda (name)
-                 (let ((info nil))
-                   (setq info (plist-put info 'title name))
-                   (org-roam-capture-  :goto nil
-                                       :keys "h"
-                                       :node (org-roam-node-create :title name)
-                                       ;; :filter-fn nil
-                                       :templates org-roam-capture-templates
-                                       :info info
-                                       :props info)))
-               :items
-               (lambda ()
-                 (mapcar
-                  (lambda (str)
-                    (concat (nerd-icons-faicon "nf-fae-brain") " " str))
-                  (org-roam--get-titles)))))
+               :new (lambda (name)
+                      (let ((info nil))
+                        (setq info (plist-put info 'title name))
+                        (org-roam-capture-  :goto nil
+                                            :keys "h"
+                                            :node (org-roam-node-create :title name)
+                                            ;; :filter-fn nil
+                                            :templates org-roam-capture-templates
+                                            :info info
+                                            :props info)))
+               :items (lambda ()
+                        (mapcar
+                         (lambda (str)
+                           (concat (nerd-icons-faicon "nf-fae-brain") " " str))
+                         (org-roam--get-titles)))))
 
   (add-to-list 'consult-buffer-sources 'org-roam-nodes-source 'append))
 
@@ -1803,7 +1789,6 @@ MYTAG"
 
 (map! :desc "Buffer list"           "M-u"           #'consult-buffer
       :desc "Buffer other window"   "M-U"           #'my/switch-buffer-other-window
-      :desc "Recent files"        "M-r"             #'consult-recent-file
 
       :desc "Consult Dir"           "C-x C-d"         #'consult-dir
       "C-M-,"                                         #'consult-mark
