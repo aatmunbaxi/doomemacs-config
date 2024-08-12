@@ -79,15 +79,28 @@ emacs-lisp-mode
 
 
 clojure-mode
-
 (fun "(defn " (p "name" name)  n > "\""
      (p  (concat "FIXME: Document " )) (s name) "\"" n> "[" p  "]" n>  q ")")
 
 (dotimes "(dotimes [" (p "var" ) " " (p "times") "]" n> q ")")
 (doseq "(doseq [" p "]" n> q ")")
 
+lisp-mode
 
-
+(mcr "(defmacro " p " (" p ")\n  \"" p "\"" n> r> ")")
+(als "(defalias '" p " '" p ")")
+(fn "(defun " p " (" p ")\n  \"" p "\"" n> r> ")")
+(iflet "(if-let (" p ")" n> r> ")")
+(whnlt "(when-let (" p ")" n> r> ")")
+(iflt* "(if-let* (" p ")" n> r> ")")
+(whnlt* "(when-let* (" p ")" n> r> ")")
+(andlt* "(and-let* (" p ")" n> r> ")")
+(cnd "(cond" n "(" q "))" >)
+(pcase "(pcase " (p "scrutinee") n "(" q "))" >)
+(lt "(let (" p ")" n> r> ")")
+(lt* "(let* (" p ")" n> r> ")")
+(lp "(loop :for " p " :in " p " :do" n> r> ")")
+(cmmnd "(defun " p " (" p ")\n  \"" p "\"" n> "(interactive" p ")" n> r> ")")
 
 
 text-mode

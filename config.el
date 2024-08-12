@@ -1,14 +1,19 @@
 ;; -*- lexical-binding: t; -*-
+
+
+;;;; * sime
+
 ;;; * Setup load path.
 (if (equal (system-name) "pop-os")
     (add-to-list 'load-path "~/.config/doom/")
   (add-to-list 'load-path "~/.doom.d/"))
-
+(setq! local-package-path (expand-file-name "lisp/" doom-user-dir))
 ;;; * Some functions
-(defun my/switch-buffer-other-window ()
-  (interactive)
-  (save-excursion
-    (consult-buffer-other-window)))
+(after!  emacs
+  (defun my/switch-buffer-other-window ()
+    (interactive)
+    (save-excursion
+      (consult-buffer-other-window))))
 
 ;;; * Basic emacs stuff
 (defun EVA-02-p ()
@@ -16,20 +21,27 @@
 
 (when (EVA-02-p)
   (display-battery-mode))
-
 (display-time-mode)
-(when (require 'activities nil t)
-  (activities-mode))
+
 
 ;;; * Buffer related config
+;;; ** `activities'
+(activities-mode)
+
+
+;;; ** `dogears'
+(dogears-mode)
+(setq! dogears-idle nil)
+
 ;;; ** `ace-window'
 (setq! aw-scope 'global)
 
-(defun my/open-eat-other-frame ()
-  (interactive)
-  (let ((buf (eat)))
-    (switch-to-buffer (other-buffer buf))
-    (switch-to-buffer-other-frame buf)))
+(when (EVA-02-p)
+  (defun my/open-eat-other-frame ()
+    (interactive)
+    (let ((buf (eat)))
+      (switch-to-buffer (other-buffer buf))
+      (switch-to-buffer-other-frame buf))))
 
 ;;; ** `popper'
 (after! popper
@@ -42,79 +54,16 @@
            "\\*cider-repl.*?"
            "\\*sly-description\\*"
            "\\*Flycheck errors\\*"
+           "\\*Outline .*?\\*"
            pdf-outline-mode
            help-mode
            helpful-mode
            compilation-mode))
   (setq! popper-mode-line '(:eval (propertize " POP " 'face 'highlight))))
-;; "\\*Outline .*?\\*"
 
 
 (popper-mode +1)
 (popper-echo-mode)
-
-;;; ** Bufler
-(after! bufler
-  (bufler-defgroups
-   (group
-    ;; Subgroup collecting all named workspaces.
-    (auto-workspace))
-   (group
-    ;; Subgroup collecting all `help-mode' and `info-mode' buffers.
-    (group-or "*Help/Info*"
-              (mode-match "*Help*" (rx bos "help-"))
-              (mode-match "*Info*" (rx bos "info-"))))
-   (group
-    ;; Subgroup collecting all special buffers (i.e. ones that are not
-    ;; file-backed), except `magit-status-mode' buffers (which are allowed to fall
-    ;; through to other groups, so they end up grouped with their project buffers).
-    (group-and "*Special*"
-               (lambda (buffer)
-                 (unless (or (funcall (mode-match "Magit" (rx bos "magit-status"))
-                                      buffer)
-                             (funcall (mode-match "Dired" (rx bos "dired"))
-                                      buffer)
-                             (funcall (auto-file) buffer))
-                   "*Special*")))
-    (group
-     ;; Subgroup collecting these "special special" buffers
-     ;; separately for convenience.
-     (name-match "**Special**"
-                 (rx bos "*" (or "Messages" "Warnings" "scratch" "Backtrace") "*")))
-    (group
-     ;; Subgroup collecting all other Magit buffers, grouped by directory.
-     (mode-match "*Magit* (non-status)" (rx bos (or "magit" "forge") "-"))
-     (auto-directory))
-    ;; Subgroup for Helm buffers.
-    (mode-match "*Helm*" (rx bos "helm-"))
-    ;; Remaining special buffers are grouped automatically by mode.
-    (auto-mode))
-   ;; All buffers under "~/.emacs.d" (or wherever it is).
-   (dir user-emacs-directory)
-   (group
-    ;; Subgroup collecting buffers in `org-directory' (or "~/org" if
-    ;; `org-directory' is not yet defined).
-    (dir (if (bound-and-true-p org-directory)
-             org-directory
-           "~/org"))
-    (group
-     ;; Subgroup collecting indirect Org buffers, grouping them by file.
-     ;; This is very useful when used with `org-tree-to-indirect-buffer'.
-     (auto-indirect)
-     (auto-file))
-    ;; Group remaining buffers by whether they're file backed, then by mode.
-    (group-not "*special*" (auto-file))
-    (auto-mode))
-   (group
-    ;; Subgroup collecting buffers in a projectile project.
-    (auto-projectile))
-   (group
-    ;; Subgroup collecting buffers in a version-control project,
-    ;; grouping them by directory.
-    (auto-project))
-   ;; Group remaining buffers by directory, then major mode.
-   (auto-directory)
-   (auto-mode)))
 
 ;;; * Editing
 (setq! kill-whole-line t)
@@ -143,29 +92,30 @@
       (when (= parity 0) (cons end (point))))))
 
 ;;; ** `easy-kill' and `expand-region' interop
-(defun easy-kill-expand-region ()
-  "Expand kill according to expand-region."
-  (interactive)
-  (let* ((thing (easy-kill-get nil))
-         (bounds (easy-kill--bounds)))
-    (save-mark-and-excursion
-      (set-mark (cdr bounds))
-      (goto-char (car bounds))
-      (er/expand-region 1)
-      (deactivate-mark)
-      (easy-kill-adjust-candidate thing (point) (mark)))))
+(after! (expand-region easy-kill)
+  (defun easy-kill-expand-region ()
+    "Expand kill according to expand-region."
+    (interactive)
+    (let* ((thing (easy-kill-get nil))
+           (bounds (easy-kill--bounds)))
+      (save-mark-and-excursion
+        (set-mark (cdr bounds))
+        (goto-char (car bounds))
+        (er/expand-region 1)
+        (deactivate-mark)
+        (easy-kill-adjust-candidate thing (point) (mark)))))
 
-(defun easy-kill-contract-region ()
-  "Expand kill according to expand-region."
-  (interactive)
-  (let* ((thing (easy-kill-get nil))
-         (bounds (easy-kill--bounds)))
-    (save-mark-and-excursion
-      (set-mark (cdr bounds))
-      (goto-char (car bounds))
-      (er/contract-region 1)
-      (deactivate-mark)
-      (easy-kill-adjust-candidate thing (point) (mark)))))
+  (defun easy-kill-contract-region ()
+    "Expand kill according to expand-region."
+    (interactive)
+    (let* ((thing (easy-kill-get nil))
+           (bounds (easy-kill--bounds)))
+      (save-mark-and-excursion
+        (set-mark (cdr bounds))
+        (goto-char (car bounds))
+        (er/contract-region 1)
+        (deactivate-mark)
+        (easy-kill-adjust-candidate thing (point) (mark))))))
 
 ;;; ** Mark utilities
 (defun push-mark-no-activate (&optional pt)
@@ -185,19 +135,6 @@
 (add-hook! prog-mode #'sp-use-smartparens-bindings)
 
 ;;; * Font config
-;;; ** Doom font config
-;; (setq! fixed-font-of-choice (if (equal (system-name) "pop-os")
-;;                                 (font-spec :family "Iosevka Term" :size 16)
-;;                               (font-spec :family "Iosevka Term" :size 18))
-;;        variable-font-of-choice  (font-spec :family "Iosevka Slab" :size 16)
-
-;;        big-font (font-spec :family "Iosevka Slab" :style "Bold"  :size 28)
-;;        font-sans-serif (font-spec :family "Iosevka Aile" :style "Regular" :size 16))
-
-;; (setq! doom-font fixed-font-of-choice
-;;        doom-variable-pitch-font variable-font-of-choice
-;;        doom-big-font big-font)
-
 (setq! variable-font "Iosevka Slab"
        fixed-font "Iosevka Fixed"
        variable-sans-serif "Iosevka Aile")
@@ -212,6 +149,7 @@
 
          (regular-sans-serif
           :variable-pitch-family ,variable-sans-serif
+          :fixed-pitch-family ,variable-sans-serif
           :inherit regular-serif)
 
          (medium
@@ -250,108 +188,56 @@
 
 
 ;;; * LaTeX
-(setq! math-delimiters-compressed-display-math nil)
+(after! math-delimiters
+  (setq! math-delimiters-compressed-display-math nil))
+
 (setq! bibtex-dialect 'biblatex)
 
 ;;; ** Helper functions
-(defun my/cdlatex-sub-superscript ()
-  "Insert ^{} or _{} unless the number of backslashes before point is odd.
+(use-package! latex-utils
+  :after (:and org latex)
+  :load-path local-package-path)
+
+(after! (:or org latex)
+  (setq! cdlatex-use-dollar-to-ensure-math nil)
+  (defadvice! my/org-try-cdlatex-tab ()
+    "Try cdlatex tab when in `laas-mode'"
+    :override #'org-try-cdlatex-tab
+    (when laas-mode
+      (cond
+       ;; Before any word on the line: No expansion possible.
+       ((save-excursion (skip-chars-backward " \t") (bolp)) nil)
+       ;; Just after first word on the line: Expand it.  Make sure it
+       ;; cannot happen on headlines, though.
+       ((save-excursion
+	  (skip-chars-backward "a-zA-Z0-9*")
+	  (skip-chars-backward " \t")
+	  (and (bolp) (not (org-at-heading-p))))
+        (cdlatex-tab) t)
+       ((org-inside-LaTeX-fragment-p) (cdlatex-tab) t))))
+
+  (defun my/cdlatex-sub-superscript ()
+    "Insert ^{} or _{} unless the number of backslashes before point is odd.
 When not in LaTeX math environment, _{} and ^{} will have dollars.
 When pressed twice, make the sub/superscript roman."
-  (interactive)
-  (if (and nil
-           (equal this-command last-command))
-      (progn
-        (insert "\\mathrm{}")
-        (backward-char 1))
-    (if (cdlatex-number-of-backslashes-is-odd)
-        ;; Quoted
-        (insert (event-basic-type last-command-event))
-      ;; Check if we are in math mode, if not switch to or only add _ or ^
-      (if (not (or (laas-mathp)
-                   cdlatex-sub-super-scripts-outside-math-mode))
+    (interactive)
+    (if (and nil
+             (equal this-command last-command))
+        (progn
+          (insert "\\mathrm{}")
+          (backward-char 1))
+      (if (cdlatex-number-of-backslashes-is-odd)
+          ;; Quoted
           (insert (event-basic-type last-command-event))
-        (cdlatex-ensure-math)
-        ;; Insert the normal template.
-        (insert (event-basic-type last-command-event))
-        (insert "{}")
-        (forward-char -1)))))
-
-(defun forward-latex-math ()
-  "Move forward across the next LaTeX equation.
-It is meant work like `forward-sexp' but for LaTeX math delimiters."
-  (interactive)
-  (require 'latex)
-  (let ((count 1))
-    ;; Search for either of the following \( \) \[ \]
-    (re-search-forward-ignore-TeX-comments "\\\\(\\|\\\\)\\|\\\\\\[\\|\\\\]")
-    (cond
-     ;; If the search nhits \(
-     ((looking-back "\\\\(" (- (point) 2))
-      (while (< 0 count)
-        ;; Search for delimiters inside the equation
-        (re-search-forward-ignore-TeX-comments "\\\\(\\|\\\\)")
-        (if (looking-back "\\\\(" (- (point) 2))
-            (setq count (1+ count))     ; If start of a nested level
-          (setq count (1- count))))     ; If end of a nested level
-      ;; Find the matching \)
-      (re-search-forward "\\\\)" (eobp) t count))
-     ;; If the search hits \[
-     ((looking-back "\\\\\\[" (- (point) 2))
-      (while (< 0 count)
-        ;; Search for delimiters inside the equation
-        (re-search-forward-ignore-TeX-comments "\\\\\\[\\|\\\\]")
-        (if (looking-back "\\\\\\[" (- (point) 2))
-            (setq count (1+ count))     ; If start of a nested level
-          (setq count (1- count))))     ; If end of a nested level
-      ;; Find the matching \]
-      (re-search-forward "\\\\]" (eobp) t count)))))
-
-(defun backward-latex-math ()
-  "Move forward across the next LaTeX equation.
-It is meant work like `forward-sexp' but for LaTeX math delimiters."
-  (interactive)
-  (require 'latex)
-  (let ((count 1))
-    ;; Search for either of the following \( \) \[ \]
-    (re-search-backward-ignore-TeX-comments "\\\\(\\|\\\\)\\|\\\\\\[\\|\\\\]")
-    (cond
-     ;; If the search hits \)
-     ((looking-at "\\\\)")
-      (while (< 0 count)
-        ;; Search for delimiters inside the equation
-        (re-search-backward-ignore-TeX-comments "\\\\(\\|\\\\)")
-        (if (looking-at "\\\\)")
-            (setq count (1+ count))     ; If start of a nested level
-          (setq count (1- count))))     ; If end of a nested level
-      ;; Find the matching \(
-      (re-search-forward "\\\\(" (eobp) t count))
-     ;; If the search hits \[
-     ((looking-at "\\\\\\]")
-      (while (< 0 count)
-        ;; Search for delimiters inside the equation
-        (re-search-backward-ignore-TeX-comments "\\\\\\[\\|\\\\]")
-        (if (looking-at "\\\\\\]")
-            (setq count (1+ count))     ; If start of a nested level
-          (setq count (1- count))))     ; If end of a nested level
-      ;; Find the matching \]
-      (re-search-forward "\\\\[" (eobp) t count)))))
-
-(defun re-search-forward-ignore-TeX-comments (regexp)
-  "Search for REGEXP and ignore TeX comments. Used by `forward-latex-math'."
-  (re-search-forward regexp (eobp) t)
-  ;; If in comment search to after it
-  (while (TeX-in-comment)
-    (forward-line)
-    (re-search-forward regexp (eobp) t)))
-
-(defun re-search-backward-ignore-TeX-comments (regexp)
-  "Search for REGEXP and ignore TeX comments. Used by `forward-latex-math'."
-  (re-search-backward regexp (bobp) t)
-  ;; If in comment search to after it
-  (while (TeX-in-comment)
-    (forward-line -1)
-    (re-search-forward regexp (eobp) t)))
+        ;; Check if we are in math mode, if not switch to or only add _ or ^
+        (if (not (or (laas-mathp)
+                     cdlatex-sub-super-scripts-outside-math-mode))
+            (insert (event-basic-type last-command-event))
+          (cdlatex-ensure-math)
+          ;; Insert the normal template.
+          (insert (event-basic-type last-command-event))
+          (insert "{}")
+          (forward-char -1))))))
 
 (after! easy-kill
   (add-to-list 'easy-kill-try-things 'sexp))
@@ -359,7 +245,7 @@ It is meant work like `forward-sexp' but for LaTeX math delimiters."
 ;;; ** laas-mode for auto expanding snippets
 (add-hook! org-mode #'laas-mode)
 
-(after! laas
+(after! (:and laas (:or org latex))
   (aas-set-snippets 'laas-mode
     :cond #'laas-mathp
     "opr" '(tempel "\\operatorname{" r "}" q)
@@ -374,24 +260,21 @@ It is meant work like `forward-sexp' but for LaTeX math delimiters."
     "RR" "\\mathbb{R}"
     "QQ" "\\mathbb{Q}"))
 
-;; (add-hook 'aas-pre-snippet-expand-hook (setq! smartparens-mode nil)
-;;           (setq! global-smartparens-mode nil))
-;; (add-hook 'aas-post-snippet-expand-hook (setq! smartparens-mode t)
-;;           (setq! global-smartparens-mode t))
 
 ;;; * org-mode
-(defun +org/close-all-folds ()
-  "Close all folds in org buffer"
-  (interactive)
-  (org-map-entries #'org-fold-hide-entry ))
+(after! org
+  (defun +org/close-all-folds ()
+    "Close all folds in org buffer"
+    (interactive)
+    (org-map-entries #'org-fold-hide-entry ))
 
-(defun +org/open-all-folds ()
-  "Close all folds in org buffer"
-  (interactive)
-  (org-map-entries #'org-fold-show-entry ))
+  (defun +org/open-all-folds ()
+    "Close all folds in org buffer"
+    (interactive)
+    (org-map-entries #'org-fold-show-entry )))
 
 ;;; ** Variables
-(after! org
+(after! org-agenda
   (setq! org-agenda-files '( "~/Documents/org/inbox.org"
                              "~/Documents/org/gtd.org"
                              "~/Documents/org/tickler.org"
@@ -405,9 +288,10 @@ It is meant work like `forward-sexp' but for LaTeX math delimiters."
          org-agenda-skip-scheduled-if-done t
          org-agenda-skip-deadline-if-done t
          org-agenda-start-day "-1d"
-         org-agenda-todo-ignore-scheduled t
+         org-agenda-todo-ignore-scheduled t))
 
-         org-refile-use-outline-path 'file
+(after! org
+  (setq! org-refile-use-outline-path 'file
          org-outline-path-complete-in-steps nil
          org-refile-targets '((("~/Documents/org/gtd.org")   :maxlevel . 1)
                               (("~/Documents/org/inbox.org")   :maxlevel . 2)
@@ -459,8 +343,9 @@ It is meant work like `forward-sexp' but for LaTeX math delimiters."
          org-default-notes-file "~/Documents/org/notes.org"
          org-todo-keywords     '((sequence
                                   "TODO(t)"
-                                  "IDEA"
+                                  "IDEA(i)"
                                   "WAIT(w)"
+                                  "PROG(g)"
                                   "MAYBE(m)"
                                   "DRAFT(D)"
                                   "|"
@@ -485,48 +370,16 @@ It is meant work like `forward-sexp' but for LaTeX math delimiters."
          org-image-actual-width 400
          org-hide-emphasis-markers t))
 
-;;; ** ox-hugo
-(after! (:and org ox)
-  (defun my/org-ref-process-buffer--html (backend)
-    "Preprocess `org-ref' citations to HTML format.
-Do this only if the export backend is `html' or a derivative of that."
-    ;; `ox-hugo' is derived indirectly from `ox-html'.
-    ;; ox-hugo <- ox-blackfriday <- ox-md <- ox-html
-    (when (org-export-derived-backend-p backend 'html)
-      (org-ref-process-buffer 'html)))
-  (add-to-list 'org-export-before-parsing-functions #'my/org-ref-process-buffer--html))
 
 ;;; * bibtex
-(setq! bibtex-autokey-year-length 4
-       bibtex-autokey-name-year-separator "-"
-       bibtex-autokey-year-title-separator "-"
-       bibtex-autokey-titleword-separator "-"
-       bibtex-autokey-titlewords 2
-       bibtex-autokey-titlewords-stretch 1
-       bibtex-autokey-titleword-length 5)
-
-
-
-;;; ** `org-ql' helper
-(require 'cl-lib)
-(cl-defun org-ql-search-directories-files
-    (&key (directories
-           (if (file-exists-p org-directory)
-               (list org-directory)
-             (user-error org-ql-search-directories-files-error)))
-          (recurse org-ql-search-directories-files-recursive)
-          (regexp org-ql-search-directories-files-regexp))
-  "Return list of matching files in DIRECTORIES.
-When RECURSE is non-nil, recurse into subdirectories.  When
-REGEXP is non-nil, only return files that match REGEXP."
-  (let ((files (->> directories
-                    (--map (f-files it nil recurse))
-                    -flatten)))
-    (if regexp
-        (--select (string-match regexp it)
-                  files)
-      files)))
-
+(after! bibtex
+  (setq! bibtex-autokey-year-length 4
+         bibtex-autokey-name-year-separator "-"
+         bibtex-autokey-year-title-separator "-"
+         bibtex-autokey-titleword-separator "-"
+         bibtex-autokey-titlewords 2
+         bibtex-autokey-titlewords-stretch 1
+         bibtex-autokey-titleword-length 5))
 
 ;;; ** `org-present'
 (after! org-present
@@ -566,8 +419,7 @@ REGEXP is non-nil, only return files that match REGEXP."
              (alltodo ""
                       ((org-agenda-overriding-header "")
                        (org-super-agenda-groups
-                        '(
-                          (:name "Maybe / To Read"
+                        '((:name "Maybe / To Read"
                            :todo ("IDEA" "READ" "MAYBE")
                            :order 10)
 
@@ -612,7 +464,7 @@ REGEXP is non-nil, only return files that match REGEXP."
            #'variable-pitch-mode
            #'org-latex-preview-auto-mode
            #'turn-off-smartparens-mode
-           (require 'cdlatex)
+           ;; (require 'cdlatex)
            (setq! display-line-numbers-mode nil
                   org-indent-mode nil
                   tab-width 8
@@ -621,27 +473,24 @@ REGEXP is non-nil, only return files that match REGEXP."
 
 ;;; ** `org' keybindings
 (map! :map org-mode-map
-      "M-f"                                           #'cdlatex-tab
-      "M-m"                                            #'math-delimiters-insert
-      :desc "Search"                 "C-c s q s"                #'org-ql-search
-      :desc "Find"                 "C-c s q f"                  #'org-ql-find
+      :desc "Math delim insert"              "M-m"                 #'math-delimiters-insert
+      :desc "Search"                         "C-c s q s"           #'org-ql-search
+      :desc "Find"                           "C-c s q f"           #'org-ql-find
+      :desc "Insert bibliography link"       "C-c ]"               #'org-cite-insert
+      :desc "Insert cross reference"         "C-c ["               #'org-ref-insert-ref-link
+      :desc "Forward LaTeX math"             "C-c L f"             #'forward-latex-math
+      :desc "Backward LaTeX math"            "C-c L b"             #'backward-latex-math
+      :desc "Add note"                       "C-c z"               #'org-add-note
+      :desc "Outline"                        "C-c s ,"             #'consult-org-heading
+      :desc "Make ink figure"                "C-c i i"             #'ink-make-figure
+      :desc "Make quiver (local)"            "C-c i c l"           #'open-quiver-local
+      :desc "Make quiver (online)"           "C-c i c w"           #'open-quiver-web
+      :desc "Org structure editing"          "C-c t o"             #'org-nav-transient
+      :desc "Forward LaTeX math"             "M-TAB"               #'forward-latex-math
+      :desc "Backward LaTeX math"            "M-<iso-lefttab>"     #'backward-latex-math)
 
-
-      :desc "Insert bibliography link" "C-c ]"        #'org-cite-insert
-      :desc "Insert cross reference" "C-c ["          #'org-ref-insert-ref-link
-
-      :desc "Forward LaTeX math"   "C-c L f"          #'forward-latex-math
-      :desc "Backward LaTeX math"  "C-c L b"          #'backward-latex-math
-      :desc "Add note"             "C-c z"            #'org-add-note
-      :desc "Outline"               "C-c s ,"         #'consult-org-heading
-
-      :desc "Make ink figure" "C-c i i"                                       #'ink-make-figure
-      :desc "Make quiver (local)" "C-c i c l"                                     #'open-quiver-local
-      :desc "Make quiver (online)" "C-c i c w"                                     #'open-quiver-web
-
-      :desc "Org structure editing" "C-c t o"         #'org-nav-transient
-      "M-TAB"                                         #'forward-latex-math
-      "M-<iso-lefttab>"                                        #'backward-latex-math)
+(defalias 'align-map-blocks-with-desc
+  (kmacro "C-a C-M-f C-M-f M-x z a p SPC u p RET \" M-: ( i n s e r t SPC DEL - c h a r SPC \" <up> <up> <down> <down> C-f DEL DEL ? SPC ( - SPC 4 5 SPC * DEL ( c u r r e n t - c o l u m n C-f C-f C-f RET"))
 
 
 
@@ -649,13 +498,13 @@ REGEXP is non-nil, only return files that match REGEXP."
 
 ;;; * `expand-region'
 (setq! expand-region-fast-keys-enabled nil)
-
-(define-repeat-map expand-region
-  (:continue
-   "," er/expand-region
-   "." er/contract-region)
-  (:enter er/expand-region
-          er/contract-region))
+(after! expand-region
+  (define-repeat-map expand-region
+    (:continue
+     "," er/expand-region
+     "." er/contract-region)
+    (:enter er/expand-region
+            er/contract-region)))
 
 (advice-add 'er--first-invocation
             :override
@@ -679,12 +528,13 @@ for details."
              (reason (assoc string texmathp-tex-commands1))
              (type (cadr reason)))
         (cond
-         ((eq type 'sw-toggle) ;; $ and $$
-          (goto-char pos)
-          (set-mark (1+ (point)))
-          (forward-sexp 1)
-          (backward-char 1)
-          (exchange-point-and-mark))
+         ;; I never use $ $$ for latex math. I mean, who does??
+         ;; ((eq type 'sw-toggle) ;; $ and $$
+         ;;  (goto-char pos)
+         ;;  (set-mark (1+ (point)))
+         ;;  (forward-sexp 1)
+         ;;  (backward-char 1)
+         ;;  (exchange-point-and-mark))
          ((or (eq type 'sw-on)
               (equal string "Org mode embedded math")) ;; \( and \[
           (re-search-forward texmathp-onoff-regexp)
@@ -771,8 +621,6 @@ for details."
 
 (add-hook! prog-mode #'tempel-setup-capf)
 (add-hook! text-mode #'tempel-setup-capf)
-;; (add-hook! org-mode #'tempel-setup-capf)
-
 
 (after! tempel
   (setq! tempel-path (directory-files (concat doom-user-dir "templates") t "eld$")
@@ -780,89 +628,93 @@ for details."
 
 ;;; ** `tempel' keybindings
 (map! :map tempel-map
-      "C-M-a"                                         #'tempel-beginning
-      "C-M-e"                                         #'tempel-end
       "M-n"                                           #'tempel-next
-      "M-e"                                           #'tempel-previous)
+      "M-e"                                           #'tempel-previous
+      "C-M-k"                                              #'tempel-abort)
 
 
 ;;; * `org-roam'
 ;;; ** `Variables'
-(after! (:and org org-roam)
-  (setq! org-roam-directory "~/Documents/org/roam/"
-         org-roam-dailies-directory "~/Documents/org/roam/daily/"
-         org-roam-node-display-template
-         (concat "${title:*} "
-                 (propertize "${tags:40}" 'face 'org-modern-tag))
+(setq! org-roam-directory "~/Documents/org/roam/"
+       org-roam-dailies-directory "~/Documents/org/roam/daily/"
+       org-roam-node-display-template
+       (concat "${title:*} "
+               (propertize "${tags:40}" 'face 'org-modern-tag))
 
-         org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
-         citar-org-roam-note-title-template "${author} - ${title}"
-         citar-org-roam-capture-template-key "b"
-         org-roam-capture-templates
-         '(("h" "Information" entry
-            "* ${title}\n:PROPERTIES:\n:CREATED: %u\n:ID: %(org-id-new)\n:END:\n%?"
-            :if-new (file "~/Documents/org/roam/roam.org")
-            :unnarrowed nil
-            :prepend nil
-            :empty-lines 1)
-           ("b" "Annotated bibliography" entry
-            "* ${note-title} :bib:\n:PROPERTIES:\n:FILE: ${citar-file}\n:ID: %(org-id-new)\n:END:\n%?"
-            :if-new (file "~/Documents/org/roam/annot-bib.org")
-            :unnarrowed nil
-            :empty-lines 1))
-         org-roam-dailies-capture-templates
-         '(("n" "default" entry
-            "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:"
-            :target (file+datetree "dailies.org" day)
-            :unnarrowed nil))))
+       org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
+       citar-org-roam-note-title-template "${author} - ${title}"
+       org-roam-capture-templates
+       '(("h" "Information" entry
+          "* ${title}\n:PROPERTIES:\n:CREATED: %u\n:ID: %(org-id-new)\n:END:\n%?"
+          :if-new (file "~/Documents/org/roam/roam.org")
+          :unnarrowed nil
+          :prepend nil
+          :empty-lines 1)
+         ;; Add a NOTER_DOCUMENT prop even though I don't use
+         ;; `org-noter', but it doesn't hurt to have
+         ("b" "Annotated bibliography" entry
+          "* ${note-title} :bib:\n:PROPERTIES:\n:FILE: ${citar-file}\n:ID: %(org-id-new)\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n%?"
+          :if-new (file "~/Documents/org/roam/annot-bib.org")
+          :unnarrowed nil
+          :empty-lines 1))
+       org-roam-dailies-capture-templates
+       '(("n" "default" entry
+          "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:"
+          :target (file+datetree "dailies.org" day)
+          :unnarrowed nil))
+
+       citar-org-roam-capture-template-key "b")
 
 
 ;;; ** `org-roam' helper functions
-(defun org-roam-file-to-heading (file buff)
-  "Moves content from single `org-roam' node FILE to a top
+(defer-until! nil
+  (defun org-roam-file-to-heading (file buff)
+    "Moves content from single `org-roam' node FILE to a top
 level heading in BUFF"
-  (org-with-file-buffer file
-    (let ((title (org-get-title))
-          (tags (mapcar #'substring-no-properties (org-roam-node-tags (org-roam-node-at-point))))
-          (props (cl-remove-if (lambda (x)  (member (car x) '("ALLTAGS" "FILE")))
-                               (org-roam-node-properties (org-roam-node-at-point))))
-          (content (progn (goto-char (point-min))
-                          (org-roam-end-of-meta-data t)
-                          (s-replace-regexp
-                           org-heading-regexp
-                           "*\\1 \\2"
-                           (buffer-substring-no-properties (point) (buffer-end 1))))))
-      (message (format "Copying file: %s" file))
-      (switch-to-buffer buff)
-      (org-insert-heading nil t 1)
-      (cl-loop for tag in tags
-               initially (insert title " :")
-               finally  (insert ":\n") do
-               (insert ":"  tag))
-      (cl-loop for (prop . val) in props
-               finally (insert "\n" content) do
-               (org-set-property prop val)))))
+    (org-with-file-buffer file
+      (let ((title (org-get-title))
+            (tags (mapcar #'substring-no-properties (org-roam-node-tags (org-roam-node-at-point))))
+            (props (cl-remove-if (lambda (x)  (member (car x) '("ALLTAGS" "FILE")))
+                                 (org-roam-node-properties (org-roam-node-at-point))))
+            (content (progn (goto-char (point-min))
+                            (org-roam-end-of-meta-data t)
+                            (s-replace-regexp
+                             org-heading-regexp
+                             "*\\1 \\2"
+                             (buffer-substring-no-properties (point) (buffer-end 1))))))
+        (message (format "Copying file: %s" file))
+        (switch-to-buffer buff)
+        (org-insert-heading nil t 1)
+        (cl-loop for tag in tags
+                 initially (insert title " :")
+                 finally  (insert ":\n") do
+                 (insert ":"  tag))
+        (cl-loop for (prop . val) in props
+                 finally (insert "\n" content) do
+                 (org-set-property prop val)))))
 
-(defun org-roam-files-to-headings (buff)
-  "Refactors all `org-roam' nodes in one-node-per-file
+  (defun org-roam-files-to-headings (buff)
+    "Refactors all `org-roam' nodes in one-node-per-file
 format to top level headlines in `org' buffer BUFF"
-  (interactive)
-  (cl-loop for file in (directory-files org-roam-directory t "\\.org$")
-           do
-           (my/org-roam-file-to-heading file buff)))
+    (interactive)
+    (cl-loop for file in (directory-files org-roam-directory t "\\.org$")
+             do
+             (my/org-roam-file-to-heading file buff))))
 
-(defun my/remove-file-level-org-ID ()
-  "Removes file-level org ID property
+;;; ** Solving org-roam file ID annoyance
+(after! org-roam
+  (defun my/remove-file-level-org-ID ()
+    "Removes file-level org ID property
 
 `org-roam' forces new ID creation at the file level
 regardless of the type of capture template. I want to use
 headlines as entries, hence the adding of this function
 to the post-capture hook."
-  (save-excursion
-    (goto-char (point-min))
-    (org-delete-property "ID")))
+    (save-excursion
+      (goto-char (point-min))
+      (org-delete-property "ID")))
 
-(add-hook! org-roam-capture-new-node #'my/remove-file-level-org-ID)
+  (add-hook! org-roam-capture-new-node #'my/remove-file-level-org-ID))
 
 ;;; ** `org-roam' keybindings
 (map! :map global-map
@@ -898,28 +750,30 @@ to the post-capture hook."
          citar-org-roam-capture-template-key "n"))
 
 ;;; ** `citar' related keybindings
+(defun my/citar-emabark-update-prefix-suffix (cite)
+  (citar-org-update-prefix-suffix nil))
 (map! :map org-mode-map
-      "C-c ]" #'citar-insert-citation
+      "C-c ]"                             #'citar-insert-citation
 
       :map citar-embark-map
-      :desc "Prefix/Suffix" "p" #'citar-org-update-prefix-suffix
-      :desc "Open entry"  "e"                 #'citar-open-entry
-      :desc "Open files" "f"                 #'citar-open-files
-      :desc "Edit" "i"                 #'citar-insert-edit
-      :desc "Open link" "l"                 #'citar-open-links
-      :desc "Open notes" "n"                 #'citar-open-notes
-      :desc "Open" "o"                 #'citar-open
-      :desc "Copy reference" "r"                 #'citar-copy-reference
+      :desc "Prefix/Suffix"           "p"        #'my/citar-emabark-update-prefix-suffix
+      :desc "Open entry"              "e"        #'citar-open-entry
+      :desc "Open files"              "f"        #'citar-open-files
+      :desc "Edit"                    "i"        #'citar-insert-edit
+      :desc "Open link"               "l"        #'citar-open-links
+      :desc "Open notes"              "n"        #'citar-open-notes
+      :desc "Open"                    "o"        #'citar-open
+      :desc "Copy reference"          "r"        #'citar-copy-reference
 
       :map citar-embark-citation-map
-      :desc "Prefix/Suffix" "p" #'citar-org-update-prefix-suffix
-      :desc "Open entry"  "e"                 #'citar-open-entry
-      :desc "Open files" "f"                 #'citar-open-files
-      :desc "Edit" "i"                 #'citar-insert-edit
-      :desc "Open link" "l"                 #'citar-open-links
-      :desc "Open notes" "n"                 #'citar-open-notes
-      :desc "Open" "o"                 #'citar-open
-      :desc "Copy reference" "r"                 #'citar-copy-reference)
+      :desc "Prefix/Suffix"           "p"        #'my/citar-emabark-update-prefix-suffix
+      :desc "Open entry"              "e"        #'citar-open-entry
+      :desc "Open files"              "f"        #'citar-open-files
+      :desc "Edit"                    "i"        #'citar-insert-edit
+      :desc "Open link"               "l"        #'citar-open-links
+      :desc "Open notes"              "n"        #'citar-open-notes
+      :desc "Open"                    "o"        #'citar-open
+      :desc "Copy reference"          "r"        #'citar-copy-reference)
 
 ;;; * `pdf-view' mode
 (pdf-loader-install)
@@ -936,104 +790,13 @@ to the post-capture hook."
 
 
 ;;; * `avy'
-;;; ** `avy' actions
-(after! avy
-  (defun my/avy-isearch (&optional arg)
-    "Goto isearch candidate in this window with hints."
-    (interactive "P")
-    (let ((avy-all-windows)
-          (current-prefix-arg (if arg 4)))
-      (call-interactively 'avy-isearch)))
-
-
-  (defun avy-action-exchange (pt)
-    "Exchange sexp at PT with the one at point."
-    (set-mark pt)
-    (transpose-sexps 0))
-
-  (defun avy-action-helpful (pt)
-    (save-excursion
-      (goto-char pt)
-      ;; (helpful-at-point)
-      (my/describe-symbol-at-point))
-    (select-window
-     (cdr (ring-ref avy-ring 0)))
-    t)
-
-  (defun avy-action-define (pt)
-    (cl-letf (((symbol-function 'keyboard-quit)
-               #'abort-recursive-edit))
-      (save-excursion
-        (goto-char pt)
-        (dictionary-search-dwim))
-      (select-window
-       (cdr (ring-ref avy-ring 0))))
-    t)
-
-  (defun avy-action-tuxi (pt)
-    (cl-letf (((symbol-function 'keyboard-quit)
-               #'abort-recursive-edit))
-      (save-excursion
-        (goto-char pt)
-        (google-search-at-point))
-      (select-window
-       (cdr (ring-ref avy-ring 0))))
-    t)
-
-  (defun avy-action-embark (pt)
-    (unwind-protect
-        (save-excursion
-          (goto-char pt)
-          (embark-act))
-      (select-window
-       (cdr (ring-ref avy-ring 0))))
-    t)
-
-  (defun avy-action-kill-line (pt)
-    (save-excursion
-      (goto-char pt)
-      (kill-line))
-    (select-window
-     (cdr (ring-ref avy-ring 0)))
-    t)
-
-  (defun avy-action-copy-whole-line (pt)
-    (save-excursion
-      (goto-char pt)
-      (cl-destructuring-bind (start . end)
-          (bounds-of-thing-at-point 'line)
-        (copy-region-as-kill start end)))
-    (select-window
-     (cdr
-      (ring-ref avy-ring 0)))
-    t)
-
-  (defun avy-action-kill-whole-line (pt)
-    (save-excursion
-      (goto-char pt)
-      (kill-whole-line))
-    (select-window
-     (cdr
-      (ring-ref avy-ring 0)))
-    t)
-
-  (defun avy-action-yank-whole-line (pt)
-    (avy-action-copy-whole-line pt)
-    (save-excursion (yank))
-    t)
-
-  (defun avy-action-teleport-whole-line (pt)
-    (avy-action-kill-whole-line pt)
-    (save-excursion (yank)) t)
-
-  (defun avy-action-mark-to-char (pt)
-    (activate-mark)
-    (goto-char pt))
-
-  (defun avy-action-push-mark-no-activate (pt)
-    (push-mark-no-activate pt))
+;;; ** `avy' functions
+(use-package! avy-utils
+  :after avy
+  :load-path local-package-path)
 
 ;;; ** `avy' variables
+(after! avy
   (setq! avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o)
          avy-timeout-seconds 0.30
          avy-all-windows t
@@ -1070,7 +833,6 @@ to the post-capture hook."
 
 ;;; ** `corfu' hook
 (after! corfu
-  ;; (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file)
   (add-hook 'completion-at-point-functions #'cape-elisp-block)
   (add-hook 'completion-at-point-functions #'cape-keyword)
@@ -1109,7 +871,7 @@ to the post-capture hook."
           (lambda ()
             (consult--buffer-query :mode 'org-mode :as #'consult--buffer-pair))))
 
-  (setq! org-roam-nodes-source
+  (setq! consult--org-roam-nodes-source
          (list :name     "org-roam node"
                :category 'org-heading
                :face 'org-roam-title
@@ -1140,7 +902,7 @@ to the post-capture hook."
                            (concat (nerd-icons-faicon "nf-fae-brain") " " str))
                          (org-roam--get-titles)))))
 
-  (add-to-list 'consult-buffer-sources 'org-roam-nodes-source 'append))
+  (add-to-list 'consult-buffer-sources 'consult--org-roam-nodes-source 'append))
 
 ;;; ** `consult-theme' bug fix
 ;;; For whatever reason, selecting an already-loaded doom theme
@@ -1196,10 +958,29 @@ to the post-capture hook."
 
 
 ;;; * `lasgun'
-(setq! lasgun-also-push-mark-ring t)
-
-;;; ** `lasgun' actions
-(after!  lasgun
+(use-package! lasgun
+  :defer t
+  :commands
+  (lasgun-mark-line
+   lasgun-mark-char-2
+   lasgun-mark-word-0
+   lasgun-mark-symbol-1
+   lasgun-mark-subword-0
+   lasgun-mark-subword-1
+   lasgun-mark-char-timer
+   lasgun-mark-end-of-line
+   lasgun-mark-char-2-above
+   lasgun-mark-char-2-below
+   lasgun-mark-word-0-above
+   lasgun-mark-word-0-below
+   lasgun-mark-symbol-1-above
+   lasgun-mark-symbol-1-below
+   lasgun-mark-whitespace-end
+   lasgun-mark-overlay-at-mark
+   lasgun-mark-whitespace-end-above
+   lasgun-mark-whitespace-end-below)
+  :config
+  (setq! lasgun-also-push-mark-ring t)
   (define-lasgun-action lasgun-action-upcase-word t upcase-word)
   (define-lasgun-action lasgun-action-downcase-word t downcase-word)
   (define-lasgun-action lasgun-action-kill-word nil kill-word)
@@ -1263,53 +1044,38 @@ to the post-capture hook."
       (lasgun-clear-lasgun-mark-ring)
       (message "Error yanking sexps")))
 
-  (defun lasgun-prompt-action ()
-    (interactive)
-    (let ((command (read-from-minibuffer "Command: ")))
-      (unwind-protect
-          (save-excursion
-            (dolist (pos (ring-elements lasgun-mark-ring))
-              (goto-char pos)
-              (call-interactively (intern command) t)))
-        (lasgun-clear-lasgun-mark-ring))))
-  (defun lasgun-action-pop-and-jump ()
-    (interactive)
-    (unless (ring-empty-p lasgun-mark-ring)
-      (unless (ring-member lasgun-mark-ring (point))
-        (push-mark-no-activate (point)))
-      (goto-char (ring-ref lasgun-mark-ring 0))
-      (ring-remove lasgun-mark-ring 0))
-    (message "No lasgun marks")))
 
-;;; ** `embark' menu for `lasgun'
-;; (after! embark
-;;   (defun my-embark-lasgun-mark ()
-;;     (unless (ring-empty-p lasgun-mark-ring)
-;;       (let ((lgmark (ring-ref lasgun-mark-ring 0)))
-;;         `(lasgun-mark  ,(buffer-substring-no-properties lgmark lgmark)
-;;           ,lgmark . ,lgmark)))))
+;;; ** `lasgun' actions
+  (after! lasgun
+    (defun lasgun-prompt-action ()
+      (interactive)
+      (let ((command (read-from-minibuffer "Command: ")))
+        (unwind-protect
+            (save-excursion
+              (dolist (pos (ring-elements lasgun-mark-ring))
+                (goto-char pos)
+                (call-interactively (intern command) t)))
+          (lasgun-clear-lasgun-mark-ring))))
 
-;; (add-to-list 'embark-target-finders #'my-embark-lasgun-mark)
+    (defun lasgun-action-pop-and-jump ()
+      (interactive)
+      (unless (ring-empty-p lasgun-mark-ring)
+        (unless (ring-member lasgun-mark-ring (point))
+          (push-mark-no-activate (point)))
+        (goto-char (ring-ref lasgun-mark-ring 0))
+        (ring-remove lasgun-mark-ring 0))
+      (message "No lasgun marks")))
 
-;; (defvar-keymap embark-lasgun-mark-actions
-;;   :doc "Keymap for embark actions on lasgun targets")
-;; (add-to-list 'embark-keymap-alist '(lasgun-mark . embark-lasgun-mark-actions))
 
-;; (map! :map embark-lasgun-mark-actions
-;;       :desc "Upcase word"   "U" #'lasgun-action-upcase-word
-;;       :desc "Downcase word" "l" #'lasgun-action-downcase-word
-;;       :desc "Pop ring and jump" "v" #'lasgun-action-pop-and-jump
-;;       :desc "Make multiple cusors" "SPC" #'lasgun-make-multiple-cursors))
-
-(defun my/avy-lg-mark-char-timer (ARG)
-  (interactive "P")
-  (if (equal ARG '(4))
-      (lasgun-mark-char-timer)
-    (avy-goto-char-timer)))
+  (defun my/avy-lg-mark-char-timer (ARG)
+    (interactive "P")
+    (if (equal ARG '(4))
+        (lasgun-mark-char-timer)
+      (avy-goto-char-timer))))
 
 
 ;;; ** `transient' menu for `lasgun'
-(after! transient
+(after!  lasgun
   (transient-define-prefix lasgun-transient ()
     "Main transient for lasgun."
     [["Marks"
@@ -1337,7 +1103,7 @@ to the post-capture hook."
 
 ;;; * Email configuration: `mu4e'
 ;; Needs some personal stuff that I don't want to include publically
-(require 'setup-email)
+;; (require 'setup-email)
 
 ;;; * TRAMP
 (connection-local-set-profile-variables 'remote-path-with-local-cargo
@@ -1345,9 +1111,7 @@ to the post-capture hook."
 (connection-local-set-profiles nil 'remote-path-with-local-cargo)
 
 ;;; * `embark'
-(after! embark
-  (setq! embark-confirm-act-all nil))
-
+(setq! embark-confirm-act-all nil)
 
 ;;; * quiver
 (defun open-quiver-local ()
@@ -1375,7 +1139,8 @@ to the post-capture hook."
    "p" previous-buffer
    "{" shrink-window
    "u" consult-buffer
-   "9" my/close-other-window)
+   "9" my/close-other-window
+   "s" ace-swap-window)
   (:exit
    "f" find-file
    "r" recentf-open-files
@@ -1384,7 +1149,8 @@ to the post-capture hook."
    "E" +eshell/here
    "d" consult-dir)
   (:enter split-window-right
-          split-window-below))
+          split-window-below
+          ace-swap-window))
 
 
 ;;; ** `org' heading navigation repeat map
@@ -1467,20 +1233,28 @@ to the post-capture hook."
                  jump-to-mark|mc-repeat-map))
     (add-to-list 'mc/cmds-to-run-once cmd)))
 
+;;; * `common-lisp' configuration
+(put 'lazy 'common-lisp-indent-function '(1 &rest 1))
+(put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
+(put 'lazy-multiple-value 'common-lisp-indent-function '(1 1 &rest 1))
+(put 'lazy-reshape 'common-lisp-indent-function '(1 &rest 1))
+
+
+;;; * `prog-mode' configuration
+(after! outli
+  (add-to-list 'outli-heading-config '(lisp-mode ";;" 59 t)))
+(add-hook! prog-mode #'outli-mode)
+
 ;;; * `haskell'
 (setq! haskell-compile-command "ghc -Wall -ferror-spans -fforce-recomp -dynamic -c %s")
 (add-to-list 'exec-path "/home/aatmun/.ghcup/bin")
-(when (and (modulep! :haskell +lsp) (modulep! :tools +eglot))
+(when (and (modulep! :haskell +lsp) (modulep! :tools +lsp))
   (setq! eglot-workspace-configuration '((haskell (plugin (stan (globalOn . :json-false)))))))
 
 ;;; * Eyecandy
-;;;
-;;; ** custom faces
-
-
 
 ;;; ** Theme
-(setq! doom-theme 'doom-earl-grey
+(setq! doom-theme 'modus-operandi-tinted
        modus-themes-mixed-fonts t)
 ;;; ** make theme consistent with `qtile'
 (when (EVA-02-p)
@@ -1578,6 +1352,7 @@ to the post-capture hook."
 (mood-line-mode)
 (spacious-padding-mode)
 
+
 (setq! display-line-numbers-type nil)
 
 (after! spacious-padding
@@ -1609,7 +1384,8 @@ to the post-capture hook."
                                ((foreground . text)
                                 (background . base)
                                 (magenta . pink)
-                                (violet . mauve))))))
+                                (violet . mauve)
+                                (cyan . sky))))))
 
 
 ;;; ** customizing faces
@@ -1634,14 +1410,41 @@ to the post-capture hook."
 (add-hook! org-agenda-finalize #'org-modern-agenda
            #'org-latex-preview-auto-mode)
 
-(setq! org-src-block-faces nil)
+(after! org-modern
+  (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10 )))
+    "Face for org modern IDEA tag")
+  (defface org-modern-wait `((t :inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
+    "Face for org modern WAIT tag")
+  (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-blend 'background 'green 60)))
+    "Face for org modern MAYBE tag")
+
+
+  (defun my/technicolor-customizations ()
+    (set-face-attribute 'org-modern-idea nil :foreground (technicolor-lighten 'cyan 10))
+    (set-face-attribute 'org-modern-wait nil :foreground (technicolor-get-color 'red))
+    (set-face-attribute 'org-modern-maybe nil :foreground (technicolor-blend 'background 'green 60))
+    (set-face-attribute 'org-modern-time-inactive nil :foreground (technicolor-blend 'background 'green 20))
+
+    (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
+                        :background (technicolor-blend 'background 'red 95)
+                        :foreground (technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
+    (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
+                        :background (technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
+                        :foreground (technicolor-blend 'foreground 'background 100))
+    (set-face-attribute 'org-modern-time-active nil :inherit 'org-modern-label
+                        :background (technicolor-blend 'background 'green 85)
+                        :foreground (technicolor-blend 'foreground 'background 90))
+    (set-face-attribute 'org-modern-date-active nil :inherit 'org-modern-label
+                        :background (technicolor-blend 'background 'blue 85)
+                        :foreground (technicolor-blend 'foreground 'background 90)))
+
+  (add-hook! doom-load-theme #'my/technicolor-customizations))
 
 (after! org-modern
   (setq! org-modern-todo-faces
-         `(("PROG" . (:inherit org-modern-todo))
-           ("NEXT" .  (:inherit org-modern-todo))
-           ("WAIT" . (:inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
-           ("MAYBE" .  ( :foreground ,(technicolor-blend 'foreground 'background 80) :inhert org-modern-todo))))
+         `(("IDEA" . org-modern-idea)
+           ("WAIT" . org-modern-wait)
+           ("MAYBE" . org-modern-maybe)))
 
   (custom-set-faces!
     '(org-level-1 :inherit outline-1 :height 1.7)
@@ -1710,8 +1513,7 @@ to the post-capture hook."
   (setq! visual-fill-column-width 130
          visual-fill-column-center-text t))
 
-(when (modulep! :ui zen)
-  (add-hook! (text-mode prog-mode) #'visual-fill-column-mode))
+(add-hook! (text-mode prog-mode) #'visual-fill-column-mode)
 
 ;;; * personal stuff
 (require 'setup-personal)
@@ -1751,20 +1553,17 @@ MYTAG"
       (elfeed-search-toggle-all mytag))))
 
 ;;; ** `elfeed-tube'
-(after! elfeed
-  (require 'elfeed-tube)
-  (require 'elfeed-tube-mpv)
-  (elfeed-tube-add-feeds '("LobosJr"
-                           "Adam Ragusea"
-                           "Ben Felix"
-                           "VaatiVidya"
-                           "James Hoffman"
-                           "@KUN1234"
-                           "Tobalog_tokyo | トバログ"
-                           "LocoYun /ろこゆん"))
+;; (after! elfeed
+;;   (require 'elfeed-tube)
+;;   (require 'elfeed-tube-mpv)
+;;   (elfeed-tube-add-feeds '("LobosJr"
+;;                            "Ben Felix"
+;;                            "@KUN1234"
+;;                            "Tobalog_tokyo | トバログ"
+;;                            "LocoYun /ろこゆん"))
 
-  (setq! elfeed-tube-captions-languages '("en" "jp" "english (auto generated)" "japanese (auto generated)"))
-  (elfeed-tube-setup))
+;;   (setq! elfeed-tube-captions-languages '("en" "jp" "english (auto generated)" "japanese (auto generated)"))
+;;   (elfeed-tube-setup))
 
 ;;; ** `elfeed'  keybindings
 (after! elfeed
@@ -1787,99 +1586,98 @@ MYTAG"
 (when (featurep 'activities)
   (setq! edebug-inhibit-emacs-lisp-mode-bindings t))
 
-(map! :desc "Buffer list"           "M-u"           #'consult-buffer
-      :desc "Buffer other window"   "M-U"           #'my/switch-buffer-other-window
+(map!
+ :desc "Buffer list"                                   "M-u"                    #'consult-buffer
+ :desc "Buffer other window"                           "M-U"                    #'my/switch-buffer-other-window
+ :desc "Consult Dir"                                   "C-x C-d"                #'consult-dir
+ :desc "Consult mark"                                  "C-M-,"                  #'consult-mark
+ :desc "Other window"                                  "M-o"                    #'other-window
+ :desc "Avy goto/Lasgun mark"                          "M-n"                    #'my/avy-lg-mark-char-timer
+ :desc "Lasgun mark char timer"                        "C-M-n"                  #'lasgun-mark-char-timer
+ :desc "Backward kill sexp"                            "C-M-<backspace>"        #'backward-kill-sexp
+ :desc "Move window top/bottom"                        "M-l"                    #'move-to-window-line-top-bottom
+ :desc "Hippie expand"                                 "M-/"                    #'hippie-expand
 
-      :desc "Consult Dir"           "C-x C-d"         #'consult-dir
-      "C-M-,"                                         #'consult-mark
+ "C-."                                           #'embark-act
+ "M-."                                           #'embark-dwim
+ "C-h B"                                         #'embark-bindings
 
-      :desc "Other window"          "M-o"             #'other-window
-      :desc "Close window"          "M-0"             #'delete-window
-      :desc "Close other window"    "M-9"             #'ace-delete-window
+ "C-c o T"                                       #'eat
+ "C-c o t"                                       #'eat
 
-      :desc "Avy goto/Lasgun mark"         "M-n"      #'my/avy-lg-mark-char-timer
-      :desc "Lasgun mark char timer"         "C-M-n"  #'lasgun-mark-char-timer
-      :desc "Backward kill sexp"    "C-M-<backspace>" #'backward-kill-sexp
+ ;; `popper' bindings
+ "<escape>"                                      #'popper-toggle
+ "C-<escape>"                                    #'popper-cycle
+ "C-M-<escape>"                                  #'popper-toggle-type
 
-      "M-l"                                           #'move-to-window-line-top-bottom
+ ;; navigating marks
+ "C-M-;"                                         #'better-jumper-set-jump
+ "C-,"                                           #'push-mark-no-activate
+ "M-,"                                           #'jump-to-mark
 
+ "C-;"                                           #'iedit-mode
 
+ ;; `easy-mark' and `easy-kill'
+ "C-M-SPC"                                       #'easy-mark
+ "M-SPC"                                         #'easy-kill
 
-      :desc "Hippie expand"        "M-/"              #'hippie-expand
+ ;; `tempel'
+ "M-*"                                           #'tempel-insert
+ "C-<tab>"                                       #'tempel-expand
 
-      "C-."                                           #'embark-act
-      "M-."                                           #'embark-dwim
-      "C-h B"                                         #'embark-bindings
+ :desc "Lasgun" "C-c t g"                        #'lasgun-transient
 
-      "C-c o T"                                       #'eat
-      "C-c o t"                                       #'eat
+ (:when (modulep! :editor multiple-cursors)
+   :desc "Mark extended"    "C-c m j"                  #'mc/mark-more-like-this-extended
+   :desc "Pop and jump"     "C-c m ,"                  #'mc/mark-pop)
 
-      ;; `popper' bindings
-      "<escape>"                                      #'popper-toggle
-      "C-<escape>"                                    #'popper-cycle
-      "C-M-<escape>"                                  #'popper-toggle-type
-
-      ;; navigating marks
-      "C-M-;"                                         #'better-jumper-set-jump
-      "C-,"                                           #'push-mark-no-activate
-      "M-,"                                           #'jump-to-mark
-
-      "C-;"                                           #'iedit-mode
-
-      ;; `easy-mark' and `easy-kill'
-      "C-M-SPC"                                       #'easy-mark
-      "M-SPC"                                         #'easy-kill
-
-      ;; `tempel'
-      "M-*"                                           #'tempel-insert
-      "C-<tab>"                                       #'tempel-expand
-
-      :desc "Lasgun" "C-c t g"                        #'lasgun-transient
-
-      (:when (modulep! :editor multiple-cursors)
-        :desc "Mark extended"    "C-c m j"                  #'mc/mark-more-like-this-extended
-        :desc "Pop and jump"     "C-c m ,"                  #'mc/mark-pop)
-
-      (:when (modulep! :editor god)
-        :desc "God Mode" "<escape>"                         #'god-mode-all)
+ (:when (modulep! :editor god)
+   :desc "God Mode" "<escape>"                         #'god-mode-all)
 
 
-      (:when (featurep 'activities)
-        (:prefix-map ("C-x C-a" . "activities")
-         :desc "Switch activity" "RET"                      #'activities-switch
-         :desc "New" "C-n"                                  #'activities-new
-         :desc "Define" "C-d"                               #'activities-define
-         :desc "Kill" "C-k"                                 #'activities-kill
-         :desc "Suspend" "C-s"                              #'activities-suspend
-         :desc "Resume activity" "C-a"                      #'activities-resume
-         :desc "List activities" "l"                        #'activities-list
-         :desc "Switch to buffer with activity" "b"         #'activities-switch-buffer
-         :desc "Revert state" "g"                           #'activities-revert)
+ (:when (featurep 'activities)
+   (:prefix-map ("C-x C-a" . "activities")
+    :desc "Switch activity"                       "RET"      #'activities-switch
+    :desc "New"                                   "C-n"      #'activities-new
+    :desc "Define"                                "C-d"      #'activities-define
+    :desc "Kill"                                  "C-k"      #'activities-kill
+    :desc "Suspend"                               "C-s"      #'activities-suspend
+    :desc "Resume activity"                       "C-a"      #'activities-resume
+    :desc "List activities"                       "l"        #'activities-list
+    :desc "Switch to buffer with activity"        "b"        #'activities-switch-buffer
+    :desc "Revert state"                          "g"        #'activities-revert))
 
-        ;; `avy' stuff
-        :desc "Goto line"            "M-g M-g"          #'avy-goto-line
-        :desc "Goto char"            "M-g i"            #'avy-goto-char
-        (:prefix "M-s"
-         :desc "Copy line" "y" #'avy-copy-line
-         :desc "Copy region" "M-y" #'avy-copy-region
-         :desc "Kill whole line" "M-k" #'avy-kill-whole-line
-         :desc "Goto line above" "M-p" #'avy-goto-line-above
-         :desc "Goto line below" "M-n" #'avy-goto-line-below
-         :desc "Kill region" "C-y" #'avy-kill-region
-         :desc "Kill region save region" "M-w" #'avy-kill-ring-save-region
-         :desc "Move line" "t" #'avy-move-line
-         :desc "Move region" "M-t" #'avy-move-region
-         :desc "End of line" "M-t" #'avy-goto-end-of-line)))
+
+ (:prefix "C-c w"
+  :desc "Swap window"                           "o"        #'ace-swap-window
+  :desc "Delete other window"                   "0"        #'ace-delete-window)
+
+ ;; `avy' stuff
+ :desc "Goto line"                              "M-g M-g"          #'avy-goto-line
+ :desc "Goto char"                              "M-g i"            #'avy-goto-char
+
+ (:prefix "M-s"
+  :desc "Copy line"                             "y"        #'avy-copy-line
+  :desc "Copy region"                           "M-y"      #'avy-copy-region
+  :desc "Kill whole line"                       "M-k"      #'avy-kill-whole-line
+  :desc "Goto line above"                       "M-p"      #'avy-goto-line-above
+  :desc "Goto line below"                       "M-n"      #'avy-goto-line-below
+  :desc "Kill region"                           "C-y"      #'avy-kill-region
+  :desc "Kill region save region"               "M-w"      #'avy-kill-ring-save-region
+  :desc "Move line"                             "t"        #'avy-move-line
+  :desc "Move region"                           "M-t"      #'avy-move-region
+  :desc "End of line"                           "M-t"      #'avy-goto-end-of-line)
+
+ (:when (featurep 'dogears)
+   :desc "Dogears remember"                     "M-g M-r"       #'dogears-remember
+   :desc "Dogears forward"                      "M-g M-f"       #'dogears-forward
+   :desc "Dogears backward"                     "M-g M-b"       #'dogears-back
+   :desc "Dogears list"                         "M-g M-l"       #'dogears-list))
 
 
 (map! :map outline-mode-map
       :leader
       "s ," #'consult-outline)
-
-
-;;; ** `dired' keybindings
-(map! :map dired-mode-map
-      "C-c C-c"                                       #'casual-dired-tmenu)
 
 ;;; ** `easy-kill'  keybindings
 (map! :map easy-kill-base-map
@@ -1897,4 +1695,7 @@ MYTAG"
 
 ;;; ** `embark' maps
 (map! :map embark-file-map
-      :desc "Find file read ony" "r"                  #'find-file-read-only)
+      :desc "Find file read ony" "r"                  #'find-file-read-only
+
+      :map embark-general-map
+      :desc "Cycle candidates"  "C-."                 #'embark-cycle)
