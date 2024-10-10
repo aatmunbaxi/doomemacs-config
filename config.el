@@ -1,13 +1,10 @@
 ;; -*- lexical-binding: t; -*-
-
-
-;;;; * sime
-
 ;;; * Setup load path.
 (if (equal (system-name) "pop-os")
     (add-to-list 'load-path "~/.config/doom/")
   (add-to-list 'load-path "~/.doom.d/"))
 (setq! local-package-path (expand-file-name "lisp/" doom-user-dir))
+
 ;;; * Some functions
 (after!  emacs
   (defun my/switch-buffer-other-window ()
@@ -21,20 +18,22 @@
 
 (when (EVA-02-p)
   (display-battery-mode))
+(setq! display-time-format "%H:%M %d %b %Y")
 (display-time-mode)
 
+(setq! fancy-splash-image (expand-file-name "splash/you_will_never_be_happy-take-1.svg" doom-user-dir))
 
 ;;; * Buffer related config
 ;;; ** `activities'
-(activities-mode)
-
+;; (activities-mode)
 
 ;;; ** `dogears'
-(dogears-mode)
 (setq! dogears-idle nil)
+(dogears-mode)
 
 ;;; ** `ace-window'
-(setq! aw-scope 'global)
+(when (modulep! :ui window-select)
+  (setq! aw-scope 'global))
 
 (when (EVA-02-p)
   (defun my/open-eat-other-frame ()
@@ -67,7 +66,7 @@
 
 ;;; * Editing
 (setq! kill-whole-line t)
-(add-hook! text-mode #'jinx-mode)
+(global-jinx-mode)
 
 (defun my/find-bounds-of-regexps (open close)
   (let ((start (point))
@@ -92,7 +91,7 @@
       (when (= parity 0) (cons end (point))))))
 
 ;;; ** `easy-kill' and `expand-region' interop
-(after! (expand-region easy-kill)
+(after! easy-kill
   (defun easy-kill-expand-region ()
     "Expand kill according to expand-region."
     (interactive)
@@ -147,6 +146,10 @@
           :default-height 110
           :default-weight regular)
 
+         (office-monitor
+          :inherit regular-serif
+          :default-height 135)
+
          (regular-sans-serif
           :variable-pitch-family ,variable-sans-serif
           :fixed-pitch-family ,variable-sans-serif
@@ -159,6 +162,9 @@
          (large
           :inherit medium
           :default-height 180)
+         (huge
+          :inherit medium
+          :default-height 210)
 
          (t ; our shared fallback properties
           :default-family ,variable-font
@@ -189,7 +195,7 @@
 
 ;;; * LaTeX
 (after! math-delimiters
-  (setq! math-delimiters-compressed-display-math nil))
+  (setq! math-delimiters-compressed-display-math t))
 
 (setq! bibtex-dialect 'biblatex)
 
@@ -247,77 +253,98 @@ When pressed twice, make the sub/superscript roman."
 
 (after! (:and laas (:or org latex))
   (aas-set-snippets 'laas-mode
-    :cond #'laas-mathp
-    "opr" '(tempel "\\operatorname{" r "}" q)
-    "^" #'my/cdlatex-sub-superscript
-    "_" #'my/cdlatex-sub-superscript
-    "ox" "\\otimes"
-    "iso" "\\cong"
-    "hom" "\\hom"
-    "ker" "\\ker"
-    "ZZ" "\\mathbb{Z}"
-    "CC" "\\mathbb{C}"
-    "RR" "\\mathbb{R}"
-    "QQ" "\\mathbb{Q}"))
+                    :cond #'laas-mathp
+                    "opr" '(tempel "\\operatorname{" r "}" q)
+                    "^" #'my/cdlatex-sub-superscript
+                    "_" #'my/cdlatex-sub-superscript
+                    "ox" "\\otimes"
+                    "<=" "\\leqslant"
+                    ">=" "\\geqslant"
+                    "iso" "\\cong"
+                    "hom" "\\hom"
+                    "ker" "\\ker"
+                    "ZZ" "\\mathbb{Z}"
+                    "CC" "\\mathbb{C}"
+                    "RR" "\\mathbb{R}"
+                    "*" "\\ast"
+                    "QQ" "\\mathbb{Q}"))
 
+
+;;; * Julia
+(when (modulep! :lang julia +snail)
+  (remove-hook! julia-mode #'julia-repl-mode)
+  (add-hook! julia-mode #'julia-snail-mode))
+
+(add-to-list 'exec-path "~/.juliaup/bin")
+(when (modulep! :lang julia +lsp)
+  (setq! eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
+
+(setq! julia-snail-executable "~/.juliaup/bin/julia"
+       org-babel-julia-command "~/.juliaup/bin/julia")
 
 ;;; * org-mode
-(after! org
-  (defun +org/close-all-folds ()
-    "Close all folds in org buffer"
-    (interactive)
-    (org-map-entries #'org-fold-hide-entry ))
-
-  (defun +org/open-all-folds ()
-    "Close all folds in org buffer"
-    (interactive)
-    (org-map-entries #'org-fold-show-entry )))
+(use-package! org-latex-preview
+  :after (org)
+  :config
+  (plist-put org-latex-preview-appearance-options
+             :page-width 0.8)
+  (add-hook 'org-latex-preview-auto-ignored-commands 'next-line)
+  (add-hook 'org-latex-preview-auto-ignored-commands 'previous-line)
+  (setq! org-latex-preview-numbered t
+         org-latex-preview-live t))
 
 ;;; ** Variables
-(after! org-agenda
-  (setq! org-agenda-files '( "~/Documents/org/inbox.org"
-                             "~/Documents/org/gtd.org"
-                             "~/Documents/org/tickler.org"
-                             "~/Documents/org/graveyard.org")
+(add-hook! org-agenda-mode (setq-local line-spacing 0.20))
 
-         org-agenda-include-deadlines t
+(setq! org-directory "~/Documents/org/"
+       org-default-notes-file "~/Documents/org/notes.org"
+       org-agenda-files '( "~/Documents/org/inbox.org"
+                           "~/Documents/org/gtd.org"
+                           "~/Documents/org/tickler.org"
+                           "~/Documents/org/graveyard.org"
+                           "~/Documents/org/maybe.org"
+                           "~/Documents/org/roam/daily/dailies.org")
+
+       org-refile-targets '((("~/Documents/org/gtd.org")   :maxlevel . 2)
+                            (("~/Documents/org/inbox.org")   :maxlevel . 2)
+                            ("~/Documents/org/tickler.org"  :level . 1)
+                            (("~/Documents/org/maybe.org")  :level . 1)
+                            (("~/Documents/org/notes.org")   :maxlevel . 3)
+                            (("~/Documents/org/research_notes.org")   :maxlevel . 2)
+                            (("~/Documents/org/graveyard.org") :level . 1)
+                            (("~/Documents/org/roam/daily/dailies.org") :maxlevel . 5)))
+(after! org
+  (setq! org-agenda-include-deadlines t
+         org-agenda-use-time-grid nil
          org-agenda-block-separator nil
-         org-agenda-compact-blocks nil
+         org-agenda-compact-blocks t
          org-agenda-start-day nil ;; i.e. today
-         org-agenda-span 4
+         org-agenda-span 5
          org-agenda-skip-scheduled-if-done t
          org-agenda-skip-deadline-if-done t
-         org-agenda-start-day "-1d"
-         org-agenda-todo-ignore-scheduled t))
+         org-agenda-todo-ignore-scheduled 'all
+         org-refile-use-outline-path 'file
+         org-outline-path-complete-in-steps nil)
+  (setq! org-latex-src-block-backend 'engraved)
 
-(after! org
-  (setq! org-refile-use-outline-path 'file
-         org-outline-path-complete-in-steps nil
-         org-refile-targets '((("~/Documents/org/gtd.org")   :maxlevel . 1)
-                              (("~/Documents/org/inbox.org")   :maxlevel . 2)
-                              ("~/Documents/org/tickler.org"  :level . 1)
-                              (("~/Documents/org/maybe.org")  :level . 1)
-                              (("~/Documents/org/notes.org")   :maxlevel . 3)
-                              (("~/Documents/org/research_notes.org")   :maxlevel . 2)
-                              (("~/Documents/org/graveyard.org") :level . 1)))
   (setq! org-capture-templates
          '(("t" "Todo" entry (file "~/Documents/org/inbox.org")
-            "* TODO %?%i\n%a\ncreated: %t\n")
+            "* TODO %?%i\n%a\n")
            ("r" "research" entry (file "~/Documents/org/inbox.org")
-            "* RSCH %?\n%i\n%a\ncreated: %t\n")
+            "* RSCH %?\n%i\n%a\n")
            ("i" "idea" entry (file "~/Documents/org/readinglist.org")
-            "* IDEA %?\n%i\n%a\ncreated: %t\n")
+            "* IDEA %?\n%i\n%a\n")
            ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
             ;; Call with C-u C-u interactive argument to insert inactive stamp
             "* %? \n%(funcall 'org-timestamp '(16) 't)"
             :empty-lines 1)
            ("M" "Email workflow")
            ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
-            "* TODO Follow up with %:fromname on %a\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%i" :immediate-finish t)
+            "* TODO Follow up with %:fromname on %a :email:\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%i" :immediate-finish t)
            ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
             "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
            ("mr" "Read Later" entry (file"~/Documents/org/readinglist.org")
-            "* READ %:subject\nSCHEDULED: %t\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n\n%i" :immediate-finish t))
+            "* READ %:subject\nSCHEDULED: %t :email:\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n\n%i" :immediate-finish t))
 
          org-archive-location ".%s_archive::"
          org-file-apps (quote
@@ -339,11 +366,11 @@ When pressed twice, make the sub/superscript roman."
                                         ("v" . "verse"))
 
          org-startup-with-latex-preview nil
-         org-directory "~/Documents/org/"
-         org-default-notes-file "~/Documents/org/notes.org"
+
          org-todo-keywords     '((sequence
                                   "TODO(t)"
                                   "IDEA(i)"
+                                  "EVENT(e)"
                                   "WAIT(w)"
                                   "PROG(g)"
                                   "MAYBE(m)"
@@ -368,66 +395,157 @@ When pressed twice, make the sub/superscript roman."
          org-fontify-quote-and-verse-blocks nil
          org-ellipsis "  "
          org-image-actual-width 400
-         org-hide-emphasis-markers t))
+         org-hide-emphasis-markers t)
 
 
 ;;; * bibtex
-(after! bibtex
-  (setq! bibtex-autokey-year-length 4
-         bibtex-autokey-name-year-separator "-"
-         bibtex-autokey-year-title-separator "-"
-         bibtex-autokey-titleword-separator "-"
-         bibtex-autokey-titlewords 2
-         bibtex-autokey-titlewords-stretch 1
-         bibtex-autokey-titleword-length 5))
+  (after! bibtex
+    (setq! bibtex-autokey-year-length 4
+           bibtex-autokey-name-year-separator "-"
+           bibtex-autokey-year-title-separator "-"
+           bibtex-autokey-titleword-separator "-"
+           bibtex-autokey-titlewords 2
+           bibtex-autokey-titlewords-stretch 1
+           bibtex-autokey-titleword-length 5))
 
 ;;; ** `org-present'
-(after! org-present
-  (setq! org-present-hide-stars-in-headings t
-         org-present-text-scale 4.5)
+  (after! org-present
+    (setq! org-present-hide-stars-in-headings t
+           org-present-text-scale 4.5)
 
-  (add-hook! org-present-mode
-    (setq-local visual-fill-column-mode 1)
-    (setq-local hl-line-mode nil)
-    (org-present-hide-cursor)
-    (org-display-inline-images)
-    (setq-local spell-fu-mode nil)
-    (hide-mode-line-mode))
+    (add-hook! org-present-mode
+      (setq-local visual-fill-column-mode 1)
+      (setq-local hl-line-mode nil)
+      (org-present-hide-cursor)
+      (org-display-inline-images)
+      (setq-local spell-fu-mode nil)
+      (hide-mode-line-mode))
 
-  (add-hook! org-present-mode-quit
-    (setq-local hl-line-mode 1)
-    (setq-local visual-fill-column-mode nil)
-    (org-present-show-cursor)
-    (setq-local spell-fu-mode 1)
-    (org-remove-inline-images)
-    (hide-mode-line-mode)))
+    (add-hook! org-present-mode-quit
+      (setq-local hl-line-mode 1)
+      (setq-local visual-fill-column-mode nil)
+      (org-present-show-cursor)
+      (setq-local spell-fu-mode 1)
+      (org-remove-inline-images)
+      (hide-mode-line-mode))))
 
 ;;; ** `org-super-agenda'
-(after! org-agenda
+(after! org
   (setq! org-agenda-custom-commands
-         '(("n" "Super view"
+         '(("n" "Today's agenda"
             ((agenda "" ((org-super-agenda-groups
-                          '((:name "Due Today"
+                          `((:discard (:file-path "graveyard"))
+                            (:discard (:todo "MAYBE"))
+                            (:name "Today"
+                             :scheduled today
+                             :face (:foreground ,(technicolor-get-color 'green) :extend t)
+                             :order 2)
+                            (:name "Due Today"
+                             :face (:background ,(technicolor-relative-darken 'red 90) :extend t)
                              :deadline today
-                             :order 0)
-                            (:name "Todo"
-                             :todo ("PROG" "WAIT" "NEXT")
-                             :and (:todo "TODO" :scheduled today)
-                             :and (:todo "TODO" :deadline today)
-                             :habit t
-                             :order)))))
+                             :order 1)
+                            (:discard anything)))))
              (alltodo ""
                       ((org-agenda-overriding-header "")
                        (org-super-agenda-groups
-                        '((:name "Maybe / To Read"
-                           :todo ("IDEA" "READ" "MAYBE")
-                           :order 10)
-
+                        `((:discard (:file-path "graveyard"))
+                          (:discard (:file-path "maybe"))
+                          (:discard (:todo "MAYBE"))
+                          (:discard (:scheduled t))
+                          (:discard (:deadline  t))
                           (:name "Unscheduled"
-                           :children ("TODO" "DONE")
-                           :and (:scheduled nil :deadline nil)
-                           :order 6)
-                          (:discard (:children nil))))))))))
+                           :todo  ("EVENT" "TODO")
+                           :order 0
+                           :face (:height 0.9
+                                  :foreground ,(technicolor-relative-darken 'foreground 10)))
+                          (:discard (:anything t))))))))
+           ("w" "Week agenda"
+            ((agenda "" ((org-super-agenda-groups
+                          `((:discard (:file-path "graveyard"))
+                            (:discard (:todo "MAYBE"))
+                            (:auto-planning t)
+                            (:auto-planning t)))))
+             (alltodo ""
+                      ((org-agenda-overriding-header "")
+                       (org-super-agenda-groups
+                        `((:discard (:file-path "graveyard"))
+                          (:discard (:file-path "maybe"))
+                          (:discard (:todo "MAYBE"))
+                          (:discard (:scheduled t))
+                          (:discard (:deadline  t))
+                          (:name "Unscheduled"
+                           :todo  ("EVENT" "TODO")
+                           :order 0)
+                          (:discard (:anything t))))))))
+           ("d" "Get back to work!"
+            ((alltodo ""
+                      ((org-agenda-overriding-header "")
+                       (org-super-agenda-groups
+                        `((:discard (:file-path "graveyard"))
+                          (:name "Maybe"
+                           :todo "MAYBE"
+                           :face (:foreground ,(technicolor-relative-darken 'foreground 70)
+                                  :height 0.9
+                                  :append t)
+                           :order 100)
+                          (:name "Important"
+                           :priority "A"
+                           :face (:foreground ,(technicolor-saturate 'red 20) :append t)
+                           :order 1)
+                          (:name "Ideas"
+                           :todo "IDEA"
+                           :face (:foreground ,(technicolor-get-color 'cyan)
+                                  :height 0.9
+                                  :append t)
+                           :order 80)
+                          (:name "Quick items"
+                           :effort< "30"
+                           :face (:foreground ,(technicolor-saturate 'blue 20) :append t))
+                          (:auto-priority t)
+
+                          (:order-multi (2 (:name "Research"
+                                            :tag "research"
+                                            :face (:foreground ,(technicolor-get-color 'cyan ) :append t))
+                                           (:name "Teaching"
+                                            :tag "teaching"
+                                            :face (:foreground ,(technicolor-get-color 'green ) :append t))))))))))
+           ("l" "Todos"
+            ((alltodo ""
+                      ((org-agenda-overriding-header "")
+                       (org-super-agenda-groups
+                        `((:discard (:file-path "graveyard"))
+                          (:auto-planning t)
+                          (:name "Ideas"
+                           :todo "IDEA"
+                           :face (:foreground ,(technicolor-get-color 'cyan)
+                                  :height 0.9
+                                  :append t)
+                           :order 80)
+
+                          (:name "Maybe"
+                           :todo "MAYBE"
+                           :face (:foreground ,(technicolor-relative-darken 'foreground 70)
+                                  :height 0.9
+                                  :append t)
+                           :order 100)
+                          (:name "Important"
+                           :priority "A"
+                           :face (:foreground ,(technicolor-saturate 'red 20) :append t)
+                           :order 1)
+                          (:order-multi (2 (:name "Research"
+                                            :tag "research"
+                                            :face (:foreground ,(technicolor-get-color 'cyan ) :append t))
+                                           (:name "Teaching"
+                                            :tag "teaching"
+                                            :face (:foreground ,(technicolor-get-color 'green ) :append t))))
+                          (:name "Email"
+                           :tag "email"
+                           :order 20)
+                          (:name "Personal"
+                           :tag "personal"
+                           :order 3)
+                          (:auto-tags t
+                           :order 50)))))))))
   (org-super-agenda-mode))
 
 ;;; ** `org' specific `expand-region' functionality
@@ -463,10 +581,10 @@ When pressed twice, make the sub/superscript roman."
            #'org-appear-mode
            #'variable-pitch-mode
            #'org-latex-preview-auto-mode
-           #'turn-off-smartparens-mode
-           ;; (require 'cdlatex)
+           
+           (org-indent-mode -1)
+           (require 'cdlatex)
            (setq! display-line-numbers-mode nil
-                  org-indent-mode nil
                   tab-width 8
                   smartparens-mode nil))
 
@@ -489,16 +607,13 @@ When pressed twice, make the sub/superscript roman."
       :desc "Forward LaTeX math"             "M-TAB"               #'forward-latex-math
       :desc "Backward LaTeX math"            "M-<iso-lefttab>"     #'backward-latex-math)
 
-(defalias 'align-map-blocks-with-desc
-  (kmacro "C-a C-M-f C-M-f M-x z a p SPC u p RET \" M-: ( i n s e r t SPC DEL - c h a r SPC \" <up> <up> <down> <down> C-f DEL DEL ? SPC ( - SPC 4 5 SPC * DEL ( c u r r e n t - c o l u m n C-f C-f C-f RET"))
-
-
-
+;; (defalias 'align-map-blocks-with-desc
+;;   (kmacro "C-a C-M-f C-M-f M-x z a p SPC u p RET \" M-: ( i n s e r t SPC DEL - c h a r SPC \" <up> <up> <down> <down> C-f DEL DEL ? SPC ( - SPC 4 5 SPC * DEL ( c u r r e n t - c o l u m n C-f C-f C-f RET"))
 
 
 ;;; * `expand-region'
-(setq! expand-region-fast-keys-enabled nil)
 (after! expand-region
+  (setq! expand-region-fast-keys-enabled nil)
   (define-repeat-map expand-region
     (:continue
      "," er/expand-region
@@ -582,6 +697,7 @@ for details."
       (er/mark-outside-pairs))))
 
 ;;; **** `org-mode' and `expand-region' latex interop
+
 (defun er/add-latex-in-org-mode-expansions ()
   (require 'expand-region)
   ;; Make Emacs recognize \ as an escape character in org
@@ -607,22 +723,22 @@ for details."
 
 ;;; * `tempel'
 ;;; ** Basic setup
-(defun tempel-setup-capf ()
-  ;; Add the Tempel Capf to `completion-at-point-functions'.
-  ;; `tempel-expand' only triggers on exact matches. Alternatively use
-  ;; `tempel-complete' if you want to see all matches, but then you
-  ;; should also configure `tempel-trigger-prefix', such that Tempel
-  ;; does not trigger too often when you don't expect it. NOTE: We add
-  ;; `tempel-expand' *before* the main programming mode Capf, such
-  ;; that it will be tried first.
-  (setq-local completion-at-point-functions
-              (cons #'tempel-expand
-                    completion-at-point-functions)))
-
-(add-hook! prog-mode #'tempel-setup-capf)
-(add-hook! text-mode #'tempel-setup-capf)
-
 (after! tempel
+  (defun tempel-setup-capf ()
+    ;; Add the Tempel Capf to `completion-at-point-functions'.
+    ;; `tempel-expand' only triggers on exact matches. Alternatively use
+    ;; `tempel-complete' if you want to see all matches, but then you
+    ;; should also configure `tempel-trigger-prefix', such that Tempel
+    ;; does not trigger too often when you don't expect it. NOTE: We add
+    ;; `tempel-expand' *before* the main programming mode Capf, such
+    ;; that it will be tried first.
+    (setq-local completion-at-point-functions
+                (cons #'tempel-expand
+                      completion-at-point-functions)))
+
+  (add-hook! prog-mode #'tempel-setup-capf)
+  (add-hook! text-mode #'tempel-setup-capf)
+
   (setq! tempel-path (directory-files (concat doom-user-dir "templates") t "eld$")
          tempel-auto-reload t))
 
@@ -664,6 +780,14 @@ for details."
           :unnarrowed nil))
 
        citar-org-roam-capture-template-key "b")
+(after! org
+  (org-roam-db-autosync-mode)
+
+  ;; function to add a citar key to ROAM_REFS property
+  ;; for org-roam nodes
+  (defun citar-org-roam-tag-headline ( &optional rest )
+    (interactive)
+    (org-roam-property-add "ROAM_REFS" (s-concat  "@" (car (citar--key-at-point))))))
 
 
 ;;; ** `org-roam' helper functions
@@ -703,6 +827,7 @@ format to top level headlines in `org' buffer BUFF"
 
 ;;; ** Solving org-roam file ID annoyance
 (after! org-roam
+  (org-roam-db-autosync-enable)
   (defun my/remove-file-level-org-ID ()
     "Removes file-level org ID property
 
@@ -718,20 +843,19 @@ to the post-capture hook."
 
 ;;; ** `org-roam' keybindings
 (map! :map global-map
-
       :leader
       (:prefix-map ("n r" . "roam")
        :desc "Insert node" "i" #'org-roam-node-insert
        :desc "Find node" "f" #'org-roam-node-find
        :desc "Sync database" "s" #'org-roam-db-sync
-       :desc "Refile node" "w" #'org-roam-refile
+       :desc "Refile node" "w" #'org-roam-refile)
 
-       (:prefix-map ("d" . "dailies")
-        :desc "Capture today" "n" #'org-roam-dailies-capture-today
-        :desc "Capture y'day" "y" #'org-roam-dailies-capture-yesterday
-        :desc "Capture tomorrow" "t" #'org-roam-dailies-capture-tomorrow
-        :desc "Goto today" "f" #'org-roam-dailies-goto-today
-        :desc "Goto date" "d" #'org-roam-dailies-goto-date)))
+      (:prefix-map ("n d" . "dailies")
+       :desc "Capture today" "n" #'org-roam-dailies-capture-today
+       :desc "Capture y'day" "y" #'org-roam-dailies-capture-yesterday
+       :desc "Capture tomorrow" "t" #'org-roam-dailies-capture-tomorrow
+       :desc "Goto today" "f" #'org-roam-dailies-goto-today
+       :desc "Goto date" "d" #'org-roam-dailies-goto-date))
 
 ;;; * `citar'
 ;;; ** variables
@@ -753,8 +877,7 @@ to the post-capture hook."
 (defun my/citar-emabark-update-prefix-suffix (cite)
   (citar-org-update-prefix-suffix nil))
 (map! :map org-mode-map
-      "C-c ]"                             #'citar-insert-citation
-
+      
       :map citar-embark-map
       :desc "Prefix/Suffix"           "p"        #'my/citar-emabark-update-prefix-suffix
       :desc "Open entry"              "e"        #'citar-open-entry
@@ -764,6 +887,8 @@ to the post-capture hook."
       :desc "Open notes"              "n"        #'citar-open-notes
       :desc "Open"                    "o"        #'citar-open
       :desc "Copy reference"          "r"        #'citar-copy-reference
+      (:after org-roam
+       :desc "Add to node refs"        "k"       #'citar-org-roam-tag-headline)
 
       :map citar-embark-citation-map
       :desc "Prefix/Suffix"           "p"        #'my/citar-emabark-update-prefix-suffix
@@ -773,7 +898,9 @@ to the post-capture hook."
       :desc "Open link"               "l"        #'citar-open-links
       :desc "Open notes"              "n"        #'citar-open-notes
       :desc "Open"                    "o"        #'citar-open
-      :desc "Copy reference"          "r"        #'citar-copy-reference)
+      :desc "Copy reference"          "r"        #'citar-copy-reference
+      (:after org-roam
+       :desc "Add to node refs"        "k"       #'citar-org-roam-tag-headline))
 
 ;;; * `pdf-view' mode
 (pdf-loader-install)
@@ -794,6 +921,12 @@ to the post-capture hook."
 (use-package! avy-utils
   :after avy
   :load-path local-package-path)
+
+;; (defun my/avy-lg-mark-char-timer (&optional ARG)
+;;   (interactive)
+;;   (if ARG
+;;       (lasgun-mark-char-timer)
+;;     (avy-goto-char-timer)))
 
 ;;; ** `avy' variables
 (after! avy
@@ -946,6 +1079,7 @@ to the post-capture hook."
   (defun consult-dir-reference-pdfs ()
     '("~/Documents/bib/pdfs/" "~/Documents/books/"))
 
+
   (defvar consult-dir--source-references
     '(:name "References"
       :narrow ?z
@@ -954,20 +1088,35 @@ to the post-capture hook."
       :history file-name-history
       :items consult-dir-reference-pdfs)
     "Reference pdf direcories")
-  (add-to-list 'consult-dir-sources 'consult-dir--source-references))
+  (add-to-list 'consult-dir-sources 'consult-dir--source-references)
+
+
+  (after! org
+    (defun consult-dir-org-source ()
+      `(,org-directory))
+
+    (defvar consult-dir--source-org-dir
+      '(:name "Org"
+        :narrow ?o
+        :category file
+        :face consult-file
+        :history file-name-history
+        :items consult-dir-org-source)
+      "org direcory")
+    (add-to-list 'consult-dir-sources 'consult-dir--source-org-dir)))
 
 
 ;;; * `lasgun'
 (use-package! lasgun
   :defer t
   :commands
-  (lasgun-mark-line
+  (lasgun-mark-char-timer
+   lasgun-mark-line
    lasgun-mark-char-2
    lasgun-mark-word-0
    lasgun-mark-symbol-1
    lasgun-mark-subword-0
    lasgun-mark-subword-1
-   lasgun-mark-char-timer
    lasgun-mark-end-of-line
    lasgun-mark-char-2-above
    lasgun-mark-char-2-below
@@ -976,17 +1125,18 @@ to the post-capture hook."
    lasgun-mark-symbol-1-above
    lasgun-mark-symbol-1-below
    lasgun-mark-whitespace-end
-   lasgun-mark-overlay-at-mark
    lasgun-mark-whitespace-end-above
    lasgun-mark-whitespace-end-below)
   :config
-  (setq! lasgun-also-push-mark-ring t)
+  (setq! lasgun-also-push-mark-ring t
+         lasgun-pop-before-make-multiple-cursors nil)
   (define-lasgun-action lasgun-action-upcase-word t upcase-word)
   (define-lasgun-action lasgun-action-downcase-word t downcase-word)
   (define-lasgun-action lasgun-action-kill-word nil kill-word)
   (define-lasgun-action lasgun-action-kill-whole-line nil kill-whole-line)
   (define-lasgun-action lasgun-action-comment-line t comment-line)
   (define-lasgun-action lasgun-action-jinx-correct t jinx-correct-nearest)
+
   (defun lasgun-action-helpful ()
     (interactive)
     (dolist (pos (ring-elements lasgun-mark-ring))
@@ -1043,39 +1193,26 @@ to the post-capture hook."
               (insert separator)))))
       (lasgun-clear-lasgun-mark-ring)
       (message "Error yanking sexps")))
+  (defun lasgun-prompt-action ()
+    (interactive)
+    (let ((command (read-from-minibuffer "Command: ")))
+      (unwind-protect
+          (save-excursion
+            (dolist (pos (ring-elements lasgun-mark-ring))
+              (goto-char pos)
+              (call-interactively (intern command) t)))
+        (lasgun-clear-lasgun-mark-ring))))
 
+  (defun lasgun-action-pop-and-jump ()
+    (interactive)
+    (unless (ring-empty-p lasgun-mark-ring)
+      (unless (ring-member lasgun-mark-ring (point))
+        (push-mark-no-activate (point)))
+      (goto-char (ring-ref lasgun-mark-ring 0))
+      (ring-remove lasgun-mark-ring 0))
+    (message "No lasgun marks")))
 
-;;; ** `lasgun' actions
-  (after! lasgun
-    (defun lasgun-prompt-action ()
-      (interactive)
-      (let ((command (read-from-minibuffer "Command: ")))
-        (unwind-protect
-            (save-excursion
-              (dolist (pos (ring-elements lasgun-mark-ring))
-                (goto-char pos)
-                (call-interactively (intern command) t)))
-          (lasgun-clear-lasgun-mark-ring))))
-
-    (defun lasgun-action-pop-and-jump ()
-      (interactive)
-      (unless (ring-empty-p lasgun-mark-ring)
-        (unless (ring-member lasgun-mark-ring (point))
-          (push-mark-no-activate (point)))
-        (goto-char (ring-ref lasgun-mark-ring 0))
-        (ring-remove lasgun-mark-ring 0))
-      (message "No lasgun marks")))
-
-
-  (defun my/avy-lg-mark-char-timer (ARG)
-    (interactive "P")
-    (if (equal ARG '(4))
-        (lasgun-mark-char-timer)
-      (avy-goto-char-timer))))
-
-
-;;; ** `transient' menu for `lasgun'
-(after!  lasgun
+(after! (:and avy lasgun)
   (transient-define-prefix lasgun-transient ()
     "Main transient for lasgun."
     [["Marks"
@@ -1087,42 +1224,42 @@ to the post-capture hook."
      ["Actions"
       ("SPC" "Make cursors" lasgun-make-multiple-cursors)
       ("." "Embark act" lasgun-embark-act-all)
-      ("$" "Jinx correct" lasgun-action-jinx-correct :transient t)
-      ("K" "Kill whole line" lasgun-action-kill-whole-line :transient t)]
-     ["Actions ctd."
+      ("$" "Jinx correct" lasgun-action-jinx-correct :transient t)]
+     ["" :description ""
       ("m" "Toggle math delims" lasgun-action-toggle-math-delims :transient t)
       (";" "Comment line" lasgun-action-comment-line :transient t)
       ("?" "Specify action" lasgun-prompt-action :transient t)]
-     ["Transient"
+     [""
       ("q" "Quit" transient-quit-one)]])
   (add-hook! transient-exit #'lasgun-clear-lasgun-mark-ring))
 
+;;; ** `lasgun' actions
+(defun my/avy-lg-mark-char-timer (ARG)
+  (interactive "P")
+  (if (equal ARG '(4))
+      (lasgun-mark-char-timer)
+    (avy-goto-char-timer)))
 
-
-
-
-;;; * Email configuration: `mu4e'
-;; Needs some personal stuff that I don't want to include publically
-;; (require 'setup-email)
-
-;;; * TRAMP
+;;; * TRAMP-REMOTE-PATH
 (connection-local-set-profile-variables 'remote-path-with-local-cargo
                                         '((tramp-remote-path . ("~/.cargo/bin" tramp-default-remote-path))))
 (connection-local-set-profiles nil 'remote-path-with-local-cargo)
 
 ;;; * `embark'
-(setq! embark-confirm-act-all nil)
+(after! embark
+  (setq! embark-confirm-act-all nil))
 
 ;;; * quiver
-(defun open-quiver-local ()
-  "Open quiver program locally"
-  (interactive)
-  (start-process "open-quiver" nil "firefox" "--new-window" "/home/aatmun/working/quiver/src/index.html"))
+(after! latex
+  (defun open-quiver-local ()
+    "Open quiver program locally"
+    (interactive)
+    (start-process "open-quiver" nil "firefox" "--new-window" "/home/aatmun/working/quiver/src/index.html"))
 
-(defun open-quiver-web ()
-  "Open quiver program on the web"
-  (interactive)
-  (start-process "open-quiver" nil "firefox" "--new-window" "https://q.uiver.app"))
+  (defun open-quiver-web ()
+    "Open quiver program on the web"
+    (interactive)
+    (start-process "open-quiver" nil "firefox" "--new-window" "https://q.uiver.app")))
 
 ;;; * `repeat-mode'
 ;;; ** window management repeat map
@@ -1234,6 +1371,7 @@ to the post-capture hook."
     (add-to-list 'mc/cmds-to-run-once cmd)))
 
 ;;; * `common-lisp' configuration
+
 (put 'lazy 'common-lisp-indent-function '(1 &rest 1))
 (put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
 (put 'lazy-multiple-value 'common-lisp-indent-function '(1 1 &rest 1))
@@ -1246,13 +1384,14 @@ to the post-capture hook."
 (add-hook! prog-mode #'outli-mode)
 
 ;;; * `haskell'
-(setq! haskell-compile-command "ghc -Wall -ferror-spans -fforce-recomp -dynamic -c %s")
-(add-to-list 'exec-path "/home/aatmun/.ghcup/bin")
+(after! haskell
+  (setq! haskell-compile-command "ghc -Wall -ferror-spans -fforce-recomp -dynamic -c %s")
+  (add-to-list 'exec-path "/home/aatmun/.ghcup/bin"))
+
 (when (and (modulep! :haskell +lsp) (modulep! :tools +lsp))
   (setq! eglot-workspace-configuration '((haskell (plugin (stan (globalOn . :json-false)))))))
 
 ;;; * Eyecandy
-
 ;;; ** Theme
 (setq! doom-theme 'modus-operandi-tinted
        modus-themes-mixed-fonts t)
@@ -1349,29 +1488,40 @@ to the post-capture hook."
 
 
 ;;; ** global eyecandy
-(mood-line-mode)
+(when (not (modulep! :ui modeline))
+  (mood-line-mode))
+
 (spacious-padding-mode)
-
-
-(setq! display-line-numbers-type nil)
-
 (after! spacious-padding
   (setq! spacious-padding-widths
-         '(:internal-border-width 15 :right-divider-width 10 :scroll-bar-width 0)))
+         '(:internal-border-width 15 :right-divider-width 5 :scroll-bar-width 0)))
+
+(after! emacs
+  (setq! display-line-numbers-type nil))
+
+
 
 ;;; ** `technicolor' configuration
-(after! technicolor
+
+(use-package! technicolor
+  :config
+  (defun technicolor-relative-darken (color alpha)
+    (technicolor-blend 'background color alpha))
+  (defun technicolor-relative-lighten (color alpha)
+    (technicolor-blend 'foreground color alpha))
+
   (setq! prot-theme-mappings
          '((foreground . fg-main)
            (background . bg-main)
-           (violet . magenta)
+           (violet . magenta-cooler)
            (green . green-warmer)
            (teal . cyan-cooler)))
 
-  (setq! technicolor-color '(foreground background
-                             red blue
-                             green magenta
-                             violet teal)
+  (setq! technicolor-colors '(foreground background
+                              red blue
+                              green magenta
+                              violet teal
+                              cyan)
 
          technicolor-themes `(,technicolor-doom-themes-data
                               ("^modus-.*" modus-themes-get-color-value
@@ -1385,8 +1535,31 @@ to the post-capture hook."
                                 (background . base)
                                 (magenta . pink)
                                 (violet . mauve)
-                                (cyan . sky))))))
+                                (cyan . sky)))))
 
+  (setq! technicolor-org-src-block-faces '(("julia"      (technicolor-relative-darken  'magenta 90))
+                                           ("python"     (technicolor-relative-darken  'teal 85))
+                                           ("go"     (technicolor-relative-darken  'cyan 90))
+                                           ("lisp"       (technicolor-relative-darken  'green 90))
+                                           ("emacs-lisp" (technicolor-relative-darken  'magenta 85))
+                                           ("rust"       (technicolor-relative-darken  'red 80))
+                                           ("sh"         (technicolor-relative-darken  'green 85))))
+
+  (defun my/technicolor-update-org-src-block-faces ()
+    "Update `org-src-block-faces' list"
+    (progn
+      (setq org-src-block-faces
+            (cl-loop for cell in technicolor-org-src-block-faces collect
+                     `(,(car cell) (:background ,(eval (nth 1 cell)) :extend t))))
+      (when (equal major-mode #'org-mode)
+        (font-lock-fontify-buffer t))))
+
+  (my/technicolor-update-org-src-block-faces)
+
+  (defadvice! my/technicolor-reload-org-src-block-faces (THEME &optional NO-CONFIRM NO-ENABLE)
+    "Apply org src block customizations from technicolor"
+    :after #'load-theme
+    (my/technicolor-update-org-src-block-faces)))
 
 ;;; ** customizing faces
 (after! org-modern
@@ -1403,28 +1576,59 @@ to the post-capture hook."
       :foreground ,(technicolor-blend 'foreground 'background 90))
 
     `(org-modern-date-active :inherit org-modern-label :background ,(technicolor-blend 'background 'blue 85)
-      :foreground ,(technicolor-blend 'foreground 'background 90))))
+      :foreground ,(technicolor-blend 'foreground 'background 90)))
+  (set-face-attribute 'org-modern-todo nil :foreground (technicolor-get-color 'green)))
 
 
 ;;; ** `org-modern'
-(add-hook! org-agenda-finalize #'org-modern-agenda
+(add-hook! org-agenda-finalize
+           #'org-modern-agenda
            #'org-latex-preview-auto-mode)
 
 (after! org-modern
   (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10 )))
     "Face for org modern IDEA tag")
+
+  (defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10) ))
+    "Face for org modern IDEA tag")
+  (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10) ))
+    "Face for org modern IDEA tag")
   (defface org-modern-wait `((t :inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
     "Face for org modern WAIT tag")
-  (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-blend 'background 'green 60)))
+  (defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 10)))
+    "Face for org modern PROG tag")
+  (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
     "Face for org modern MAYBE tag")
 
-
   (defun my/technicolor-customizations ()
+    (set-face-attribute 'org-super-agenda-header  nil
+                        :foreground (technicolor-get-color 'blue) :background 'unspecified
+                        :box nil
+                        :height 1.0)
+    (set-face-attribute 'org-agenda-date nil  :foreground (technicolor-get-color 'foreground)
+                        :background 'unspecified
+                        :box nil
+                        :underline nil
+                        :height 1.1)
+    (set-face-attribute 'org-agenda-date-weekend  nil
+                        :foreground (technicolor-blend 'foreground 'background 50)
+                        :background 'unspecified
+                        :box nil
+                        :underline nil
+                        :height 'unspecified)
+    (set-face-attribute 'org-agenda-date-weekend-today  nil
+                        :foreground (technicolor-blend 'foreground 'background 50)
+                        :background 'unspecified
+                        :box t
+                        :height 'unspecified)
     (set-face-attribute 'org-modern-idea nil :foreground (technicolor-lighten 'cyan 10))
+    (set-face-attribute 'org-modern-todo nil :foreground (technicolor-get-color 'green))
+    (set-face-attribute 'org-modern-draft nil :foreground (technicolor-lighten 'cyan 10))
     (set-face-attribute 'org-modern-wait nil :foreground (technicolor-get-color 'red))
     (set-face-attribute 'org-modern-maybe nil :foreground (technicolor-blend 'background 'green 60))
+    (set-face-attribute 'org-modern-prog nil
+                        :foreground (technicolor-relative-lighten 'green 10) :background 'unspecified)
     (set-face-attribute 'org-modern-time-inactive nil :foreground (technicolor-blend 'background 'green 20))
-
     (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
                         :background (technicolor-blend 'background 'red 95)
                         :foreground (technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
@@ -1437,14 +1641,17 @@ to the post-capture hook."
     (set-face-attribute 'org-modern-date-active nil :inherit 'org-modern-label
                         :background (technicolor-blend 'background 'blue 85)
                         :foreground (technicolor-blend 'foreground 'background 90)))
-
   (add-hook! doom-load-theme #'my/technicolor-customizations))
 
 (after! org-modern
   (setq! org-modern-todo-faces
          `(("IDEA" . org-modern-idea)
+           ("EVENT" . org-modern-event)
+           ("TODO" . org-modern-todo)
            ("WAIT" . org-modern-wait)
-           ("MAYBE" . org-modern-maybe)))
+           ("PROG" . org-modern-prog)
+           ("MAYBE" . org-modern-maybe)
+           ("DRAFT" . org-modern-draft)))
 
   (custom-set-faces!
     '(org-level-1 :inherit outline-1 :height 1.7)
@@ -1520,6 +1727,7 @@ to the post-capture hook."
 
 ;;; * `elfeed' and `elfeed-tube'
 (setq! rmh-elfeed-org-files '("notes.org"))
+
 ;;; ** `elfeed' helper functions
 (after! elfeed
   (defun elfeed-show-eww-open (&optional use-generic-p)
@@ -1552,18 +1760,7 @@ MYTAG"
       (interactive)
       (elfeed-search-toggle-all mytag))))
 
-;;; ** `elfeed-tube'
-;; (after! elfeed
-;;   (require 'elfeed-tube)
-;;   (require 'elfeed-tube-mpv)
-;;   (elfeed-tube-add-feeds '("LobosJr"
-;;                            "Ben Felix"
-;;                            "@KUN1234"
-;;                            "Tobalog_tokyo | トバログ"
-;;                            "LocoYun /ろこゆん"))
 
-;;   (setq! elfeed-tube-captions-languages '("en" "jp" "english (auto generated)" "japanese (auto generated)"))
-;;   (elfeed-tube-setup))
 
 ;;; ** `elfeed'  keybindings
 (after! elfeed
@@ -1593,6 +1790,7 @@ MYTAG"
  :desc "Consult mark"                                  "C-M-,"                  #'consult-mark
  :desc "Other window"                                  "M-o"                    #'other-window
  :desc "Avy goto/Lasgun mark"                          "M-n"                    #'my/avy-lg-mark-char-timer
+ :desc "Avy goto/Lasgun mark"                          "M-g SPC"                #'lasgun-make-multiple-cursors
  :desc "Lasgun mark char timer"                        "C-M-n"                  #'lasgun-mark-char-timer
  :desc "Backward kill sexp"                            "C-M-<backspace>"        #'backward-kill-sexp
  :desc "Move window top/bottom"                        "M-l"                    #'move-to-window-line-top-bottom
@@ -1604,6 +1802,9 @@ MYTAG"
 
  "C-c o T"                                       #'eat
  "C-c o t"                                       #'eat
+
+
+ "C-c ]"                             #'citar-insert-reference
 
  ;; `popper' bindings
  "<escape>"                                      #'popper-toggle
@@ -1646,6 +1847,8 @@ MYTAG"
     :desc "List activities"                       "l"        #'activities-list
     :desc "Switch to buffer with activity"        "b"        #'activities-switch-buffer
     :desc "Revert state"                          "g"        #'activities-revert))
+
+
 
 
  (:prefix "C-c w"
@@ -1696,6 +1899,13 @@ MYTAG"
 ;;; ** `embark' maps
 (map! :map embark-file-map
       :desc "Find file read ony" "r"                  #'find-file-read-only
-
       :map embark-general-map
       :desc "Cycle candidates"  "C-."                 #'embark-cycle)
+
+
+(when init-file-debug
+  (use-package! benchmark-init
+    :ensure t
+    :config
+    ;; To disable collection of benchmark data after init is done.
+    (add-hook 'after-init-hook 'benchmark-init/deactivate)))

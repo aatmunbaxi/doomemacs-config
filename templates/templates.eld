@@ -125,6 +125,7 @@ latex-mode org-mode :when (texmathp)
 (over "\\overset{" (p "over") "}{" (p "lower") "}" q)
 (bx "\\boxtimes")
 (xrow "\\xrightarrow{" p "}")
+
 (bigop (r (completing-read "Operator: "
                            '("\\bigoplus"
                              "\\bigotimes"

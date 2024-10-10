@@ -15,9 +15,10 @@
 ;;       directory (for easy access to its source code).
 
 
+
 (doom! :input
        ;; chinese
-       japanese
+       ;; japanese
        ;; layout                    ; auie,ctsrnm is the superior home row
 
        :completion
@@ -25,8 +26,8 @@
        ;;  helm                     ; the *other* search engine for love and life
        ;;  ido                      ; the other *other* search engine...
        ;; ivy                      ; a search engine for love and life
-       (corfu +icons)
-       (vertico +icons)
+       corfu
+       vertico
 
        :ui
        ;;  deft                     ; notational velocity for Emacs
@@ -39,7 +40,7 @@
        ;;  indent-guides            ; highlighted indent columns
        ;; ligatures                 ; ligatures and symbols to make your code pretty again
        ;;  minimap                  ; show a map of the code on the side
-       ;; (modeline +light)         ; snazzy, Atom-inspired modeline, plus API
+       (modeline +light)         ; snazzy, Atom-inspired modeline, plus API
        ;; nav-flash                    ; blink cursor line after big motions
        ;;  neotree                  ; a project drawer, like NERDTree for vim
        ;; ophints                      ; highlight the region an operation acts on
@@ -67,12 +68,12 @@
        ;; parinfer                     ; turn lisp into python, sort of
        ;; rotate-text               ; cycle region at point between text candidates
        ;; snippets                  ; my elves. They type so I don't have to
-       word-wrap                    ; soft wrapping with language-aware indent
+       ;; word-wrap                    ; soft wrapping with language-aware indent
 
        :emacs
-       (dired  +icons)              ; making dired pretty [functional]
+       dired               ; making dired pretty [functional]
        ;; electric                     ; smarter, keyword-based electric-indent
-       (ibuffer +icons)             ; interactive buffer management
+       ibuffer              ; interactive buffer management
        undo                          ; persistent, smarter undo for your inevitable mistakes
        ;;  vc                       ; version-control and Emacs, sitting in a tree
 
@@ -83,7 +84,7 @@
        ;; vterm                     ; the best terminal emulation in Emacs
 
        :checkers
-       syntax                    ; tasing you for every semicolon you forget
+       ;; syntax                    ; tasing you for every semicolon you forget
        ;; spell                        ; tasing you for misspelling mispelling
        ;; grammar                   ; tasing grammar mistake every you make
 
@@ -95,17 +96,17 @@
        ;; docker
        ;; editorconfig              ; let someone else argue about tabs vs spaces
        ;; ein                       ; tame Jupyter notebooks with emacs
-       (eval +overlay)           ; run code, run (also, repls)
+       eval            ; run code, run (also, repls)
        ;; gist                      ; interacting with github gists
-       (lookup +docsets)                       ; navigate your code and its documentation
-       lsp
+       lookup                        ; navigate your code and its documentation
+       (lsp +eglot)
        biblio
        magit                        ; a git porcelain for Emacs
        ;; pass                      ; password manager for nerds
        ;; make                      ; run make tasks from Emacs
        pdf                          ; pdf enhancements
        ;; prodigy                   ; FIXME managing external services & code builders
-       rgb                          ; creating color strings
+       ;; rgb                          ; creating color strings
        ;; taskrunner                ; taskrunner for all your projects
        ;; terraform                 ; infrastructure as code
        ;; tmux                      ; an API for interacting with tmux
@@ -118,7 +119,7 @@
        :lang
        ;; agda                      ; types of types of types of types...
        ;; (cc +lsp +tree-sitter)                        ; C/C++/Obj-C madness
-       (clojure +lsp +tree-sitter)                   ; java with a lisp
+       ;; (clojure +lsp +tree-sitter)                   ; java with a lisp
        common-lisp           ; if you've seen one lisp, you've seen them all
        ;; coq                       ; proofs-as-programs
        ;; crystal                   ; ruby at the speed of c
@@ -129,7 +130,7 @@
        ;; elm                       ; care for a cup of TEA?
        emacs-lisp                                  ; drown in parentheses
        ;; erlang                    ; an elegant language for a more civilized age
-       ;; ess                       ; emacs speaks statistics
+       ess                       ; emacs speaks statistics
        ;; faust                     ; dsp, but you get to keep your soul
        ;; (fortran +lsp)
        ;; fsharp                    ; ML stands for Microsoft's Language
@@ -142,9 +143,9 @@
        ;; json                      ; At least it ain't XML
        ;; (java +meghanada)         ; the poster child for carpal tunnel syndrome
        ;; javascript                ; all(hope(abandon(ye(who(enter(here))))))
-       ;; (julia +lsp +tree-sitter +snail)                     ; a better, faster MATLAB
+       (julia  +tree-sitter +snail +lsp)                     ; a better, faster MATLAB
        ;; kotlin                    ; a better, slicker Java(Script)
-       ;; latex                        ; writing papers in Emacs has never been so fun
+       latex                        ; writing papers in Emacs has never been so fun
        ;; lean
        ;; factor
        ;; ledger                    ; an accounting system in Emacs
@@ -153,11 +154,11 @@
        ;; nim                       ; python + lisp at the speed of c
        ;; nix                       ; I hereby declare "nix geht mehr!"
        ;; ocaml                     ; an objective camel
-       ;; (org  +hugo +roam2)       ; organize your plain life in plain text
+       (org +pretty +roam2 +hugo +crypt +present)                          ; organize your plain life in plain text
        ;; php                       ; perl's insecure younger brother
        ;; plantuml                  ; diagrams for confusing people more
        ;; purescript                ; javascript, but functional
-       (python  +pyright +poetry +tree-sitter)   ; beautiful is better than ugly
+       (python +poetry)   ; beautiful is better than ugly
        ;; qt                        ; the 'cutest' gui framework ever
        ;; racket                    ; a DSL for DSLs
        ;; raku                      ; the artist formerly known as perl6
@@ -183,16 +184,19 @@
        :app
        ;; calendar
        ;; irc                       ; how neckbeards socialize
-       (rss +org)                   ; emacs as an RSS reader
+       ;; (rss +org)                   ; emacs as an RSS reader
        ;;  twitter                  ; twitter client https://twitter.com/vnought
-       everywhere
+       ;; everywhere
 
        :config
        ;; literate
        (default +bindings))
 
-;; (add-to-list 'load-path "~/.emacs.d/.local/straight/repos/benchmark-init-el/")
-;; add-to-list 'load-path "~/.config/emacs/.local/straight/repos/benchmark-init-el/")
-;; (when init-file-debug
-;;   (require 'benchmark-init)
-;;   (add-hook 'doom-first-input-hook #'benchmark-init/deactivate)
+
+;;(if (equal (system-name) "pop-os")
+;;    (add-to-list 'load-path "~/.config/emacs/.local/straight/repos/benchmark-init-el/")
+;;  (add-to-list 'load-path "~/.emacs.d/.local/straight/repos/benchmark-init-el/"))
+
+;;(when init-file-debug
+;;  (require 'benchmark-init)
+;;  (add-hook 'doom-first-input-hook #'benchmark-init/deactivate))
