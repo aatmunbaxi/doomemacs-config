@@ -84,4 +84,21 @@
                  pt
                (point)) t nil))
 
+
+;;;###autoload
+(defun avy-make-org-roam-link ()
+  "Select the beginning of two words and turn all text
+in between and including those words an `org-roam' link"
+  (interactive)
+  (let* ((current-prefix-arg (when avy-all-windows t))
+         (beg (save-excursion
+                (call-interactively #'avy-goto-word-1 t )))
+         (end (save-excursion
+                (call-interactively #'avy-goto-word-1 t))))
+    (save-excursion (goto-char (car beg))
+                    (push-mark)
+                    (activate-mark)
+                    (goto-char (car end))
+                    (forward-sexp)
+                    (org-roam-node-insert nil))))
 (provide 'avy-utils)
