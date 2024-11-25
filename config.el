@@ -1,9 +1,5 @@
 ;; -*- lexical-binding: t; -*-
-;;; * Setup load path.
-(if (equal (system-name) "pop-os")
-    (add-to-list 'load-path "~/.config/doom/")
-  (add-to-list 'load-path "~/.doom.d/"))
-(setq! local-package-path (expand-file-name "lisp/" doom-user-dir))
+
 
 ;;; * Some functions
 (after!  emacs
@@ -27,6 +23,13 @@
 
 (when (EVA-02-p)
     (setq! fancy-splash-image (expand-file-name "splash/you_will_never_be_happy-take-1.svg" doom-user-dir)))
+
+;;; * Setup load path.
+(if (or (equal (system-name) "pop-os") (surfacep))
+    (add-to-list 'load-path "~/.config/doom/")
+  (add-to-list 'load-path "~/.doom.d/"))
+(setq! local-package-path (expand-file-name "lisp/" doom-user-dir))
+
 
 ;;; * Buffer related config
 ;;; ** `activities'
