@@ -84,12 +84,12 @@
        ;; vterm                     ; the best terminal emulation in Emacs
 
        :checkers
-       ;; syntax                    ; tasing you for every semicolon you forget
+       syntax                    ; tasing you for every semicolon you forget
        ;; spell                        ; tasing you for misspelling mispelling
        ;; grammar                   ; tasing grammar mistake every you make
 
        :tools
-       tree-sitter
+       ;;tree-sitter
        ;; ansible
        ;; debugger                     ; FIXME stepping through code, to help you add bugs
        ;; direnv
@@ -145,7 +145,7 @@
        ;; javascript                ; all(hope(abandon(ye(who(enter(here))))))
        (julia  +tree-sitter +snail +lsp)                     ; a better, faster MATLAB
        ;; kotlin                    ; a better, slicker Java(Script)
-       (latex +cdlatex +fold)                        ; writing papers in Emacs has never been so fun
+       (latex +cdlatex)                        ; writing papers in Emacs has never been so fun
        ;; lean
        ;; factor
        ;; ledger                    ; an accounting system in Emacs
@@ -154,7 +154,7 @@
        ;; nim                       ; python + lisp at the speed of c
        ;; nix                       ; I hereby declare "nix geht mehr!"
        ;; ocaml                     ; an objective camel
-       (org +roam2 +hugo +crypt)                          ; organize your plain life in plain text
+       (org +hugo +crypt)                          ; organize your plain life in plain text
        ;; php                       ; perl's insecure younger brother
        ;; plantuml                  ; diagrams for confusing people more
        ;; purescript                ; javascript, but functional
@@ -177,7 +177,7 @@
        ;; yaml                      ; JSON, but readable
 
        :email
-       ;; (mu4e +gmail +org)
+       (mu4e +gmail +mbsync)
        ;; notmuch
        ;; (wanderlust +gmail)
 
@@ -185,7 +185,6 @@
        calendar
        ;; irc                       ; how neckbeards socialize
        ;; (rss +org)                   ; emacs as an RSS reader
-       ;;  twitter                  ; twitter client https://twitter.com/vnought
        ;; everywhere
 
        :config

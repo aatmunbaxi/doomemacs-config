@@ -24,6 +24,9 @@
         "(provide 'org-version)\n"))))
   :pin nil)
 (unpin! org)
+(package! org-msg)
+(package! repeat-help :recipe (:host github :repo "karthink/repeat-help"))
+(unpin! org-msg)
 (package! org-super-agenda)
 (package! org-appear)
 (package! org-modern)
@@ -53,32 +56,37 @@
 (package! mood-line)
 (package! modus-themes)
 (package! spacious-padding)
-;; (package! catppuccin-theme)
 (package! ef-themes)
 (package! technicolor :recipe (:host github :repo "aatmunbaxi/technicolor"))
-(package! stimmung-themes
-  :recipe (:host github :repo "motform/stimmung-themes"))
-(package! tao-themes
-  :recipe (:host github :repo "11111000000/tao-theme-emacs"))
 (package! emacs-miasma
   :recipe (:host github :repo "daut/miasma-theme.el"))
-
+(package! lambda-themes
+  :recipe (:host github :repo "Lambda-Emacs/lambda-themes"))
 
 ;;; $ Utilities
-(package! indent-bars)
-(package! hyperbole)
+(package! wttrin
+  :recipe (:host github :repo "bcbcarl/emacs-wttrin"))
 (package! consult-org-roam)
-(package! lsp-booster
-  :recipe (:host github :repo "blahgeek/emacs-lsp-booster"))
+(package! org-roam)
+(package! org-node
+  :recipe (:host github :repo "meedstrom/org-node"))
+;; (package! lsp-booster
+;;   :recipe (:host github :repo "blahgeek/emacs-lsp-booster"))
 (package! eglot-booster
   :recipe (:host github :repo "jdtsmith/eglot-booster"))
 (package! el-easydraw
   :recipe (:host github :repo "misohena/el-easydraw"))
 (package! rainbow-mode)
 (package! outli :recipe  (:host github :repo "jdtsmith/outli"))
-(package! define-repeat-map :recipe (:host nil :repo "https://tildegit.org/acdw/define-repeat-map.el"))
 (package! gap-mode)
 (package! popper :recipe (:host github :repo "karthink/popper"))
+n(package! org-roam-ql
+  :recipe (:host github :repo "ahmed-shariff/org-roam-ql"))
+(package! age.el
+  :recipe (:host github :repo "anticomputer/age.el"))
+(package! pinentry)
+(package! embark-org-roam
+  :recipe (:host github :repo "bramadams/embark-org-roam"))
 (package! eat :recipe
   (:host codeberg
    :repo "akib/emacs-eat"
@@ -93,15 +101,15 @@
 ;; (package! keycast :recipe (:host github :repo "tarsius/keycast"))
 (package! no-littering)
 (package! dogears)
-(when (equal (system-name) "pop-os")
-  (package! elffmpeg :recipe ( :local-repo "~/repos/elffmpeg")))
-(package! engraved-faces :recipe (:host github :repo "tecosaur/engrave-faces"))
+;(when (equal (system-name) "pop-os")
+;  (package! elffmpeg :recipe ( :local-repo "~/repos/elffmpeg")))
+(package! engrave-faces :recipe (:host github :repo "tecosaur/engrave-faces"))
 ;; (package! benchmark-init)
 (package! sudoku)
-
+(package! quickroam
+  :recipe (:host github :repo "meedstrom/quickroam"))
 ;;; $ Disable packages
-(package! avy-migemo :disable t)
-
+(disable-packages! avy-migemo
+                   activities)
 (when (modulep! :ui modeline)
   (package! mood-line :disable t))
-(package! activities :disable t)

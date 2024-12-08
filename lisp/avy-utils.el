@@ -86,7 +86,7 @@
 
 
 ;;;###autoload
-(defun avy-make-org-roam-link ()
+(defun avy-make-org-node-link ()
   "Select the beginning of two words and turn all text
 in between and including those words an `org-roam' link"
   (interactive)
@@ -100,5 +100,5 @@ in between and including those words an `org-roam' link"
                     (activate-mark)
                     (goto-char (car end))
                     (forward-sexp)
-                    (org-roam-node-insert nil))))
+                    (org-node-insert-link t))))
 (provide 'avy-utils)

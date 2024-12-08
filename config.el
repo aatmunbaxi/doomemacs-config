@@ -1,8 +1,16 @@
 ;; -*- lexical-binding: t; -*-
-
-
+;;; Commentary
+;;
+;; Generally speaking, this configuration is motivated
+;; by the tenet of "be as lazy as possible" while
+;; not causing any load order errors and accommodating
+;; my fickle decision-making about which modules
+;; and packages to have active in `init.el' and
+;; `packages.el'. Hence, you'll likely find many `after!'
+;; blocks that refer to packages that aren't currently installed
+;; or toggled in
 ;;; * Some functions
-(after!  emacs
+(after! emacs
   (defun my/switch-buffer-other-window ()
     (interactive)
     (save-excursion
@@ -22,12 +30,12 @@
 (display-time-mode)
 
 (when (EVA-02-p)
-    (setq! fancy-splash-image (expand-file-name "splash/you_will_never_be_happy-take-1.svg" doom-user-dir)))
+  (setq! fancy-splash-image (expand-file-name "splash/you_will_never_be_happy-take-1.svg" doom-user-dir)))
 
 ;;; * Setup load path.
-(if (or (equal (system-name) "pop-os") (surfacep))
-    (add-to-list 'load-path "~/.config/doom/")
-  (add-to-list 'load-path "~/.doom.d/"))
+(or (equal (system-name) "pop-os") (surfacep))
+(add-to-list 'load-path "~/.config/doom/")
+(add-to-list 'load-path "~/.doom.d/")
 (setq! local-package-path (expand-file-name "lisp/" doom-user-dir))
 
 
@@ -38,6 +46,11 @@
 ;;; ** `dogears'
 (setq! dogears-idle nil)
 (dogears-mode)
+(map!
+ :desc "Dogears save"                         "M-g M-s"       #'dogears-remember
+ :desc "Dogears forward"                      "M-g M-f"       #'dogears-forward
+ :desc "Dogears backward"                     "M-g M-b"       #'dogears-back
+ :desc "Dogears list"                         "M-g M-l"       #'dogears-list)
 
 ;;; ** `ace-window'
 (when (modulep! :ui window-select)
@@ -208,9 +221,7 @@
 
 (add-hook! enable-theme-functions #'fontaine-apply-current-preset)
 (add-hook! text-mode #'variable-pitch-mode)
-(add-hook! prog-mode (variable-pitch-mode -1))
-(remove-hook! prog-mode #'display-line-numbers-mode
-  #'highlight-numbers-mode)
+(remove-hook! text-mode #'display-line-numbers-mode)
 
 ;;; * LaTeX
 (setq! TeX-engine 'xetex)
@@ -273,43 +284,31 @@ When pressed twice, make the sub/superscript roman."
 
 (after! (:and laas (:or org latex))
   (aas-set-snippets 'laas-mode
-    :cond #'laas-mathp
-    "opr" '(tempel "\\operatorname{" r "}" q)
-    "^" #'my/cdlatex-sub-superscript
-    "_" #'my/cdlatex-sub-superscript
-    "ox" "\\otimes"
-    "<=" "\\leqslant"
-    ">=" "\\geqslant"
-    "iso" "\\cong"
-    "hom" "\\hom"
-    "ker" "\\ker"
-    "ZZ" "\\mathbb{Z}"
-    "CC" "\\mathbb{C}"
-    "RR" "\\mathbb{R}"
-    "*" "\\ast"
-    "QQ" "\\mathbb{Q}"))
+                    :cond #'laas-mathp
+                    "opr" '(tempel "\\operatorname{" r "}" q)
+                    "^" #'my/cdlatex-sub-superscript
+                    "_" #'my/cdlatex-sub-superscript
+                    "ox" "\\otimes"
+                    "<=" "\\leqslant"
+                    ">=" "\\geqslant"
+                    "iso" "\\cong"
+                    "hom" "\\hom"
+                    "ker" "\\ker"
+                    "ZZ" "\\mathbb{Z}"
+                    "CC" "\\mathbb{C}"
+                    "RR" "\\mathbb{R}"
+                    "*" "\\ast"
+                    "QQ" "\\mathbb{Q}"))
 
 
 
 ;;; * eglot
-(use-package! eglot-booster             ;
+(use-package! eglot-booster
   :after eglot
   :config
   (eglot-booster-mode))
 
 
-;;; * Julia
-(when (modulep! :lang julia +snail)
-  (remove-hook! julia-mode #'julia-repl-mode)
-  (add-hook! julia-mode #'julia-snail-mode))
-
-(add-to-list 'exec-path "~/.juliaup/bin")
-(when (modulep! :lang julia +lsp)
-  (setq! eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
-
-(setq! julia-snail-executable "~/.juliaup/bin/julia"
-       julia-snail-extra-args "--threads auto"
-       org-babel-julia-command "~/.juliaup/bin/julia")
 
 ;;; * org-mode
 (use-package! org-latex-preview
@@ -323,7 +322,7 @@ When pressed twice, make the sub/superscript roman."
          org-latex-preview-live t))
 
 ;;; ** Variables
-(add-hook! org-agenda-mode (setq-local line-spacing 0.20))
+(add-hook! org-agenda-mode (setq-local line-spacing 0.35))
 
 (setq! org-directory "~/Documents/org/"
        org-default-notes-file "~/Documents/org/notes.org"
@@ -357,24 +356,38 @@ When pressed twice, make the sub/superscript roman."
          org-outline-path-complete-in-steps nil
          org-latex-src-block-backend 'engraved
          org-use-speed-commands t
-         org-capture-templates
-         '(("t" "Todo" entry (file "~/Documents/org/inbox.org")
-            "* TODO %?%i\n%a\n")
-           ("r" "research" entry (file "~/Documents/org/inbox.org")
-            "* RSCH %?\n%i\n%a\n")
-           ("i" "idea" entry (file "~/Documents/org/readinglist.org")
-            "* IDEA %?\n%i\n%a\n")
-           ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
-            ;; Call with C-u C-u interactive argument to insert inactive stamp
-            "* %? \n%(funcall 'org-timestamp '(16) 't)"
-            :empty-lines 1)
-           ("M" "Email workflow")
-           ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
-            "* TODO Follow up with %:fromname on %a :email:\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%i" :immediate-finish t)
-           ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
-            "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
-           ("mr" "Read Later" entry (file"~/Documents/org/readinglist.org")
-            "* READ %:subject\nSCHEDULED: %t :email:\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n\n%i" :immediate-finish t))
+         org-capture-templates '(("n" "Info/IDEA")
+                                 ("nn" "Info node"
+                                  entry
+                                  (file "~/Documents/org/roam/roam.org")
+                                  "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+                                 ("nt" "Daily: Today"
+                                  entry
+                                  (file+olp+datetree "~/Documents/org/roam/daily/dailies.org")
+                                  "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
+                                  :unnarrowed nil)
+                                 ("ni" "Daily: Idea"
+                                  entry
+                                  (file+olp+datetree "~/Documents/org/roam/dailies.org")
+                                  "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+                                 ("t" "Todo" entry (file "~/Documents/org/inbox.org")
+                                  "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
+                                 ("r" "research" entry (file "~/Documents/org/inbox.org")
+                                  "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
+                                 ("i" "idea" entry (file "~/Documents/org/readinglist.org")
+                                  "* IDEA %?\n%i\n%a\n")
+                                 ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
+                                  ;; Call with C-u C-u interactive argument to insert inactive stamp
+                                  "* %? \n%(funcall 'org-timestamp '(16) 't)"
+                                  :empty-lines 1)
+                                 ("m" "Email workflow")
+                                 ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
+                                  "* TODO Follow up with %:fromname on %a :email:\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                                  :immediate-finish t)
+                                 ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
+                                  "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
+                                 ("mr" "Read Later" entry (file"~/Documents/org/readinglist.org")
+                                  "* READ %:subject\nSCHEDULED: %t :email:\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i" :immediate-finish t))
          org-archive-location ".%s_archive::"
          org-file-apps (quote
                         ((auto-mode . emacs)
@@ -411,7 +424,7 @@ When pressed twice, make the sub/superscript roman."
                                             ("" "fontspec" t ("lualatex" "xetex"))
                                             ("AUTO" "inputenc" t ("pdflatex"))
                                             ("T1" "fontenc" t ("pdflatex")))
-         org-highlight-latex-and-related '(native)
+         org-highlight-latex-and-related nil
          org-startup-folded t
          org-startup-with-inline-images nil
          org-fontify-whole-heading-line t
@@ -420,7 +433,6 @@ When pressed twice, make the sub/superscript roman."
          org-ellipsis "  "
          org-image-actual-width 400
          org-hide-emphasis-markers t))
-
 
 ;;;  bibtex
 (after! bibtex
@@ -435,6 +447,7 @@ When pressed twice, make the sub/superscript roman."
 ;;; ** `ox-cv'
 (use-package! ox-awesomecv
   :after org)
+
 ;;; ** `org-present'
 (after! org-present
   (setq! org-present-hide-stars-in-headings t
@@ -616,35 +629,40 @@ When pressed twice, make the sub/superscript roman."
 
 
 ;;; ** `org' keybindings
+(map! :map global-map
+      :desc "org-ql search"                  "C-c s q s"                 #'org-ql-search
+      :desc "org-ql find"                    "C-c s q f"                 #'org-ql-find
+      (:when (modulep! :lang org +roam2)
+        :desc "org-roam-ql search"           "C-c n r q"    #'org-roam-ql-search))
+
 (map! :map org-mode-map
-      :desc "Math delim insert"              "M-m"                 #'math-delimiters-insert
-      :desc "Search"                         "C-c s q s"           #'org-ql-search
-      :desc "Find"                           "C-c s q f"           #'org-ql-find
-      :desc "Insert bibliography link"       "C-c ]"               #'org-cite-insert
-      :desc "Insert cross reference"         "C-c ["               #'org-ref-insert-ref-link
-      :desc "Forward LaTeX math"             "C-c L f"             #'forward-latex-math
-      :desc "Backward LaTeX math"            "C-c L b"             #'backward-latex-math
-      :desc "Add note"                       "C-c z"               #'org-add-note
-      :desc "Outline"                        "C-c s ,"             #'consult-org-heading
-      :desc "Make ink figure"                "C-c i i"             #'ink-make-figure
-      :desc "Make quiver (local)"            "C-c i c l"           #'open-quiver-local
-      :desc "Make quiver (online)"           "C-c i c w"           #'open-quiver-web
-      :desc "Org structure editing"          "C-c t o"             #'org-nav-transient
-      :desc "Forward LaTeX math"             "M-TAB"               #'forward-latex-math
-      :desc "Backward LaTeX math"            "M-<iso-lefttab>"     #'backward-latex-math)
+      :desc "Math delim insert"              "M-m"                       #'math-delimiters-insert
+      :desc "Insert bibliography link"       "C-c ]"                     #'org-cite-insert
+      :desc "Insert cross reference"         "C-c ["                     #'org-ref-insert-ref-link
+      :desc "Forward LaTeX math"             "C-c L f"                   #'forward-latex-math
+      :desc "Backward LaTeX math"            "C-c L b"                   #'backward-latex-math
+      :desc "Add note"                       "C-c z"                     #'org-add-note
+      :desc "Outline"                        "C-c s ,"                   #'consult-org-heading
+      :desc "Make ink figure"                "C-c i i"                   #'ink-make-figure
+      :desc "Make quiver (local)"            "C-c i c l"                 #'open-quiver-local
+      :desc "Make quiver (online)"           "C-c i c w"                 #'open-quiver-web
+      :desc "Org structure editing"          "C-c t o"                   #'org-nav-transient
+      :desc "Forward LaTeX math"             "M-TAB"                     #'forward-latex-math
+      :desc "Backward LaTeX math"            "M-<iso-lefttab>"           #'backward-latex-math)
 
 ;;; ** `org-agenda' keybindings
-(map! :map org-agenda-mode-map
-      :desc "Calendar" "C" #'=calendar)
+(when (modulep! :app calendar)
+  (map! :map org-agenda-mode-map
+        :desc "Calendar" "C" #'=calendar))
+
 ;;; * `expand-region'
 (after! expand-region
   (setq! expand-region-fast-keys-enabled nil)
-  (define-repeat-map expand-region
-    (:continue
-     "," er/expand-region
-     "." er/contract-region)
-    (:enter er/expand-region
-            er/contract-region)))
+  (defvar-keymap expand-region-repeat-map
+    :repeat ((:enter er/expand-region
+                     er/contract-region))
+    "," #'er/expand-region
+    "." #'er/contract-region))
 
 (advice-add 'er--first-invocation
             :override
@@ -791,8 +809,6 @@ for details."
           :unnarrowed nil
           :prepend nil
           :empty-lines 1)
-         ;; Add a NOTER_DOCUMENT prop even though I don't use
-         ;; `org-noter', but it doesn't hurt to have
          ("b" "Annotated bibliography" entry
           "* ${note-title} :bib:\n:PROPERTIES:\n:FILE: ${citar-file}\n:ID: %(org-id-new)\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n%?"
           :if-new (file "~/Documents/org/roam/annot-bib.org")
@@ -803,20 +819,26 @@ for details."
           "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:"
           :target (file+datetree "dailies.org" day)
           :unnarrowed nil))
-
        citar-org-roam-capture-template-key "b")
 (after! org
-  (org-roam-db-autosync-mode)
+  ;; (org-roam-db-autosync-mode)
 
   ;; function to add a citar key to ROAM_REFS property
   ;; for org-roam nodes
   (defun citar-org-roam-tag-headline ( &optional rest )
     (interactive)
-    (org-roam-property-add "ROAM_REFS" (s-concat  "@" (car (citar--key-at-point))))))
+    (org-node--add-to-property-keep-space "ROAM_REFS" (s-concat  "@" (car (citar--key-at-point)))))
+  (setq! org-node-warn-title-collisions nil))
 
 
 ;;; ** `org-roam' helper functions
-(defer-until! nil
+;; This code is just  helper stuff that I wrote
+;; to migrate my org-roam collection to a single big file
+;; as opposed to many small files. Organizationally, I find
+;; the latter preferable because the in-buffer search utilities
+;; are superior, and I arbitrarily prefer fewer buffers
+;; open at a time. You can safely delete this code.
+(after! nil
   (defun org-roam-file-to-heading (file buff)
     "Moves content from single `org-roam' node FILE to a top
 level heading in BUFF"
@@ -852,7 +874,7 @@ format to top level headlines in `org' buffer BUFF"
 
 ;;; ** Solving org-roam file ID annoyance
 (after! org-roam
-  (org-roam-db-autosync-enable)
+  (quickroam-mode)
   (defun my/remove-file-level-org-ID ()
     "Removes file-level org ID property
 
@@ -863,24 +885,23 @@ to the post-capture hook."
     (save-excursion
       (goto-char (point-min))
       (org-delete-property "ID")))
-
   (add-hook! org-roam-capture-new-node #'my/remove-file-level-org-ID))
 
 ;;; ** `org-roam' keybindings
 (map! :map global-map
       :leader
-      (:prefix-map ("n r" . "roam")
-       :desc "Insert node" "i" #'org-roam-node-insert
-       :desc "Find node" "f" #'org-roam-node-find
-       :desc "Sync database" "s" #'org-roam-db-sync
-       :desc "Refile node" "w" #'org-roam-refile)
+      (:prefix-map ("n r" . "node")
+       :desc "Insert node" "i" #'org-node-insert-link
+       :desc "Find node" "f" #'org-node-find
+       :desc "Refile node" "w" #'org-node-refile)
 
-      (:prefix-map ("n d" . "dailies")
-       :desc "Capture today" "n" #'org-roam-dailies-capture-today
-       :desc "Capture y'day" "y" #'org-roam-dailies-capture-yesterday
-       :desc "Capture tomorrow" "t" #'org-roam-dailies-capture-tomorrow
-       :desc "Goto today" "f" #'org-roam-dailies-goto-today
-       :desc "Goto date" "d" #'org-roam-dailies-goto-date))
+      ;; (:prefix-map ("n d" . "dailies")
+      ;;  :desc "Capture today" "n" #'org-roam-dailies-capture-today
+      ;;  :desc "Capture y'day" "y" #'org-roam-dailies-capture-yesterday
+      ;;  :desc "Capture tomorrow" "t" #'org-roam-dailies-capture-tomorrow
+      ;;  :desc "Goto today" "f" #'org-roam-dailies-goto-today
+      ;;  :desc "Goto date" "d" #'org-roam-dailies-goto-date)
+      )
 
 ;;; * `citar'
 ;;; ** variables
@@ -899,12 +920,14 @@ to the post-capture hook."
          citar-org-roam-capture-template-key "n"))
 
 ;;; ** `citar' related keybindings
-(defun my/citar-emabark-update-prefix-suffix (cite)
+(defun my/citar-embark-update-prefix-suffix (cite)
   (citar-org-update-prefix-suffix nil))
 (map! :map org-mode-map
+      :desc "Find node"         "C-c n r f"      #'org-node-find
+
       
       :map citar-embark-map
-      :desc "Prefix/Suffix"           "p"        #'my/citar-emabark-update-prefix-suffix
+      :desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
       :desc "Open entry"              "e"        #'citar-open-entry
       :desc "Open files"              "f"        #'citar-open-files
       :desc "Edit"                    "i"        #'citar-insert-edit
@@ -912,11 +935,10 @@ to the post-capture hook."
       :desc "Open notes"              "n"        #'citar-open-notes
       :desc "Open"                    "o"        #'citar-open
       :desc "Copy reference"          "r"        #'citar-copy-reference
-      (:after org-roam
-       :desc "Add to node refs"        "k"       #'citar-org-roam-tag-headline)
+      :desc "Add to node refs"        "k"       #'citar-org-roam-tag-headline
 
       :map citar-embark-citation-map
-      :desc "Prefix/Suffix"           "p"        #'my/citar-emabark-update-prefix-suffix
+      :desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
       :desc "Open entry"              "e"        #'citar-open-entry
       :desc "Open files"              "f"        #'citar-open-files
       :desc "Edit"                    "i"        #'citar-insert-edit
@@ -924,8 +946,7 @@ to the post-capture hook."
       :desc "Open notes"              "n"        #'citar-open-notes
       :desc "Open"                    "o"        #'citar-open
       :desc "Copy reference"          "r"        #'citar-copy-reference
-      (:after org-roam
-       :desc "Add to node refs"        "k"       #'citar-org-roam-tag-headline))
+      :desc "Add to node refs"        "k"        #'citar-org-roam-tag-headline)
 
 ;;; * `pdf-view' mode
 (pdf-loader-install)
@@ -1025,7 +1046,7 @@ to the post-capture hook."
             (consult--buffer-query :mode 'org-mode :as #'consult--buffer-pair))))
 
   (setq! consult--org-roam-nodes-source
-         (list :name     "org-roam node"
+         (list :name     "org nodes"
                :category 'org-heading
                :face 'org-roam-title
                :narrow   ?n
@@ -1131,6 +1152,7 @@ to the post-capture hook."
   :defer t
   :commands
   (lasgun-mark-char-timer
+   lasgun-transient
    lasgun-mark-line
    lasgun-mark-char-2
    lasgun-mark-word-0
@@ -1274,7 +1296,7 @@ to the post-capture hook."
   (defun open-quiver-local ()
     "Open quiver program locally"
     (interactive)
-    (start-process "open-quiver" nil "firefox" "--new-window" "/home/aatmun/working/quiver/src/index.html"))
+    (start-process "open-quiver" nil "firefox" "--new-window" "~/working/quiver/src/index.html"))
 
   (defun open-quiver-web ()
     "Open quiver program on the web"
@@ -1282,110 +1304,96 @@ to the post-capture hook."
     (start-process "open-quiver" nil "firefox" "--new-window" "https://q.uiver.app")))
 
 ;;; * `repeat-mode'
+;;; ** A consistent structural editing keymap
+(defvar-keymap structural-editing-repeat-map
+  :repeat (:enter (sp-copy-sexp sp-down-sexp
+                                sp-kill-sexp sp-mark-sexp
+                                sp-next-sexp sp-splice-sexp
+                                sp-unwrap-sexp sp-forward-sexp
+                                sp-backward-sexp sp-previous-sexp
+                                sp-transpose-sexp sp-backward-up-sexp
+                                sp-forward-barf-sexp sp-backward-barf-sexp
+                                sp-backward-down-sexp sp-forward-slurp-sexp
+                                sp-backward-slurp-sexp))
+  "w"          #'sp-copy-sexp
+  "d"          #'sp-down-sexp
+  "k"          #'sp-kill-sexp
+  "SPC"        #'sp-mark-sexp
+  "n"          #'sp-next-sexp
+  "M-D"        #'sp-splice-sexp
+  "M-<delete>" #'sp-unwrap-sexp
+  "f"          #'sp-forward-sexp
+  "b"          #'sp-backward-sexp
+  "p"          #'sp-previous-sexp
+  "t"          #'sp-transpose-sexp
+  "u"          #'sp-backward-up-sexp
+  "C-M-i"      #'sp-forward-barf-sexp
+  "C-M-m"      #'sp-backward-barf-sexp
+  "C-i"        #'sp-forward-slurp-sexp
+  "C-m"        #'sp-backward-slurp-sexp)
 
-;;; ** `org' buffer structural editing
-(define-repeat-map org-structure-editing
-  (:continue
-   "p" org-move-subtree-up
-   "n" org-move-subtree-down
-   "M-w" org-copy-subtree)
-  (:enter org-move-subtree-up
-          org-move-subtree-down))
-
-(map! :map org-mode-map
-      :localleader
-      "s p" #'org-move-subtree-up
-      "s n" #'org-move-subtree-down)
 ;;; ** window management repeat map
-(define-repeat-map window-manage
-  (:continue
-   "o" other-window
-   "0" delete-window
-   "2" split-window-below
-   "3" split-window-right
-   "=" enlarge-window-horizontally
-   "-" shrink-window-horizontally
-   "}" enlarge-window
-   "n" next-buffer
-   "p" previous-buffer
-   "{" shrink-window
-   "u" consult-buffer
-   "9" my/close-other-window
-   "s" ace-swap-window)
-  (:exit
-   "f" find-file
-   "r" recentf-open-files
-   "B" bookmark-jump
-   "T" eat
-   "E" +eshell/here
-   "d" consult-dir)
-  (:enter split-window-right
-          split-window-below
-          ace-swap-window))
+;;;
+(defvar-keymap window-manage-repeat-map
+  :repeat (:enter (split-window-right
+                   split-window-below
+                   ace-swap-window
+                   ace-window)
+           :exit (find-file
+                  recentf-open-files
+                  bookmark-jump
+                  eat
+                  +eshell/here
+                  consult-dir
+                  consult-buffer
+                  ibuffer))
+  "o" #'other-window
+  "0" #'delete-window
+  "2" #'split-window-below
+  "3" #'split-window-right
+  "=" #'enlarge-window-horizontally
+  "-" #'shrink-window-horizontally
+  "}" #'enlarge-window
+  "{" #'shrink-window
+  "u" #'consult-buffer
+  "s" #'ace-swap-window)
 
-
-;;; ** `org' heading navigation repeat map
-;; (define-repeat-map org-navigation
-;;   (:continue "n" org-next-visible-heading
-;;              "p" org-previous-visible-heading
-;;              "L" org-demote-subtree
-;;              "H" org-promote-subtree
-;;              "t" org-todo
-;;              "l" org-set-property
-;;              "d" org-deadline
-;;              "s" org-schedule
-;;              "e" org-edit-heading
-;;              "v" consult-org-heading
-;;              "z" org-narrow-to-subtree
-;;              "W" widen
-;;              "M-TAB" +org/close-all-folds
-;;              "f" org-cycle
-;;              "C-l" recenter-top-bottom
-;;              "F" org-next-block
-;;              "B" org-previous-block
-;;              "w" org-refile
-;;              "A" org-archive-subtree
-;;              "N" org-move-subtree-down
-;;              "P" org-move-subtree-up)
-;;   (:enter org-next-visible-heading
-;;           org-previous-visible-heading
-;;           org-next-block
-;;           org-previous-block))
-
-;;; ** `latex' math navigation repeat map
-(define-repeat-map latex-motion
-  (:continue
-   "f" forward-latex-math
-   "b" backward-latex-math)
-  (:enter forward-latex-math
-          backward-latex-math))
 
 ;;; ** `flycheck' error repeat map
 (when (modulep! :checkers syntax)
-  (define-repeat-map flycheck
-    (:continue
-     "n" flycheck-next-error
-     "p" flycheck-previous-error
-     "h" flycheck-display-error-at-point
-     "e" flycheck-explain-error-at-point)
-    (:enter flycheck-buffer
-            flycheck-previous-error
-            flycheck-display-error-at-point
-            flycheck-explain-error-at-point)
-    (:exit  "l" flycheck-list-errors)))
+  (defvar-keymap flycheck-repeat-map
+    :repeat (:enter (flycheck-buffer
+                     flycheck-previous-error
+                     flycheck-display-error-at-point
+                     flycheck-explain-error-at-point)
+             :exit (flycheck-list-errors))
+    "n" #'flycheck-next-error
+    "p" #'flycheck-previous-error
+    "h" #'flycheck-display-error-at-point
+    "e" #'flycheck-explain-error-at-point
+
+    "l" #'flycheck-list-errors))
+
 
 ;;; ** `multiple-cursor' repeat map
-(define-repeat-map mc
-  (:enter mc/mark-pop
-          mc/mark-next-like-this
-          mc/mark-previous-like-this)
-  (:continue
-   "," mc/mark-pop
-   "." jump-to-mark
-   "n" mc/mark-next-like-this
-   "N" mc/unmark-next-like-this
-   "p" mc/mark-previous-like-this
-   "P" mc/unmark-previous-like-this))
+(when (modulep! :editor multiple-cursors)
+  (defvar-keymap mc-repeat-map
+    :repeat (:enter (mc/mark-pop
+                     mc/mark-next-like-this
+                     mc/mark-previous-like-this))
+    "," #'mc/mark-pop
+    "." #'jump-to-mark
+    "n" #'mc/mark-next-like-this
+    "N" #'mc/unmark-next-like-this
+    "p" #'mc/mark-previous-like-this
+    "P" #'mc/unmark-previous-like-this))
+
+
+(after! repeat
+  (setq! repeat-help-popup-type #'embark
+         repeat-help-auto nil))
+(add-hook! repeat-mode #'repeat-help-mode)
+
 (repeat-mode)
 
 ;;; * `multiple-cursors'
@@ -1404,22 +1412,36 @@ to the post-capture hook."
                  jump-to-mark|mc-repeat-map))
     (add-to-list 'mc/cmds-to-run-once cmd)))
 
-;;; * `common-lisp' configuration
+;;; * Programming language configurations
+;;; ** Julia
+(when (modulep! :lang julia +snail)
+  (remove-hook! julia-mode #'julia-repl-mode)
+  (add-hook! julia-mode #'julia-snail-mode))
 
+(add-to-list 'exec-path "~/.juliaup/bin")
+(when (modulep! :lang julia +lsp)
+  (setq! eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
+
+(setq! julia-snail-executable "~/.juliaup/bin/julia"
+       julia-snail-extra-args "--threads auto"
+       org-babel-julia-command "~/.juliaup/bin/julia")
+;;; ** `common-lisp' configuration
+;;;  *** Petalisp indentation fixes
 (put 'lazy 'common-lisp-indent-function '(1 &rest 1))
 (put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
 (put 'lazy-multiple-value 'common-lisp-indent-function '(1 1 &rest 1))
 (put 'lazy-reshape 'common-lisp-indent-function '(1 &rest 1))
 
 
-;;; * `prog-mode' configuration
+;;; ** Hook `outli-mode' to programming modes
 (after! outli
   (add-to-list 'outli-heading-config '(lisp-mode ";;" 59 t)))
 (add-hook! prog-mode #'outli-mode)
 
-;;; * `gap' config
+;;; ** `gap' config
 (setq! gap-executable "/usr/bin/gap")
-;;; * `haskell'
+
+;;; ** `haskell'
 (after! haskell
   (setq! haskell-compile-command "ghc -Wall -ferror-spans -fforce-recomp -dynamic -c %s")
   (add-to-list 'exec-path "/home/aatmun/.ghcup/bin"))
@@ -1514,7 +1536,7 @@ to the post-capture hook."
             (t (user-error (format "No way to convert colors in format %s" theme-type))))))
 
 
-  (defvar qtile-colors-file "/home/aatmun/.config/qtile/colors.py")
+  (defvar qtile-colors-file "~/.config/qtile/colors.py")
 
   (defadvice! my/consult-theme-set-doom-theme (fn theme)
     :around #'consult-theme
@@ -1532,39 +1554,39 @@ to the post-capture hook."
 (when (not (modulep! :ui modeline))
   (mood-line-mode)
   (setq! mood-line-format '((" "
-                            (mood-line-segment-modal)
-                            " "
-                            (or
-                             (mood-line-segment-buffer-status)
-                             " ")
-                            " "
-                            (mood-line-segment-buffer-name)
-                            "  "
-                            (mood-line-segment-anzu)
-                            "  "
-                            (mood-line-segment-multiple-cursors)
-                            "  ")
-                           ((mood-line-segment-vc)
-                            "  "
-                            (mood-line-segment-major-mode)
-                            "  "
-                            (mood-line-segment-misc-info)
-                            "  "
-                            (mood-line-segment-checker)
-                            "  "
-                            (mood-line-segment-process)
-                            "  " " "))))
+                             (mood-line-segment-modal)
+                             " "
+                             (or
+                              (mood-line-segment-buffer-status)
+                              " ")
+                             " "
+                             (mood-line-segment-buffer-name)
+                             "  "
+                             (mood-line-segment-anzu)
+                             "  "
+                             (mood-line-segment-multiple-cursors)
+                             "  ")
+                            ((mood-line-segment-vc)
+                             "  "
+                             (mood-line-segment-major-mode)
+                             "  "
+                             (mood-line-segment-misc-info)
+                             "  "
+                             (mood-line-segment-checker)
+                             "  "
+                             (mood-line-segment-process)
+                             "  " " "))))
 (spacious-padding-mode)
 (setq! spacious-padding-widths
        '(:internal-border-width 15 :right-divider-width 5 :scroll-bar-width 0))
 
-(after! emacs
-  (setq! display-line-numbers-type nil))
 
 ;;; ** `technicolor' configuration
 
 (use-package! technicolor
   :config
+  (when (EVA-02-p)
+    (require 'miasma-utils))
   (defun technicolor-relative-darken (color alpha)
     (technicolor-blend 'background color alpha))
   (defun technicolor-relative-lighten (color alpha)
@@ -1655,6 +1677,8 @@ to the post-capture hook."
 (add-hook! org-agenda-finalize
            #'org-modern-agenda
            #'org-latex-preview-auto-mode)
+(setq! org-latex-preview-preamble
+       "\\documentclass{article}\n[DEFAULT-PACKAGES]\n[PACKAGES]\n\\usepackage{xcolor}\n\\usepackage{amssymb}\n\\usepackage{amsmath}")
 (setq! org-modern-block-fringe nil)
 (after! org-modern
   (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10 )))
@@ -1797,6 +1821,21 @@ to the post-capture hook."
 ;;; * personal stuff
 (require 'setup-personal)
 
+;;; * `wttr'
+(setq! wttrin-default-cities '("College Station" "Colleyville"))
+;; Fix needed: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
+
+(defadvice! wwtrin-fetch-raw-string (query)
+  "Make sure we fetch the acutual weather view"
+  :override #'wttrin-fetch-raw-string
+  (let ((url-user-agent "curl"))
+    (add-to-list 'url-request-extra-headers wttrin-default-accept-language)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         (concat "http://wttr.in/" query "?A")
+         (lambda (status) (switch-to-buffer (current-buffer))))
+      (decode-coding-string (buffer-string) 'utf-8))))
+
 ;;; * `elfeed' and `elfeed-tube'
 (setq! rmh-elfeed-org-files '("notes.org"))
 
@@ -1832,8 +1871,13 @@ MYTAG"
       (interactive)
       (elfeed-search-toggle-all mytag))))
 
+;;; * email
+(when (EVA-02-p)
+  (require 'setup-email))
 
-
+;;; * `org-gcal'
+(when (EVA-02-p)
+  (require 'setup-org-gcal))
 ;;; ** `elfeed'  keybindings
 (after! elfeed
   (map! :map elfeed-show-mode-map
@@ -1901,10 +1945,6 @@ MYTAG"
  :desc "Lasgun" "C-c t g"                        #'lasgun-transient
 
 
- (:when (modulep! :editor god)
-   :desc "God Mode" "<escape>"                         #'god-mode-all)
-
-
  (:when (featurep 'activities)
    (:prefix-map ("C-x C-a" . "activities")
     :desc "Switch activity"                       "RET"      #'activities-switch
@@ -1916,8 +1956,6 @@ MYTAG"
     :desc "List activities"                       "l"        #'activities-list
     :desc "Switch to buffer with activity"        "b"        #'activities-switch-buffer
     :desc "Revert state"                          "g"        #'activities-revert))
-
-
 
 
  (:prefix "C-c w"
@@ -1938,13 +1976,7 @@ MYTAG"
   :desc "Kill region save region"               "M-w"      #'avy-kill-ring-save-region
   :desc "Move line"                             "t"        #'avy-move-line
   :desc "Move region"                           "M-t"      #'avy-move-region
-  :desc "End of line"                           "M-t"      #'avy-goto-end-of-line)
-
- (:when (featurep 'dogears)
-   :desc "Dogears save"                         "M-g M-s"       #'dogears-remember
-   :desc "Dogears forward"                      "M-g M-f"       #'dogears-forward
-   :desc "Dogears backward"                     "M-g M-b"       #'dogears-back
-   :desc "Dogears list"                         "M-g M-l"       #'dogears-list))
+  :desc "End of line"                           "M-t"      #'avy-goto-end-of-line))
 
 
 (map! :map outline-mode-map
@@ -1982,6 +2014,8 @@ MYTAG"
     ;; To disable collection of benchmark data after init is done.
     (add-hook 'after-init-hook 'benchmark-init/deactivate)))
 
+(map! :map minibuffer-mode-map
+      "C-c C-." #'embark-select)
 
 ;;; ** `eat' maps
 (map! :map (eat-mode-map
