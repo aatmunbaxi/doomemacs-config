@@ -14,7 +14,7 @@
 ;;       Alternatively, press 'gd' (or 'C-c c d') on a module to browse its
 ;;       directory (for easy access to its source code).
 
-
+;; (setq! use-package-compute-statistics t)
 
 (doom! :input
        ;; chinese
@@ -53,13 +53,13 @@
        ;;  VI-tilde-fringe          ; fringe tildes to mark beyond EOB
        window-select                ; visually switch windows
        ;; workspaces                ; tab emulation, persistence & separate workspaces
-       zen                       ; distraction-free coding or writing
+       ;; zen                       ; distraction-free coding or writing
 
        :editor
        ;; (meow +qwerty +override)  ; yet another modal editor
        ;; (evil +everywhere)        ; come to the dark side, we have cookies
        ;; file-templates               ; auto-snippets for empty files
-       fold                         ; (nigh) universal code folding
+       ;; fold                         ; (nigh) universal code folding
        (format +lsp)             ; automated prettiness
        ;; god                       ; run Emacs commands without modifier keys
        ;; lispy                     ; vim for lisp, for people who don't like vim
@@ -71,22 +71,22 @@
        ;; word-wrap                    ; soft wrapping with language-aware indent
 
        :emacs
-       dired               ; making dired pretty [functional]
-       ;; electric                     ; smarter, keyword-based electric-indent
-       ibuffer              ; interactive buffer management
-       undo                          ; persistent, smarter undo for your inevitable mistakes
-       ;;  vc                       ; version-control and Emacs, sitting in a tree
+       (dired +dirvish +icons)            ; making dired pretty [functional]
+       ;; electric                        ; smarter, keyword-based electric-indent
+       ;; ibuffer                         ; interactive buffer management
+       undo                               ; persistent, smarter undo for your inevitable mistakes
+       ;;  vc                             ; version-control and Emacs, sitting in a tree
 
        :term
-       ;; eshell                       ; the elisp shell that works everywhere
-       ;; shell                     ; simple shell REPL for Emacs
-       ;; term                      ; basic terminal emulator for Emacs
-       ;; vterm                     ; the best terminal emulation in Emacs
+       ;; eshell                          ; the elisp shell that works everywhere
+       ;; shell                           ; simple shell REPL for Emacs
+       ;; term                            ; basic terminal emulator for Emacs
+       ;; vterm                           ; the best terminal emulation in Emacs
 
        :checkers
-       syntax                    ; tasing you for every semicolon you forget
-       ;; spell                        ; tasing you for misspelling mispelling
-       ;; grammar                   ; tasing grammar mistake every you make
+       syntax                             ; tasing you for every semicolon you forget
+       ;; spell                           ; tasing you for misspelling mispelling
+       ;; grammar                         ; tasing grammar mistake every you make
 
        :tools
        ;;tree-sitter
@@ -145,7 +145,7 @@
        ;; javascript                ; all(hope(abandon(ye(who(enter(here))))))
        (julia  +tree-sitter +snail +lsp)                     ; a better, faster MATLAB
        ;; kotlin                    ; a better, slicker Java(Script)
-       (latex +cdlatex)                        ; writing papers in Emacs has never been so fun
+       ;; (latex +cdlatex)                        ; writing papers in Emacs has never been so fun
        ;; lean
        ;; factor
        ;; ledger                    ; an accounting system in Emacs
@@ -177,14 +177,14 @@
        ;; yaml                      ; JSON, but readable
 
        :email
-       (mu4e +gmail +mbsync)
+       (mu4e +gmail +mbsync +org)
        ;; notmuch
        ;; (wanderlust +gmail)
 
        :app
        calendar
        ;; irc                       ; how neckbeards socialize
-       ;; (rss +org)                   ; emacs as an RSS reader
+       (rss +org)                   ; emacs as an RSS reader
        ;; everywhere
 
        :config

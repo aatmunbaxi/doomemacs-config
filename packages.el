@@ -24,7 +24,7 @@
         "(provide 'org-version)\n"))))
   :pin nil)
 (unpin! org)
-(package! org-msg)
+(unpin! org-msg)
 (package! repeat-help :recipe (:host github :repo "karthink/repeat-help"))
 (unpin! org-msg)
 (package! org-super-agenda)
@@ -70,8 +70,10 @@
 (package! org-roam)
 (package! org-node
   :recipe (:host github :repo "meedstrom/org-node"))
-;; (package! lsp-booster
-;;   :recipe (:host github :repo "blahgeek/emacs-lsp-booster"))
+(package! org-node-fakeroam
+  :recipe (:host github :repo "meedstrom/org-node-fakeroam"))
+(package! lsp-booster
+  :recipe (:host github :repo "blahgeek/emacs-lsp-booster"))
 (package! eglot-booster
   :recipe (:host github :repo "jdtsmith/eglot-booster"))
 (package! el-easydraw
@@ -80,7 +82,7 @@
 (package! outli :recipe  (:host github :repo "jdtsmith/outli"))
 (package! gap-mode)
 (package! popper :recipe (:host github :repo "karthink/popper"))
-n(package! org-roam-ql
+(package! org-roam-ql
   :recipe (:host github :repo "ahmed-shariff/org-roam-ql"))
 (package! age.el
   :recipe (:host github :repo "anticomputer/age.el"))
@@ -98,18 +100,28 @@ n(package! org-roam-ql
 (package! visual-fill-column)
 (package! sage-shell-mode)
 (package! activities)
+(package! indent-bars)
+(package! elfeed-tube)
+(package! dired-rsync)
 ;; (package! keycast :recipe (:host github :repo "tarsius/keycast"))
 (package! no-littering)
 (package! dogears)
-;(when (equal (system-name) "pop-os")
-;  (package! elffmpeg :recipe ( :local-repo "~/repos/elffmpeg")))
 (package! engrave-faces :recipe (:host github :repo "tecosaur/engrave-faces"))
 ;; (package! benchmark-init)
 (package! sudoku)
 (package! quickroam
   :recipe (:host github :repo "meedstrom/quickroam"))
+
+
+;;; $ Unpinning old packages
+(unpin! dirvish)
+
 ;;; $ Disable packages
 (disable-packages! avy-migemo
-                   activities)
+                   activities
+                   anaconda-mode
+                   org-noter
+                   org-noter-nov
+                   org-noter-djvu)
 (when (modulep! :ui modeline)
   (package! mood-line :disable t))

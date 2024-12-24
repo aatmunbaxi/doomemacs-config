@@ -3,6 +3,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(auth-source-save-behavior nil)
  '(custom-safe-themes
    '("8d146df8bd640320d5ca94d2913392bc6f763d5bc2bb47bed8e14975017eea91" "c63d2e6502d4f78e359d1fa610f137dd04778d39133d7d9e75255d2e13c6b8c4" "9d5124bef86c2348d7d4774ca384ae7b6027ff7f6eb3c401378e298ce605f83a" "e5e253a4d31d709f1b7147fe6bb237ed2b9353685eea9a9e18652ac917f48823" "436b2a4af465aa0499c27aa5906a2808d5a381b5329e59db3c028aceb084be3d" "276c08753eae8e13d7c4f851432b627af58597f2d57b09f790cb782f6f043966" "ccff17f0cb616e239e2de4bd78f0b2e8f1f49291aa43c50845e250203be27a95" "93011fe35859772a6766df8a4be817add8bfe105246173206478a0706f88b33d" "38c0c668d8ac3841cb9608522ca116067177c92feeabc6f002a27249976d7434" "88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e" default))
  '(elfeed-feeds
@@ -20,8 +21,6 @@
      ("https://planet.emacslife.com/atom.xml" tech Emacs Emacs blog)
      ("https://karthinks.com/index.xml" tech Emacs Emacs)))
  '(magit-todos-insert-after '(bottom) nil nil "Changed by setter of obsolete option `magit-todos-insert-at'")
- '(org-agenda-files
-   '("~/Documents/org/maybe.org" "/home/aatmun/Documents/org/gtd.org" "/home/aatmun/Documents/org/tickler.org" "/home/aatmun/Documents/org/graveyard.org"))
  '(safe-local-variable-values
    '((major-mode function lisp-data-mode)
      (consult-org-roam-mode . 1))))

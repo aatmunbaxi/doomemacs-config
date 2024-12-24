@@ -9,6 +9,18 @@
 ;; `packages.el'. Hence, you'll likely find many `after!'
 ;; blocks that refer to packages that aren't currently installed
 ;; or toggled in
+
+
+
+(doom-load-packages-incrementally '(org
+                                    magit
+                                    recentf
+                                    org-roam
+                                    org-capture
+                                    org-agenda
+                                    embark
+                                    consult))
+
 ;;; * Some functions
 (after! emacs
   (defun my/switch-buffer-other-window ()
@@ -74,6 +86,7 @@
            "\\*sly-description\\*"
            "\\*Flycheck errors\\*"
            "\\*Outline .*?\\*"
+           "\\*org-roam\\*"
            pdf-outline-mode
            help-mode
            helpful-mode
@@ -161,60 +174,61 @@
        variable-sans-serif "Iosevka Aile")
 
 ;;; ** Fontaine
-(setq! fontaine-presets
-       `((regular-serif
-          :variable-pitch-family ,variable-font
-          :fixed-pitch-family ,fixed-font
-          :default-height 110
-          :default-weight light)
-         (regular-sans
-          :variable-pitch-family ,variable-sans-serif
-          :fixed-pitch-family ,fixed-font
-          :default-height 110
-          :default-weight light)
-         (office-monitor
-          :inherit regular-sans
-          :default-height 135)
-         (medium-serif
-          :inherit regular-serif
-          :default-height 140)
-         (medium-sans
-          :inherit regular-sans
-          :variable-pitch-weight light
-          :default-height 140)
+(after! fontaine
+  (setq! fontaine-presets
+         `((regular-serif
+            :variable-pitch-family ,variable-font
+            :fixed-pitch-family ,fixed-font
+            :default-height 110
+            :default-weight light)
+           (regular-sans
+            :variable-pitch-family ,variable-sans-serif
+            :fixed-pitch-family ,fixed-font
+            :default-height 110
+            :default-weight light)
+           (office-monitor
+            :inherit regular-sans
+            :default-height 135)
+           (medium-serif
+            :inherit regular-serif
+            :default-height 140)
+           (medium-sans
+            :inherit regular-sans
+            :variable-pitch-weight light
+            :default-height 140)
 
-         (large-serif
-          :inherit medium-serif
-          :default-height 180)
+           (large-serif
+            :inherit medium-serif
+            :default-height 180)
 
-         (large-sans
-          :inherit medium-sans
-          :default-height 180)
-         (huge-serif
-          :inherit medium-serif
-          :default-height 210)
-         (huge-sans
-          :inherit medium-sans
-          :default-height 210)
+           (large-sans
+            :inherit medium-sans
+            :default-height 180)
+           (huge-serif
+            :inherit medium-serif
+            :default-height 210)
+           (huge-sans
+            :inherit medium-sans
+            :default-height 210)
 
-         (t ; our shared fallback properties
-          :fixed-pitch-family ,fixed-font
-          :fixed-pitch-height 1.0
+           (t ; our shared fallback properties
+            :fixed-pitch-family ,fixed-font
+            :fixed-pitch-height 1.0
 
-          :variable-pitch-family ,variable-font
-          :variable-pitch-weight regular
-          :variable-pitch-height 1.0
+            :variable-pitch-family ,variable-font
+            :variable-pitch-weight regular
+            :variable-pitch-height 1.0
 
-          :fixed-pitch-serif-family ,fixed-font
-          :fixed-pitch-serif-weight nil
-          :fixed-pitch-serif-slant nil
-          :fixed-pitch-serif-height 1.0
+            :fixed-pitch-serif-family ,fixed-font
+            :fixed-pitch-serif-weight nil
+            :fixed-pitch-serif-slant nil
+            :fixed-pitch-serif-height 1.0
 
-          :bold-family nil ; use whatever the underlying face has
-          :bold-weight bold
-          :italic-family nil
-          :italic-slant italic
-          :line-spacing nil)))
+            :bold-family nil ; use whatever the underlying face has
+            :bold-weight bold
+            :italic-family nil
+            :italic-slant italic
+            :line-spacing nil))))
 
 (fontaine-mode)
 (fontaine-set-preset 'medium-sans)
@@ -311,9 +325,7 @@ When pressed twice, make the sub/superscript roman."
 
 
 ;;; * org-mode
-(use-package! org-latex-preview
-  :after (org)
-  :config
+(after! org
   (plist-put org-latex-preview-appearance-options
              :page-width 0.8)
   (add-hook 'org-latex-preview-auto-ignored-commands 'next-line)
@@ -324,26 +336,26 @@ When pressed twice, make the sub/superscript roman."
 ;;; ** Variables
 (add-hook! org-agenda-mode (setq-local line-spacing 0.35))
 
-(setq! org-directory "~/Documents/org/"
-       org-default-notes-file "~/Documents/org/notes.org"
-       org-agenda-files '( "~/Documents/org/inbox.org"
-                           "~/Documents/org/gtd.org"
-                           "~/Documents/org/tickler.org"
-                           "~/Documents/org/graveyard.org"
-                           "~/Documents/org/maybe.org"
-                           "~/Documents/org/roam/daily/dailies.org")
-
-       org-refile-targets '((("~/Documents/org/gtd.org")   :maxlevel . 2)
-                            (("~/Documents/org/inbox.org")   :maxlevel . 2)
-                            ("~/Documents/org/tickler.org"  :level . 1)
-                            (("~/Documents/org/maybe.org")  :level . 1)
-                            (("~/Documents/org/notes.org")   :maxlevel . 3)
-                            (("~/Documents/org/research_notes.org")   :maxlevel . 2)
-                            (("~/Documents/org/graveyard.org") :level . 1)
-                            (("~/Documents/org/roam/daily/dailies.org") :maxlevel . 5)))
-
+;;; *** `org-agenda'  variables
 (after! org
-  (setq! org-agenda-include-deadlines t
+  (setq! org-directory "~/Documents/org/"
+         org-default-notes-file "~/Documents/org/notes.org"
+         org-agenda-files '("~/Documents/org/inbox.org"
+                            "~/Documents/org/gtd.org"
+                            "~/Documents/org/tickler.org"
+                            "~/Documents/org/graveyard.org"
+                            "~/Documents/org/maybe.org"
+                            "~/Documents/org/roam/daily/dailies.org")
+
+         org-refile-targets '((("~/Documents/org/gtd.org")   :maxlevel . 2)
+                              (("~/Documents/org/inbox.org")   :maxlevel . 2)
+                              (("~/Documents/org/tickler.org")  :level . 1)
+                              (("~/Documents/org/maybe.org")  :level . 1)
+                              (("~/Documents/org/notes.org")   :maxlevel . 3)
+                              (("~/Documents/org/research_notes.org")   :maxlevel . 2)
+                              (("~/Documents/org/graveyard.org") :level . 1)
+                              (("~/Documents/org/roam/daily/dailies.org") :maxlevel . 5))
+         org-agenda-include-deadlines t
          org-agenda-use-time-grid nil
          org-agenda-block-separator nil
          org-agenda-compact-blocks t
@@ -352,10 +364,6 @@ When pressed twice, make the sub/superscript roman."
          org-agenda-skip-scheduled-if-done t
          org-agenda-skip-deadline-if-done t
          org-agenda-todo-ignore-scheduled 'all
-         org-refile-use-outline-path 'file
-         org-outline-path-complete-in-steps nil
-         org-latex-src-block-backend 'engraved
-         org-use-speed-commands t
          org-capture-templates '(("n" "Info/IDEA")
                                  ("nn" "Info node"
                                   entry
@@ -368,13 +376,13 @@ When pressed twice, make the sub/superscript roman."
                                   :unnarrowed nil)
                                  ("ni" "Daily: Idea"
                                   entry
-                                  (file+olp+datetree "~/Documents/org/roam/dailies.org")
+                                  (file+olp+datetree "~/Documents/org/roam/daily/dailies.org")
                                   "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
                                  ("t" "Todo" entry (file "~/Documents/org/inbox.org")
                                   "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
                                  ("r" "research" entry (file "~/Documents/org/inbox.org")
                                   "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-                                 ("i" "idea" entry (file "~/Documents/org/readinglist.org")
+                                 ("i" "idea" entry (file "~/Documents/org/inbox.org")
                                   "* IDEA %?\n%i\n%a\n")
                                  ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
                                   ;; Call with C-u C-u interactive argument to insert inactive stamp
@@ -382,12 +390,20 @@ When pressed twice, make the sub/superscript roman."
                                   :empty-lines 1)
                                  ("m" "Email workflow")
                                  ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
-                                  "* TODO Follow up with %:fromname on %a :email:\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                                  "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
                                   :immediate-finish t)
                                  ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
                                   "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
-                                 ("mr" "Read Later" entry (file"~/Documents/org/readinglist.org")
-                                  "* READ %:subject\nSCHEDULED: %t :email:\nDEADLINE: %(org-insert-time-stamp (org-read-date nil t \"+2d\"))\n\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i" :immediate-finish t))
+                                 ("mr" "Read Later" entry (file"~/Documents/org/inbox.org")
+                                  "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                                  :immediate-finish t))
+         org-refile-use-outline-path 'file))
+
+;;; *** `org' variables
+(after! org
+  (setq! org-outline-path-complete-in-steps nil
+         org-latex-src-block-backend 'engraved
+         org-use-speed-commands t
          org-archive-location ".%s_archive::"
          org-file-apps (quote
                         ((auto-mode . emacs)
@@ -434,6 +450,10 @@ When pressed twice, make the sub/superscript roman."
          org-image-actual-width 400
          org-hide-emphasis-markers t))
 
+(when (modulep! :app calendar)
+  (map! :map org-agenda-mode-map
+        :desc "Calendar" "C" #'=calendar))
+
 ;;;  bibtex
 (after! bibtex
   (setq! bibtex-autokey-year-length 4
@@ -470,120 +490,117 @@ When pressed twice, make the sub/superscript roman."
     (hide-mode-line-mode)))
 
 ;;; ** `org-super-agenda'
-(setq! org-agenda-custom-commands
-       '(("n" "Today's agenda"
-          ((agenda "" ((org-super-agenda-groups
+(after! org
+  (setq! org-agenda-custom-commands
+         '(("n" "Today's agenda"
+            ((agenda "" ((org-super-agenda-groups
+                          `((:discard (:file-path "graveyard"))
+                            (:discard (:todo "MAYBE"))
+                            (:name "Today"
+                             :scheduled today
+                             :face (:foreground ,(technicolor-get-color 'green) :extend t)
+                             :order 2)
+                            (:name "Due Today"
+                             :face (:background ,(technicolor-relative-darken 'red 90) :extend t)
+                             :deadline today
+                             :order 1)
+                            (:discard anything)))))
+             (alltodo ""
+                      ((org-agenda-overriding-header "")
+                       (org-super-agenda-groups
                         `((:discard (:file-path "graveyard"))
+                          (:discard (:file-path "maybe"))
                           (:discard (:todo "MAYBE"))
-                          (:name "Today"
-                           :scheduled today
-                           :face (:foreground ,(technicolor-get-color 'green) :extend t)
-                           :order 2)
-                          (:name "Due Today"
-                           :face (:background ,(technicolor-relative-darken 'red 90) :extend t)
-                           :deadline today
+                          (:discard (:scheduled t))
+                          (:discard (:deadline  t))
+                          (:name "To Process"
+                           :todo  ("EVENT" "TODO" "PROG" "WAIT")
+                           :order 1
+                           :face (:height 0.9
+                                  :foreground ,(technicolor-relative-darken 'foreground 10)))
+                          (:discard (:anything t))))))))
+           ("w" "Week agenda"
+            ((agenda "" ((org-super-agenda-groups
+                          `((:discard (:file-path "graveyard"))
+                            (:discard (:todo "MAYBE"))
+                            (:discard (:file-path "inbox"))
+                            (:auto-planning t)
+                            (:auto-planning t)))))
+             (alltodo ""
+                      ((org-agenda-overriding-header "")
+                       (org-super-agenda-groups
+                        `((:discard (:file-path "graveyard"))
+                          (:discard (:file-path "maybe"))
+                          (:discard (:todo "MAYBE"))
+                          (:discard (:scheduled t))
+                          (:discard (:deadline  t))
+                          (:name "Unscheduled"
+                           :todo  ("EVENT" "TODO")
+                           :order 0)
+                          (:discard (:anything t))))))))
+           ("d" "Get back to work!"
+            ((alltodo ""
+                      ((org-agenda-overriding-header "")
+                       (org-super-agenda-groups
+                        `((:discard (:file-path "graveyard"))
+                          (:name "Maybe"
+                           :todo "MAYBE"
+                           :face (:foreground ,(technicolor-relative-darken 'foreground 70)
+                                  :height 0.9
+                                  :append t)
+                           :order 100)
+                          (:name "Important"
+                           :priority "A"
+                           :face (:foreground ,(technicolor-saturate 'red 20) :append t)
                            :order 1)
-                          (:discard anything)))))
-           (alltodo ""
-                    ((org-agenda-overriding-header "")
-                     (org-super-agenda-groups
-                      `((:discard (:file-path "graveyard"))
-                        (:discard (:file-path "maybe"))
-                        (:discard (:todo "MAYBE"))
-                        (:discard (:scheduled t))
-                        (:discard (:deadline  t))
-                        (:name "Unscheduled"
-                         :todo  ("EVENT" "TODO")
-                         :order 0
-                         :face (:height 0.9
-                                :foreground ,(technicolor-relative-darken 'foreground 10)))
-                        (:discard (:anything t))))))))
-         ("w" "Week agenda"
-          ((agenda "" ((org-super-agenda-groups
-                        `((:discard (:file-path "graveyard"))
-                          (:discard (:todo "MAYBE"))
-                          (:auto-planning t)
-                          (:auto-planning t)))))
-           (alltodo ""
-                    ((org-agenda-overriding-header "")
-                     (org-super-agenda-groups
-                      `((:discard (:file-path "graveyard"))
-                        (:discard (:file-path "maybe"))
-                        (:discard (:todo "MAYBE"))
-                        (:discard (:scheduled t))
-                        (:discard (:deadline  t))
-                        (:name "Unscheduled"
-                         :todo  ("EVENT" "TODO")
-                         :order 0)
-                        (:discard (:anything t))))))))
-         ("d" "Get back to work!"
-          ((alltodo ""
-                    ((org-agenda-overriding-header "")
-                     (org-super-agenda-groups
-                      `((:discard (:file-path "graveyard"))
-                        (:name "Maybe"
-                         :todo "MAYBE"
-                         :face (:foreground ,(technicolor-relative-darken 'foreground 70)
-                                :height 0.9
-                                :append t)
-                         :order 100)
-                        (:name "Important"
-                         :priority "A"
-                         :face (:foreground ,(technicolor-saturate 'red 20) :append t)
-                         :order 1)
-                        (:name "Ideas"
-                         :todo "IDEA"
-                         :face (:foreground ,(technicolor-get-color 'cyan)
-                                :height 0.9
-                                :append t)
-                         :order 80)
-                        (:name "Quick items"
-                         :effort< "30"
-                         :face (:foreground ,(technicolor-saturate 'blue 20) :append t))
-                        (:auto-priority t)
+                          (:name "Ideas"
+                           :todo "IDEA"
+                           :face (:foreground ,(technicolor-get-color 'cyan)
+                                  :height 0.9
+                                  :append t)
+                           :order 80)
+                          (:name "Quick items"
+                           :effort< "30"
+                           :face (:foreground ,(technicolor-saturate 'blue 20) :append t))
+                          (:auto-priority t)
 
-                        (:order-multi (2 (:name "Research"
-                                          :tag "research"
-                                          :face (:foreground ,(technicolor-get-color 'cyan ) :append t))
-                                         (:name "Teaching"
-                                          :tag "teaching"
-                                          :face (:foreground ,(technicolor-get-color 'green ) :append t))))))))))
-         ("l" "Todos"
-          ((alltodo ""
-                    ((org-agenda-overriding-header "")
-                     (org-super-agenda-groups
-                      `((:discard (:file-path "graveyard"))
-                        (:auto-planning t)
-                        (:name "Ideas"
-                         :todo "IDEA"
-                         :face (:foreground ,(technicolor-get-color 'cyan)
-                                :height 0.9
-                                :append t)
-                         :order 80)
-                        (:name "Maybe"
-                         :todo "MAYBE"
-                         :face (:foreground ,(technicolor-relative-darken 'foreground 70)
-                                :height 0.9
-                                :append t)
-                         :order 100)
-                        (:name "Important"
-                         :priority "A"
-                         :face (:foreground ,(technicolor-saturate 'red 20) :append t)
-                         :order 1)
-                        (:order-multi (2 (:name "Research"
-                                          :tag "research"
-                                          :face (:foreground ,(technicolor-get-color 'cyan ) :append t))
-                                         (:name "Teaching"
-                                          :tag "teaching"
-                                          :face (:foreground ,(technicolor-get-color 'green ) :append t))))
-                        (:name "Email"
-                         :tag "email"
-                         :order 20)
-                        (:name "Personal"
-                         :tag "personal"
-                         :order 3)
-                        (:auto-tags t
-                         :order 50)))))))))
+                          (:order-multi (2 (:name "Research"
+                                            :tag "research"
+                                            :face (:foreground ,(technicolor-get-color 'cyan ) :append t))
+                                           (:name "Teaching"
+                                            :tag "teaching"
+                                            :face (:foreground ,(technicolor-get-color 'green ) :append t))))))))))
+           ("l" "Todos"
+            ((alltodo ""
+                      ((org-agenda-overriding-header "")
+                       (org-super-agenda-groups
+                        `((:discard (:file-path "graveyard"))
+                          (:discard (:file-path "maybe"))
+                          (:auto-planning t)
+                          (:name "Ideas"
+                           :todo "IDEA"
+                           :face (:foreground ,(technicolor-get-color 'cyan)
+                                  :height 0.9
+                                  :append t)
+                           :order 80)
+                          (:name "Important"
+                           :priority "A"
+                           :face (:foreground ,(technicolor-saturate 'red 20) :append t)
+                           :order 1)
+                          (:order-multi (2 (:name "Research"
+                                            :tag "research"
+                                            :face (:foreground ,(technicolor-get-color 'cyan ) :append t))
+                                           (:name "Teaching"
+                                            :tag "teaching"
+                                            :face (:foreground ,(technicolor-get-color 'green ) :append t))))
+                          (:name "Email"
+                           :tag "email"
+                           :order 20)
+                          (:name "Personal"
+                           :tag "personal"
+                           :order 3)
+                          (:auto-tags t
+                           :order 50))))))))))
 (after! org
   (org-super-agenda-mode))
 
@@ -630,15 +647,17 @@ When pressed twice, make the sub/superscript roman."
 
 ;;; ** `org' keybindings
 (map! :map global-map
-      :desc "org-ql search"                  "C-c s q s"                 #'org-ql-search
-      :desc "org-ql find"                    "C-c s q f"                 #'org-ql-find
+      :desc "Org QL search"                  "C-c s q s"                 #'org-ql-search
+      :desc "Org QL find"                    "C-c s q f"                 #'org-ql-find
+      :desc "Org QL view"                    "C-c s q v"                 #'org-ql-view
       (:when (modulep! :lang org +roam2)
-        :desc "org-roam-ql search"           "C-c n r q"    #'org-roam-ql-search))
+        :desc "org-roam-ql search"           "C-c n r q"    #'org-roam-ql-search)
+      (:when (modulep! :completion vertico)
+        :desc "Search org agenda"               "C-c s a"     #'consult-org-agenda))
 
 (map! :map org-mode-map
       :desc "Math delim insert"              "M-m"                       #'math-delimiters-insert
       :desc "Insert bibliography link"       "C-c ]"                     #'org-cite-insert
-      :desc "Insert cross reference"         "C-c ["                     #'org-ref-insert-ref-link
       :desc "Forward LaTeX math"             "C-c L f"                   #'forward-latex-math
       :desc "Backward LaTeX math"            "C-c L b"                   #'backward-latex-math
       :desc "Add note"                       "C-c z"                     #'org-add-note
@@ -646,14 +665,9 @@ When pressed twice, make the sub/superscript roman."
       :desc "Make ink figure"                "C-c i i"                   #'ink-make-figure
       :desc "Make quiver (local)"            "C-c i c l"                 #'open-quiver-local
       :desc "Make quiver (online)"           "C-c i c w"                 #'open-quiver-web
-      :desc "Org structure editing"          "C-c t o"                   #'org-nav-transient
       :desc "Forward LaTeX math"             "M-TAB"                     #'forward-latex-math
       :desc "Backward LaTeX math"            "M-<iso-lefttab>"           #'backward-latex-math)
 
-;;; ** `org-agenda' keybindings
-(when (modulep! :app calendar)
-  (map! :map org-agenda-mode-map
-        :desc "Calendar" "C" #'=calendar))
 
 ;;; * `expand-region'
 (after! expand-region
@@ -793,42 +807,33 @@ for details."
 
 
 ;;; * `org-roam'
+;; Will be removed eventually (maybe).
+;; I think I prefer the zen of `org-node',
+;; but some of the `org-roam' features are
+;; really nice to have
 ;;; ** `Variables'
-(setq! org-roam-directory "~/Documents/org/roam/"
-       org-roam-dailies-directory "~/Documents/org/roam/daily/"
-       org-roam-node-display-template
-       (concat "${title:*} "
-               (propertize "${tags:40}" 'face 'org-modern-tag))
 
-       org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
-       citar-org-roam-note-title-template "${author} - ${title}"
-       org-roam-capture-templates
-       '(("h" "Information" entry
-          "* ${title}\n:PROPERTIES:\n:CREATED: %u\n:ID: %(org-id-new)\n:END:\n%?"
-          :if-new (file "~/Documents/org/roam/roam.org")
-          :unnarrowed nil
-          :prepend nil
-          :empty-lines 1)
-         ("b" "Annotated bibliography" entry
-          "* ${note-title} :bib:\n:PROPERTIES:\n:FILE: ${citar-file}\n:ID: %(org-id-new)\n:NOTER_DOCUMENT: ${citar-file}\n:END:\n%?"
-          :if-new (file "~/Documents/org/roam/annot-bib.org")
-          :unnarrowed nil
-          :empty-lines 1))
-       org-roam-dailies-capture-templates
-       '(("n" "default" entry
-          "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:"
-          :target (file+datetree "dailies.org" day)
-          :unnarrowed nil))
-       citar-org-roam-capture-template-key "b")
+(after! org-roam
+  (setq! org-roam-directory "~/Documents/org/roam/"
+         org-roam-dailies-directory "~/Documents/org/roam/daily/"
+         org-roam-node-display-template
+         (concat "${title:*} "
+                 (propertize "${tags:40}" 'face 'org-modern-tag))
+
+         org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
+         citar-org-roam-note-title-template "${author} - ${title}"
+         citar-org-roam-capture-template-key "b"))
+(add-hook! org-roam-mode  (visual-line-mode
+                           (org-latex-preview 'buffer)))
 (after! org
-  ;; (org-roam-db-autosync-mode)
-
   ;; function to add a citar key to ROAM_REFS property
   ;; for org-roam nodes
   (defun citar-org-roam-tag-headline ( &optional rest )
     (interactive)
     (org-node--add-to-property-keep-space "ROAM_REFS" (s-concat  "@" (car (citar--key-at-point)))))
-  (setq! org-node-warn-title-collisions nil))
+  (setq! org-node-warn-title-collisions nil
+         org-node-creation-fn #'org-capture)
+  (org-node-cache-mode))
 
 
 ;;; ** `org-roam' helper functions
@@ -873,11 +878,11 @@ format to top level headlines in `org' buffer BUFF"
              (my/org-roam-file-to-heading file buff))))
 
 ;;; ** Solving org-roam file ID annoyance
-(after! org-roam
-  (quickroam-mode)
-  (defun my/remove-file-level-org-ID ()
-    "Removes file-level org ID property
+(quickroam-mode)
 
+(after! org-roam
+  (defun my/remove-file-level-org-ID ()
+    "Removes file-level org ID property.
 `org-roam' forces new ID creation at the file level
 regardless of the type of capture template. I want to use
 headlines as entries, hence the adding of this function
@@ -922,10 +927,10 @@ to the post-capture hook."
 ;;; ** `citar' related keybindings
 (defun my/citar-embark-update-prefix-suffix (cite)
   (citar-org-update-prefix-suffix nil))
+
 (map! :map org-mode-map
       :desc "Find node"         "C-c n r f"      #'org-node-find
 
-      
       :map citar-embark-map
       :desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
       :desc "Open entry"              "e"        #'citar-open-entry
@@ -935,7 +940,7 @@ to the post-capture hook."
       :desc "Open notes"              "n"        #'citar-open-notes
       :desc "Open"                    "o"        #'citar-open
       :desc "Copy reference"          "r"        #'citar-copy-reference
-      :desc "Add to node refs"        "k"       #'citar-org-roam-tag-headline
+      :desc "Add to node refs"        "k"        #'citar-org-roam-tag-headline
 
       :map citar-embark-citation-map
       :desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
@@ -1026,7 +1031,6 @@ to the post-capture hook."
 
 ;;; * `consult'
 ;;; ** `consult-buffer' sources
-;;;
 (after! (:and consult org-roam)
   (defvar org-source
     (list :name     "Org Buffer"
@@ -1044,7 +1048,7 @@ to the post-capture hook."
           :items
           (lambda ()
             (consult--buffer-query :mode 'org-mode :as #'consult--buffer-pair))))
-
+  ;; TODO: adapt this to use `org-node'
   (setq! consult--org-roam-nodes-source
          (list :name     "org nodes"
                :category 'org-heading
@@ -1059,23 +1063,14 @@ to the post-capture hook."
                              (when (org-at-heading-p)
                                (org-fold-show-entry t)
                                (recenter-top-bottom 0)))))
-
                :new (lambda (name)
-                      (let ((info nil))
-                        (setq info (plist-put info 'title name))
-                        (org-roam-capture-  :goto nil
-                                            :keys "h"
-                                            :node (org-roam-node-create :title name)
-                                            ;; :filter-fn nil
-                                            :templates org-roam-capture-templates
-                                            :info info
-                                            :props info)))
+                      (org-capture "nn")
+                      (insert name))
                :items (lambda ()
                         (mapcar
                          (lambda (str)
                            (concat (nerd-icons-faicon "nf-fae-brain") " " str))
                          (org-roam--get-titles)))))
-
   (add-to-list 'consult-buffer-sources 'consult--org-roam-nodes-source 'append))
 
 ;;; ** `consult-theme' bug fix
@@ -1120,7 +1115,6 @@ to the post-capture hook."
   (defun consult-dir-reference-pdfs ()
     '("~/Documents/bib/pdfs/" "~/Documents/books/"))
 
-
   (defvar consult-dir--source-references
     '(:name "References"
       :narrow ?z
@@ -1130,7 +1124,6 @@ to the post-capture hook."
       :items consult-dir-reference-pdfs)
     "Reference pdf direcories")
   (add-to-list 'consult-dir-sources 'consult-dir--source-references)
-
 
   (after! org
     (defun consult-dir-org-source ()
@@ -1454,7 +1447,7 @@ to the post-capture hook."
 (setq! doom-theme 'modus-operandi-tinted
        modus-themes-mixed-fonts t)
 ;;; ** make theme consistent with `qtile'
-(when (EVA-02-p)
+(after! nil
   (defun my/current-theme-type ()
     "Return type of theme"
     (let ((theme (symbol-name (car custom-enabled-themes))))
@@ -1582,7 +1575,6 @@ to the post-capture hook."
 
 
 ;;; ** `technicolor' configuration
-
 (use-package! technicolor
   :config
   (when (EVA-02-p)
@@ -1677,13 +1669,19 @@ to the post-capture hook."
 (add-hook! org-agenda-finalize
            #'org-modern-agenda
            #'org-latex-preview-auto-mode)
+
 (setq! org-latex-preview-preamble
-       "\\documentclass{article}\n[DEFAULT-PACKAGES]\n[PACKAGES]\n\\usepackage{xcolor}\n\\usepackage{amssymb}\n\\usepackage{amsmath}")
-(setq! org-modern-block-fringe nil)
+       "\\documentclass{article}[DEFAULT-PACKAGES]
+[PACKAGES]
+\\usepackage{xcolor}
+\\usepackage{amssymb}
+\\usepackage{amsmath}")
+
 (after! org-modern
+  (setq! org-modern-block-fringe nil)
+
   (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10 )))
     "Face for org modern IDEA tag")
-
   (defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10) ))
     "Face for org modern IDEA tag")
   (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10) ))
@@ -1809,7 +1807,7 @@ to the post-capture hook."
            ("caption" . "☰")
            ("results" . "⮞"))))
 
-(add-hook! org-mode #'global-org-modern-mode)
+(global-org-modern-mode)
 
 ;;; ** `visual-fill-column-mode'
 (after! visual-fill-column
@@ -1823,8 +1821,8 @@ to the post-capture hook."
 
 ;;; * `wttr'
 (setq! wttrin-default-cities '("College Station" "Colleyville"))
-;; Fix needed: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
 
+;; Fix: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
 (defadvice! wwtrin-fetch-raw-string (query)
   "Make sure we fetch the acutual weather view"
   :override #'wttrin-fetch-raw-string
@@ -2007,12 +2005,12 @@ MYTAG"
       :desc "Cycle candidates"  "C-."                 #'embark-cycle)
 
 
-(when init-file-debug
-  (use-package! benchmark-init
-    :ensure t
-    :config
-    ;; To disable collection of benchmark data after init is done.
-    (add-hook 'after-init-hook 'benchmark-init/deactivate)))
+;; (when init-file-debug
+;;   (use-package! benchmark-init
+;;     :ensure t
+;;     :config
+;;     ;; To disable collection of benchmark data after init is done.
+;;     (add-hook 'after-init-hook 'benchmark-init/deactivate)))
 
 (map! :map minibuffer-mode-map
       "C-c C-." #'embark-select)
