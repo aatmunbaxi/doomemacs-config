@@ -89,7 +89,7 @@
            "\\*sly-description\\*"
            "\\*Flycheck errors\\*"
            "\\*Outline .*?\\*"
-           "\\*org-roam\\*"
+           "\\*nixos-options-doc\\*"
            pdf-outline-mode
            help-mode
            helpful-mode
@@ -117,8 +117,13 @@
        "M-u" #'consult-buffer))
 
 ;;; * Editing
+<<<<<<< HEAD
 (setopt kill-whole-line t)
 (add-hook! '(prog-mode-hook text-mode-hook) #'jinx-mode)
+=======
+(setq! kill-whole-line t)
+;; (global-jinx-mode)
+>>>>>>> 6b66c5d (Update)
 
 (map! :map global-map
       "M-/"          #'hippie-expand
@@ -200,10 +205,16 @@
         "C-M-<left>" #'sp-backward-slurp-sexp
         "M-D"        #'sp-backward-unwrap-sexp))
 ;;; * Font config
+<<<<<<< HEAD
 (setq variable-serif-font "EB Garamond"
       fixed-font "JetBrains Mono"
       variable-sans-serif "Rosario"
       doom-font fixed-font)
+=======
+(setq! variable-font "Iosevka Nerd Font"
+       fixed-font "FiraMono Nerd Font"
+       variable-sans-serif "Iosevka Aile")
+>>>>>>> 6b66c5d (Update)
 
 ;;; ** Fontaine
 (after! fontaine
@@ -467,6 +478,7 @@ When pressed twice, make the sub/superscript roman."
             :immediate-finish t)))))))
 ;;; ** org variables
 (after! org
+<<<<<<< HEAD
   (setopt org-directory "~/Documents/org/"
           org-default-notes-file "~/Documents/org/notes.org"
    org-outline-path-complete-in-steps nil
@@ -526,6 +538,125 @@ When pressed twice, make the sub/superscript roman."
 
 (map! (:when (modulep! :app calendar)
         :map org-agenda-mode-map
+=======
+  (setq! org-directory "~/Documents/org/"
+         org-default-notes-file "~/Documents/org/notes.org"
+         org-agenda-files '("~/Documents/org/inbox.org"
+                            "~/Documents/org/journal.org"
+                            "~/Documents/org/gtd.org"
+                            "~/Documents/org/tickler.org"
+                            "~/Documents/org/graveyard.org"
+                            "~/Documents/org/maybe.org")
+
+         org-refile-targets '((("~/Documents/org/journal.org")   :maxlevel . 2)
+                              (("~/Documents/org/gtd.org")   :maxlevel . 2)
+                              (("~/Documents/org/inbox.org")   :maxlevel . 2)
+                              (("~/Documents/org/tickler.org")  :level . 1)
+                              (("~/Documents/org/maybe.org")  :level . 1)
+                              (("~/Documents/org/notes.org")   :maxlevel . 3)
+                              (("~/Documents/org/graveyard.org") :level . 1))
+         org-agenda-include-deadlines t
+         org-agenda-use-time-grid nil
+         org-agenda-block-separator nil
+         org-agenda-compact-blocks t
+         org-agenda-start-day nil ;; i.e. today
+         org-agenda-span 5
+         org-agenda-skip-scheduled-if-done t
+         org-agenda-skip-deadline-if-done t
+         org-agenda-todo-ignore-scheduled 'all
+         org-capture-notes-file "~/Documents/org/notes.org"
+         org-capture-templates '(("n" "Info/IDEA")
+                                 ("nn" "Info node"
+                                  entry
+                                  (file+headline "~/Documents/org/notes.org" "Braindump")
+                                  "** %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+                                 ("nt" "Daily: Today"
+                                  entry
+                                  (file+olp+datetree "~/Documents/org/journal.org")
+                                  "* %?  :research:\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
+                                  :unnarrowed nil)
+                                 ("ni" "Daily: Idea"
+                                  entry
+                                  (file+olp+datetree "~/Documents/org/journal.org")
+                                  "* IDEA %?  :research:\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+                                 ("t" "Todo" entry (file "~/Documents/org/inbox.org")
+                                  "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
+
+                                 ("r" "research" entry (file "~/Documents/org/inbox.org")
+                                  "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
+
+                                 ("i" "idea" entry (file "~/Documents/org/inbox.org")
+                                  "* IDEA %?\n%i\n%a\n")
+
+                                 ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
+                                  ;; Call with C-u C-u interactive argument to insert inactive stamp
+                                  "* %? \n%(funcall 'org-timestamp '(16) 't)"
+                                  :empty-lines 1)
+                                 ("m" "Email workflow")
+                                 ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
+                                  "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                                  :immediate-finish t)
+                                 ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
+                                  "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
+                                 ("mr" "Read Later" entry (file"~/Documents/org/inbox.org")
+                                  "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                                  :immediate-finish t))
+         org-refile-use-outline-path 'file))
+
+;;; *** `org' variables
+(after! org
+  (setq! org-outline-path-complete-in-steps nil
+         org-latex-src-block-backend 'engraved
+         org-use-speed-commands t
+         org-archive-location ".%s_archive::"
+         org-file-apps (quote
+                        ((auto-mode . emacs)
+                         ("\\.m\\'" . default)
+                         ("\\.?html?\\'" . /usr/bin/firefox)
+                         ("\\.pdf\\'" . emacs)))
+         org-export-with-drawers '(not "noex")
+         org-structure-template-alist '(("a" . "export ascii")
+                                        ("c" . "center")
+                                        ("C" . "comment")
+                                        ("e" . "equation")
+                                        ("E" . "export")
+                                        ("h" . "export html")
+                                        ("l" . "export latex")
+                                        ("q" . "quote")
+                                        ("s" . "src")
+                                        ("v" . "verse"))
+         org-startup-with-latex-preview nil
+         org-todo-keywords     '((sequence
+                                  "TODO(t)"
+                                  "IDEA(i)"
+                                  "EVENT(e)"
+                                  "WAIT(w)"
+                                  "PROG(g)"
+                                  "MAYBE(m)"
+                                  "DRAFT(D)"
+                                  "|"
+                                  "DONE(d)"
+                                  "CANCELLED(c)"))
+         org-attach-id-dir "~/Documents/org/.attach/"
+         org-latex-pdf-process (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f")
+         org-latex-default-packages-alist '(("" "amssymb" t)
+                                            ("" "amsmath" t ("lualatex" "xetex"))
+                                            ("" "fontspec" t ("lualatex" "xetex"))
+                                            ("AUTO" "inputenc" t ("pdflatex"))
+                                            ("T1" "fontenc" t ("pdflatex")))
+         org-highlight-latex-and-related nil
+         org-startup-folded t
+         org-startup-with-inline-images nil
+         org-fontify-whole-heading-line t
+         org-fontify-done-headline t
+         org-fontify-quote-and-verse-blocks nil
+         org-ellipsis "  "
+         org-image-actual-width 400
+         org-hide-emphasis-markers t))
+
+(when (modulep! :app calendar)
+  (map! :map org-agenda-mode-map
+>>>>>>> 6b66c5d (Update)
         :desc "Calendar" "C" #'=calendar))
 
 ;;;  bibtex
@@ -878,6 +1009,7 @@ INFO is a plist containing export properties."
        "C-<tab>"                                       #'tempel-expand)
 
 
+<<<<<<< HEAD
 ;;; * org-node
 (after! org-mem
   (setopt org-mem-watch-dirs '("~/Documents/org/")
@@ -885,18 +1017,55 @@ INFO is a plist containing export properties."
           org-mem-do-warn-title-collisions nil))
 (after! org-node
   (setopt org-node-creation-fn #'org-capture)
+=======
+;;; * `org-roam'
+;; Will be removed eventually (maybe).
+;; I think I prefer the zen of `org-node',
+;; but some of the `org-roam' features are
+;; really nice to have
+;;; ** `Variables'
+
+(after! org-roam
+  (setq! org-roam-directory "~/Documents/org/roam/"
+         org-roam-dailies-directory "~/Documents/org/roam/daily/"
+         org-roam-node-display-template
+         (concat "${title:*} "
+                 (propertize "${tags:40}" 'face 'org-modern-tag))
+
+         org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
+         citar-org-roam-note-title-template "${author} - ${title}"
+         citar-org-roam-capture-template-key "b"))
+(add-hook! org-roam-mode  (visual-line-mode
+                           (org-latex-preview 'buffer)))
+(after! org
+  ;; function to add a citar key to ROAM_REFS property
+  ;; for org-roam nodes
+  (defun citar-org-tag-headline ( &optional rest )
+    (interactive)
+    ;; keep this aroound for posterity
+    (org-node--add-to-property-keep-space "ROAM_REFS" (s-concat  "@" (car (citar--key-at-point))))
+    (org-node--add-to-property-keep-space "REFS" (s-concat  "@" (car (citar--key-at-point)))))
+  (setq! org-node-warn-title-collisions nil
+         org-node-creation-fn #'org-capture
+         org-node-extra-id-dirs org-directory)
+  ;; (org-node-reset)
+>>>>>>> 6b66c5d (Update)
   (org-node-cache-mode))
 (after! org
   (org-mem-updater-mode))
 
+<<<<<<< HEAD
 ;;; ** org-roam helper functions
+=======
+;;; ** `org-roam' helper functions
+>>>>>>> 6b66c5d (Update)
 ;; This code is just  helper stuff that I wrote
 ;; to migrate my org-roam collection to a single big file
 ;; as opposed to many small files. Organizationally, I find
 ;; the latter preferable because the in-buffer search utilities
 ;; are superior, and I arbitrarily prefer fewer buffers
 ;; open at a time. You can safely delete this code.
-(after! nil
+(after! org-roam
   (defun org-roam-file-to-heading (file buff)
     "Moves content from single org-roam node FILE to a top
 level heading in BUFF"
@@ -930,8 +1099,12 @@ format to top level headlines in org buffer BUFF"
              do
              (my/org-roam-file-to-heading file buff))))
 
+<<<<<<< HEAD
 ;;; ** Solving org-roam file ID annoyance
 (after! org-roam
+=======
+(after! nil
+>>>>>>> 6b66c5d (Update)
   (defun my/remove-file-level-org-ID ()
     "Removes file-level org ID property.
 org-roam forces new ID creation at the file level
@@ -951,6 +1124,7 @@ to the post-capture hook."
        :desc "Find node" "f" #'org-node-find
        :desc "Refile node" "w" #'org-node-refile))
 
+<<<<<<< HEAD
 ;;; * citar
 ;;; ** citar variables
 (after! citar
@@ -958,11 +1132,33 @@ to the post-capture hook."
 
 ;;; ** citar related keybindings
 (defun my/citar-embark-update-prefix-suffix (cite)
+=======
+;;; * `citar'
+;;; ** variables
+(after! citar
+  (setq! citar-bibliography '("~/Documents/bib/zotero_refs.bib")
+         ;; citar-org-roam-subdir "~/Documents/org/roam/"
+         bibtex-completion-library-path '("~/Documents/books/" "~/Documents/bib/pdfs/")
+         ;; citar-org-roam-template-fields '((:citar-title "title")
+         ;;                                  (:citar-author "author" "editor")
+         ;;                                  (:citar-date "date" "year" "issued")
+         ;;                                  (:citar-pages "pages")
+         ;;                                  (:citar-type "=type=")
+         ;;                                  (:citar-citekey "citekey")
+         ;;                                  (:citar-file "file"))
+         ;; citar-org-roam-capture-template-key "n")
+  ))
+
+;;; ** `citar' related keybindings
+;;;
+(defun my/citar-embark-update-prefix-suffix ()
+>>>>>>> 6b66c5d (Update)
   (citar-org-update-prefix-suffix nil))
 
 (map! :map org-mode-map
 :desc "Find node"         "C-c n r f"       #'org-node-find
 
+<<<<<<< HEAD
 :map global-map
 :desc "Citar open"              "C-c ]"     #'citar-open
 :map citar-embark-map
@@ -984,6 +1180,29 @@ to the post-capture hook."
 :desc "Open"                    "o"         #'citar-open
 :desc "Copy reference"          "r"         #'citar-copy-reference
 :desc "Add to node refs"        "k"         #'citar-org-roam-tag-headline)
+=======
+      :map citar-embark-map
+      :desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
+      :desc "Open entry"              "e"        #'citar-open-entry
+      :desc "Open files"              "f"        #'citar-open-files
+      :desc "Edit"                    "i"        #'citar-insert-edit
+      :desc "Open link"               "l"        #'citar-open-links
+      :desc "Open notes"              "n"        #'citar-open-notes
+      :desc "Open"                    "o"        #'citar-open
+      :desc "Copy reference"          "r"        #'citar-copy-reference
+      :desc "Add to node refs"        "k"        #'citar-org-tag-headline
+
+      :map citar-embark-citation-map
+      :desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
+      :desc "Open entry"              "e"        #'citar-open-entry
+      :desc "Open files"              "f"        #'citar-open-files
+      :desc "Edit"                    "i"        #'citar-insert-edit
+      :desc "Open link"               "l"        #'citar-open-links
+      :desc "Open notes"              "n"        #'citar-open-notes
+      :desc "Open"                    "o"        #'citar-open
+      :desc "Copy reference"          "r"        #'citar-copy-reference
+      :desc "Add to node refs"        "k"        #'citar-org-tag-headline)
+>>>>>>> 6b66c5d (Update)
 
 ;;; * pdf-view mode
 (add-hook! 'pdf-tools-enabled-hook #'pdf-view-themed-minor-mode
@@ -1109,6 +1328,7 @@ If PAGE is non-nil return its size instead of current page."
   "TAB"                                         #'corfu-next
   "S-TAB"                                       #'corfu-previous))
 
+<<<<<<< HEAD
 ;;; * vertico
 ;;; ** vertico bindings
 (map! (:after consult-dir
@@ -1117,6 +1337,15 @@ If PAGE is non-nil return its size instead of current page."
               "C-x C-d"                                       #'consult-dir))
 ;;; * consult
 ;;; ** consult-buffer sources
+=======
+;;; * `consult'
+;;; ** consult-notes
+(setq! consult-notes-org-headings-files
+       '("~/Documents/org/journal.org" "~/Documents/org/notes.org"))
+
+(consult-notes-org-headings-mode)
+;;; ** `consult-buffer' sources
+>>>>>>> 6b66c5d (Update)
 (after! (:and consult org-roam)
   (defvar org-source
     (list :name     "Org Buffer"
@@ -1232,8 +1461,26 @@ If PAGE is non-nil return its size instead of current page."
     (add-to-list 'consult-dir-sources 'consult-dir--source-org-dir)))
 
 
+<<<<<<< HEAD
 ;;; ** consult keybindings
 ;;; * lasgun
+=======
+
+;;; * `ncspot-control'
+(use-package! ncspot-control
+  :load-path  "~/.config/doom/lisp/ncspot-control"
+  :config
+  (defun ncspot-control-dispatch ()
+    (interactive)
+    (when (not (executable-find "ncspot"))
+      (error "ncspot not installed!"))
+    (if (equal (current-buffer) (get-buffer "spotify"))
+        (ncspot-control)
+      (ncspot-control-quick-menu)))
+
+  (map! :desc "Spotify control" "M-g M-m" #'ncspot-control-dispatch))
+;;; * `lasgun'
+>>>>>>> 6b66c5d (Update)
 (use-package! lasgun
   :defer t
   :commands
@@ -1341,6 +1588,7 @@ If PAGE is non-nil return its size instead of current page."
       (ring-remove lasgun-mark-ring 0))
     (message "No lasgun marks")))
 
+<<<<<<< HEAD
 (after! (:and avy lasgun)
   (transient-define-prefix lasgun-transient ()
     "Main transient for lasgun."
@@ -1362,6 +1610,29 @@ If PAGE is non-nil return its size instead of current page."
      [""
       ("q" "Quit" transient-quit-one)]])
   (add-hook! transient-exit-hook #'lasgun-clear-lasgun-mark-ring))
+=======
+;; (after! (:and avy lasgun)
+;;   (transient-define-prefix lasgun-transient ()
+;;     "Main transient for lasgun."
+;;     [["Marks"
+;;       ("c" "Char timer" lasgun-mark-char-timer :transient t)
+;;       ("l" "Begin of line" lasgun-mark-line :transient t)
+;;       ("s" "Symbol" lasgun-mark-symbol-1 :transient t)
+;;       ("x" "Clear lasgun mark ring" lasgun-clear-lasgun-mark-ring :transient t)
+;;       ("u" "Undo lasgun mark" lasgun-pop-lasgun-mark :transient t)]
+;;      ["Actions"
+;;       ("SPC" "Make cursors" lasgun-make-multiple-cursors)
+;;       ("." "Embark act" lasgun-embark-act-all)
+;;       ("$" "Jinx correct" lasgun-action-jinx-correct :transient t)]
+;;      ["" :description ""
+;;       ("m" "Toggle math delims" lasgun-action-toggle-math-delims :transient t)
+;;       (";" "Comment line" lasgun-action-comment-line :transient t)
+;;       ("?" "Specify action" lasgun-prompt-action :transient t)]
+;;      [""
+;;       ("q" "Quit" transient-quit-one)]])
+;;   ;; (add-hook! transient-exit #'lasgun-clear-lasgun-mark-ring)
+;;   )
+>>>>>>> 6b66c5d (Update)
 
 ;;; ** lasgun actions
 (defun my/avy-lg-mark-char-timer (ARG)
@@ -1526,13 +1797,20 @@ If PAGE is non-nil return its size instead of current page."
     (add-to-list 'mc/cmds-to-run-once cmd)))
 
 ;;; * Programming language configurations
+<<<<<<< HEAD
 ;;; ** julia
+=======
+;;; ** envrc
+(envrc-global-mode)
+;;; ** Julia
+>>>>>>> 6b66c5d (Update)
 (when (modulep! :lang julia +snail)
   (add-hook! julia-mode #'julia-repl-mode)
   (add-hook! julia-mode-hook #'julia-snail-mode))
 
 ;; (add-to-list 'exec-path "~/.juliaup/bin")
 ;; (when (modulep! :lang julia +lsp)
+<<<<<<< HEAD
 ;;   (setopt eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
 
 (after! julia-snail
@@ -1546,6 +1824,28 @@ If PAGE is non-nil return its size instead of current page."
   (put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
   (put 'lazy-multiple-value 'common-lisp-indent-function '(1 1 &rest 1))
   (put 'lazy-reshape 'common-lisp-indent-function '(1 &rest 1)))
+=======
+;;   (setq! eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
+
+(setq! julia-snail-executable (executable-find "julia")
+       julia-snail-extra-args "--threads auto"
+       org-babel-julia-command  (executable-find "julia"))
+;;; ** lldb debugger
+;; (dap-register-debug-template "Rust::GDB Run Configuration"
+;;                              (list :type "gdb"
+;;                                    :request "launch"
+;;                                    :name "GDB::Run"
+;;                            :gdbpath "rust-gdb"
+;;                                    :target nil
+;;                                    :cwd nil))
+
+;;; ** `common-lisp' configuration
+;;;  *** Petalisp indentation fixes
+(put 'lazy 'common-lisp-indent-function '(1 &rest 1))
+(put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
+(put 'lazy-multiple-value 'common-lisp-indent-function '(1 1 &rest 1))
+(put 'lazy-reshape 'common-lisp-indent-function '(1 &rest 1))
+>>>>>>> 6b66c5d (Update)
 
 
 ;;; ** outli
@@ -1560,9 +1860,17 @@ If PAGE is non-nil return its size instead of current page."
 (map! :map outline-minor-mode-map
       "C-c s ,"                                       #'consult-outline)
 
+<<<<<<< HEAD
 ;;; ** gap
 (setopt gap-executable (executable-find "gap"))
 ;;; ** haskell
+=======
+
+;;; ** `gap' config
+;; (setq! gap-executable "/usr/bin/gap")
+
+;;; ** `haskell'
+>>>>>>> 6b66c5d (Update)
 (after! haskell
   (setopt haskell-compile-command "ghc -Wall -ferror-spans -fforce-recomp -dynamic -c %s")
   (add-to-list 'exec-path "/home/aatmun/.ghcup/bin"))
@@ -1572,24 +1880,28 @@ If PAGE is non-nil return its size instead of current page."
   (setopt eglot-workspace-configuration '((haskell (plugin (stan (globalOn . :json-false)))))))
 
 ;;; * Eyecandy
+
 ;;; ** Theme
+<<<<<<< HEAD
 (setopt doom-theme 'ef-light
         modus-themes-mixed-fonts t)
 ;;; ** make theme consistent with qtile
+=======
+(setq! doom-theme 'modus-operandi
+       modus-themes-mixed-fonts t)
+;;; ** make theme consistent with `qtile'
+>>>>>>> 6b66c5d (Update)
 (after! nil
   (defun my/current-theme-type ()
     "Return type of theme"
     (let ((theme (symbol-name (car custom-enabled-themes))))
       (intern (car (split-string theme "-")))))
-
   (defvar qtile-colors-to-export
     '(bg bg-alt grey
       red orange green
       teal yellow blue
       dark-blue magenta violet
       cyan dark-cyan fg-alt fg))
-
-
   (defun my/gen-doom-colors ()
     "Generates python-formatted doom colors"
     (let ((colors '(bg bg-alt grey
@@ -1597,7 +1909,6 @@ If PAGE is non-nil return its size instead of current page."
                     teal yellow blue
                     dark-blue magenta violet
                     cyan dark-cyan fg-alt fg))
-
           (res "cs = {"))
       (cl-loop for color in colors do
                (setq res
@@ -1608,8 +1919,12 @@ If PAGE is non-nil return its size instead of current page."
                                (doom-color 'bg)) "\",\n"))
                (setq res (concat res "}")))
       res))
+<<<<<<< HEAD
 
   (setopt modus-to-universal-palette-translation
+=======
+  (setq! modus-to-universal-palette-translation
+>>>>>>> 6b66c5d (Update)
          '((bg-main . bg)
            (bg-dim . bg-alt)
            (border . grey)
@@ -1709,8 +2024,25 @@ If PAGE is non-nil return its size instead of current page."
        '(:internal-border-width 15 :right-divider-width 5 :scroll-bar-width 0))
 
 
+<<<<<<< HEAD
 ;;; ** technicolor 
 (defun technicolor-relative-darken (color alpha)
+=======
+
+;;; ** indent-bars
+
+(add-hook! (python-mode
+            rustic-mode
+            julia-mode
+            conf-toml-mode)
+           #'indent-bars-mode)
+;;; ** `technicolor' configuration
+(use-package! technicolor
+  :config
+  (when (EVA-02-p)
+    (require 'miasma-utils))
+  (defun technicolor-relative-darken (color alpha)
+>>>>>>> 6b66c5d (Update)
     (technicolor-blend 'background color alpha))
   (defun technicolor-relative-lighten (color alpha)
     (technicolor-blend 'foreground color alpha))
@@ -1902,6 +2234,7 @@ If PAGE is non-nil return its size instead of current page."
             ("caption" . "☰")
             ("results" . "⮞")))
 
+<<<<<<< HEAD
   (setopt org-modern-todo-faces
           `(("IDEA" . org-modern-idea)
             ("EVENT" . org-modern-event)
@@ -1917,6 +2250,75 @@ If PAGE is non-nil return its size instead of current page."
 ;;          visual-fill-column-center-text t))
 
 ;; (add-hook! (text-mode-hook prog-mode-hook) #'visual-fill-column-mode)
+=======
+  (setq! org-modern-list '((43 . "➤")
+                           (45 . "–")
+                           (42 . "•"))
+         org-modern-footnote (cons nil (cadr org-script-display))
+         org-modern-block-name
+         '((t . t)
+           ("src" "»" "«")
+           ("example" "»–" "–«")
+           ("quote" "❝" "❞")
+           ("export" "⏩" "⏪"))
+         org-modern-progress nil
+         org-modern-priority nil
+         org-modern-horizontal-rule (make-string 36 ?─)
+         org-modern-keyword
+         '((t . t)
+           ("title" . "𝙏")
+           ("subtitle" . "𝙩")
+           ("author" . "𝘼")
+           ("email" . #("" 0 1 (display (raise -0.14))))
+           ("date" . "𝘿")
+           ("property" . "☸")
+           ("options" . "⌥")
+           ("startup" . "⏻")
+           ("macro" . "𝓜")
+           ("bind" . #("" 0 1 (display (raise -0.1))))
+           ("bibliography" . "")
+           ("print_bibliography" . #("" 0 1 (display (raise -0.1))))
+           ("cite_export" . "⮭")
+           ("print_glossary" . #("ᴬᶻ" 0 1 (display (raise -0.1))))
+           ("glossary_sources" . #("" 0 1 (display (raise -0.14))))
+           ("include" . "⇤")
+           ("setupfile" . "⇚")
+           ("html_head" . "🅷")
+           ("html" . "🅗")
+           ("latex_class" . "🄻")
+           ("latex_class_options" . #("🄻" 1 2 (display (raise -0.14))))
+           ("latex_header" . "🅻")
+           ("latex_header_extra" . "🅻⁺")
+           ("latex" . "🅛")
+           ("beamer_theme" . "🄱")
+           ("beamer_color_theme" . #("🄱" 1 2 (display (raise -0.12))))
+           ("beamer_font_theme" . "🄱𝐀")
+           ("beamer_header" . "🅱")
+           ("beamer" . "🅑")
+           ("attr_latex" . "🄛")
+           ("attr_html" . "🄗")
+           ("attr_org" . "⒪")
+           ("call" . #("" 0 1 (display (raise -0.15))))
+           ("name" . "⁍")
+           ("header" . "›")
+           ("caption" . "☰")
+           ("results" . "⮞"))))
+
+(global-org-modern-mode)
+
+;;; ** `visual-fill-column-mode'
+(after! visual-fill-column
+  (setq! visual-fill-column-width 130
+         visual-fill-column-center-text t))
+
+(add-hook! text-mode #'visual-fill-column-mode)
+
+;;; * personal stuff
+;; (require 'setup-personal)
+
+;;; * `wttr'
+(setq! wttrin-default-cities '("College Station" "Colleyville"))
+>>>>>>> 6b66c5d (Update)
 
 ;;; * wttr
 (after! wttrin
@@ -1934,8 +2336,20 @@ If PAGE is non-nil return its size instead of current page."
          (lambda (status) (switch-to-buffer (current-buffer))))
       (decode-coding-string (buffer-string) 'utf-8))))
 
+<<<<<<< HEAD
 ;;; * elfeed and elfeed-tube
 (setopt rmh-elfeed-org-files '("notes.org"))
+=======
+;;; * spotify control
+(setq! browse-url-browser-function #'browse-url-firefox)
+(setq! smudge-oauth2-client-id "4cca92de47df47b2b4f2d15f1fb1987a"
+       smudge-oauth2-client-secret "7271a6c2f3574d0aa22f0117fd8cbe54")
+
+
+
+;;; * `elfeed' and `elfeed-tube'
+(setq! rmh-elfeed-org-files '("notes.org"))
+>>>>>>> 6b66c5d (Update)
 
 ;;; ** elfeed helper functions
 (after! elfeed
@@ -1985,6 +2399,7 @@ MYTAG"
         "l"      (elfeed-tag-selection-as 'readlater)))
 
 
+<<<<<<< HEAD
 ;;; * email
 (after! notmuch
   (require 'setup-email))
@@ -1994,6 +2409,115 @@ MYTAG"
           (agent-shell-google-make-authentication :login t)
           agent-shell-anthropic-authentication
           (agent-shell-anthropic-make-authentication :login t)))
+=======
+(map!
+ :desc "Buffer list"                                   "M-u"                    #'consult-buffer
+ :desc "Buffer other window"                           "M-U"                    #'my/switch-buffer-other-window
+ :desc "Consult Dir"                                   "C-x C-d"                #'consult-dir
+ :desc "Search notes"                                  "C-c s n"                #'consult-notes
+ :desc "Consult mark"                                  "C-M-,"                  #'consult-mark
+ :desc "Other window"                                  "M-o"                    #'other-window
+ :desc "Avy goto/Lasgun mark"                          "M-n"                    #'my/avy-lg-mark-char-timer
+ :desc "Lasgun make multiple cursors"                          "M-g SPC"                #'lasgun-make-multiple-cursors
+ :desc "Lasgun mark char timer"                        "M-g M-SPC"                  #'lasgun-mark-char-timer
+ :desc "Backward kill sexp"                            "C-M-<backspace>"        #'backward-kill-sexp
+ :desc "Move window top/bottom"                        "M-l"                    #'move-to-window-line-top-bottom
+ :desc "Hippie expand"                                 "M-/"                    #'hippie-expand
+
+ "C-."                                           #'embark-act
+ "M-."                                           #'embark-dwim
+ "C-h B"                                         #'embark-bindings
+
+ "C-c o T"                                       #'eat
+ "C-c o t"                                       #'eat
+
+
+ "C-c ]"                             #'citar-insert-reference
+
+ ;; `popper' bindings
+ "<escape>"                                      #'popper-toggle
+ "C-<escape>"                                    #'popper-cycle
+ "C-M-<escape>"                                  #'popper-toggle-type
+
+ ;; navigating marks
+ "C-M-;"                                         #'better-jumper-set-jump
+ "C-,"                                           #'push-mark-no-activate
+ "M-,"                                           #'jump-to-mark
+
+ "C-;"                                           #'iedit-mode
+
+ ;; `easy-mark' and `easy-kill'
+ "C-M-SPC"                                       #'easy-mark
+ "M-SPC"                                         #'easy-kill
+
+ ;; `tempel'
+ "M-*"                                           #'tempel-insert
+ "C-<tab>"                                       #'tempel-expand
+
+ :desc "Lasgun" "C-c t g"                        #'lasgun-transient
+
+
+ (:when (featurep 'activities)
+   (:prefix-map ("C-x C-a" . "activities")
+    :desc "Switch activity"                       "RET"      #'activities-switch
+    :desc "New"                                   "C-n"      #'activities-new
+    :desc "Define"                                "C-d"      #'activities-define
+    :desc "Kill"                                  "C-k"      #'activities-kill
+    :desc "Suspend"                               "C-s"      #'activities-suspend
+    :desc "Resume activity"                       "C-a"      #'activities-resume
+    :desc "List activities"                       "l"        #'activities-list
+    :desc "Switch to buffer with activity"        "b"        #'activities-switch-buffer
+    :desc "Revert state"                          "g"        #'activities-revert))
+
+
+ (:prefix "C-c w"
+  :desc "Swap window"                           "o"        #'ace-swap-window
+  :desc "Delete other window"                   "0"        #'ace-delete-window)
+
+ ;; `avy' stuff
+ :desc "Goto line"                              "M-g M-g"          #'avy-goto-line
+ :desc "Goto char"                              "M-g i"            #'avy-goto-char
+
+ (:prefix "M-s"
+  :desc "Copy line"                             "y"        #'avy-copy-line
+  :desc "Copy region"                           "M-y"      #'avy-copy-region
+  :desc "Kill whole line"                       "M-k"      #'avy-kill-whole-line
+  :desc "Goto line above"                       "M-p"      #'avy-goto-line-above
+  :desc "Goto line below"                       "M-n"      #'avy-goto-line-below
+  :desc "Kill region"                           "C-y"      #'avy-kill-region
+  :desc "Kill region save region"               "M-w"      #'avy-kill-ring-save-region
+  :desc "Move line"                             "t"        #'avy-move-line
+  :desc "Move region"                           "M-t"      #'avy-move-region
+  :desc "End of line"                           "M-t"      #'avy-goto-end-of-line))
+
+
+(map! :map outline-mode-map
+      :leader
+      "s ," #'consult-outline
+      :map outli-mode-map
+      :leader
+      "s ," #'consult-outline)
+
+;;; ** `easy-kill'  keybindings
+(map! :map easy-kill-base-map
+      ","                                             #'easy-kill-expand-region
+      "."                                             #'easy-kill-contract-region)
+
+;;; ** `vertico' keybindings
+(map! :map vertico-map
+      "C-x C-j"                                       #'consult-dir-jump-file
+      "C-x C-d"                                       #'consult-dir)
+
+;;; ** `outline-minor-mode'  map
+(map! :map outline-minor-mode-map
+      "C-c s ,"                                       #'consult-outline)
+
+;;; ** `embark' maps
+(map! :map embark-file-map
+      :desc "Find file read ony" "r"                  #'find-file-read-only
+      :map embark-general-map
+      :desc "Cycle candidates"  "C-."                 #'embark-cycle)
+>>>>>>> 6b66c5d (Update)
 
 ;;; * overleaf
 (after!  overleaf

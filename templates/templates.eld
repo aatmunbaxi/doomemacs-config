@@ -8,6 +8,9 @@ prog-mode
 (bug (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "BUG ")
 (hack (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "HACK ")
 
+
+
+
 emacs-lisp-mode
 
 (atload & ";;;###autoload")
@@ -125,6 +128,7 @@ latex-mode org-mode :when (texmathp)
 (FF "\mathbb{F}")
 (im "\\operatorname{im} ")
 (hom "\\operatorname*{Hom}" r)
+(FF "\\mathbb{F}" r)
 (par "\\left( " r " \\right)" q)
 (sqr "\\left[ " r " \\right]" q)
 (angle "\\left\\langle " r " \\right\\rangle" q)
@@ -199,6 +203,7 @@ nix-mode
 (installCheckPhasephase > "installCheckPhasePhase= ''" n (p "") n " '';")
 (installphase > "installphase= ''" n p " mkdir -p $out/bin" n> "for f in $(find . -executable -type f);" n> "do" n> "cp $f $out/bin" n> "done}" n> " '';")
 
+<<<<<<< HEAD
 (gitpackage "{ lib" n ", stdenv" n ", fetchFromGitHub" n ", " (p "inputs") n ", " (p "inputs") n "}:" n n>
             "stdenv.mkDerivation rec {" n> "pname = \"" (p "" pkgn nil) "\";" n> "version = \"" p "\";" n n>
             "src = fetchFromGitHub {" n> "owner = \"" (p "" own) "\";" n> "repo = \"" (s pkgn) "\";" n>
@@ -211,6 +216,39 @@ nix-mode
             "maintainers = with maintainers; [ " (s own) " ];" n>
             "platforms = platforms."
             (p (completing-read "Platform: " '("all" "allBut" "arm" "cygwin" "darwin" "freebsd" "gnu" "i686" "illumos" "linux" "mesaPlatforms" "mips" "netbsd" "none" "openbsd" "unix" "x86"))) ";" n> q "};" n> "}")
+=======
+nix-mode
+(rustenv "let
+  pkgs = import <nixpkgs> {};
+in
+with pkgs;
+mkShell {
+  buildInputs = [
+    rustc
+    rust-analyzer
+    udev pkg-config # this is needed by cargo-embed
+    clippy
+    rustfmt
+  ];
+}")
+
+(pkgmodule
+ "{ config, pkgs, ... }:
+
+{
+
+	home.packages = with pkgs; [\n"
+ r
+	"\n];
+
+  programs. = {
+    enable = true;
+
+  };
+
+}
+")
+>>>>>>> 6b66c5d (Update)
 
 
 ;; Local Variables:

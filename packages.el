@@ -23,14 +23,17 @@
         (format "(defun org-git-version () \"The truncate git commit hash of Org mode.\" %S)\n" git-version)
         "(provide 'org-version)\n"))))
   :pin nil)
-(package! eldoc-box)
-(package! org-msg :recipe (:host github :repo "jeremy-compostella/org-msg" :branch "main"))
+
+(unpin! org)
+(unpin! org-msg)
+(package! repeat-help :recipe (:host github :repo "karthink/repeat-help"))
 (package! org-super-agenda)
 (package! uniline :recipe
   (:host github :repo "tbanel/uniline"))
 (package! org-chef)
 (package! no-littering)
 (package! org-appear)
+(package! envrc)
 (package! org-modern)
 (package! org-web-tools)
 (package! org-protocol-capture-html)
@@ -39,6 +42,7 @@
 (package! pdftotxt.el
   :recipe (:host github :repo "tecosaur/pdftotext.el"))
 (package! org-ql)
+
 (package! org-cv
   :recipe (:host gitlab
            :repo "Titan-C/org-cv"))
@@ -46,7 +50,7 @@
 (package! org-pomodoro)
 (package! doric-themes :recipe
   (:host github
-         :repo "protesilaos/doric-themes"))
+   :repo "protesilaos/doric-themes"))
 ;;; $ Editing packages
 (package! super-save)
 (package! tempel)
@@ -78,12 +82,13 @@
 (package! technicolor :recipe (:host github :repo "aatmunbaxi/technicolor"))
 (package! lambda-themes
   :recipe (:host github :repo "Lambda-Emacs/lambda-themes"))
-
+(package! standard-themes)
 ;;; $ Utilities
 (package! timeout
   :recipe (:host github :repo "karthink/timeout"))
 (package! wttrin
   :recipe (:host github :repo "bcbcarl/emacs-wttrin"))
+
 (package! org-node
   :recipe (:host github :repo "meedstrom/org-node"))
 (package! lsp-booster
@@ -127,13 +132,20 @@
 (when (modulep! :email notmuch)
   (package! notmuch-indicator))
 
-(package! keycast :recipe (:host github :repo "tarsius/keycast"))
 
 (package! engrave-faces :recipe (:host github :repo "tecosaur/engrave-faces"))
 (package! benchmark-init)
 
 (package! nixos-options
   :recipe (:host github :repo "nix-community/nix-emacs"))
+(package! indent-bars)
+;; (package! elfeed-tube)
+(package! keycast :recipe (:host github :repo "tarsius/keycast"))
+(package! no-littering)
+(package! dogears)
+(package! engrave-faces :recipe (:host github :repo "tecosaur/engrave-faces"))
+(package! consult-notes :recipe (:host github :repo "mclear-tools/consult-notes"))
+;; (package! benchmark-init)
 
 (package! acp)
 (package! agent-shell)
@@ -144,11 +156,13 @@
 (package! overleaf :recipe (:host github :repo "vale981/overleaf.el"))
 
 ;;; $ Disable packages
-(unpin! emacs-everywhere)
-;; (disable-packages! avy-migemo
-;;                    anaconda-mode
-;;                    org-noter-nov
-;;                    org-noter-djvu)
 
+(disable-packages! avy-migemo
+                   activities
+                   anaconda-mode
+                   org-noter
+                   org-noter-nov
+                   org-noter-djvu
+                   solaire-mode)
 (when (modulep! :ui modeline)
   (package! mood-line :disable t))
