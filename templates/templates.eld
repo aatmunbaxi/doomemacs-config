@@ -1,3 +1,6 @@
+fundamental-mode
+(date (format-time-string "%Y-%m-%d") r)
+
 prog-mode
 
 (fixme (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "FIXME ")
@@ -9,32 +12,32 @@ emacs-lisp-mode
 
 (atload & ";;;###autoload")
 (pt "(point)")
-(vr "(defvar " p "\n  \"" p "\")")
-(lcl "(defvar-local " p "\n  \"" p "\")")
-(cnst "(defconst " p "\n  \"" p "\")")
-(cstom "(defcustom " p "\n  \"" p "\"" n> ":type '" p ")")
+(var "(defvar " p "\n  \"" p "\")")
+(local "(defvar-local " p "\n  \"" p "\")")
+(const "(defconst " p "\n  \"" p "\")")
+(custom "(defcustom " p "\n  \"" p "\"" n> ":type '" p ")")
 (fce "(defface " p " '((t :inherit " p "))\n  \"" p "\")")
 (grp "(defgroup " p " nil\n  \"" p "\"" n> ":group '" p n> ":prefix \"" p "-\")")
-(mcr "(defmacro " p " (" p ")\n  \"" p "\"" n> r> ")")
-(als "(defalias '" p " '" p ")")
+(macro "(defmacro " p " (" p ")\n  \"" p "\"" n> r> ")")
+(alias "(defalias '" p " '" p ")")
 (fn "(defun " p " (" p ")\n  \"" p "\"" n> r> ")")
 (iflet "(if-let (" p ")" n> r> ")")
-(whnlt "(when-let (" p ")" n> r> ")")
-(iflt* "(if-let* (" p ")" n> r> ")")
-(whnlt* "(when-let* (" p ")" n> r> ")")
-(andlt* "(and-let* (" p ")" n> r> ")")
-(cnd "(cond" n "(" q "))" >)
+(whenlt "(when-let (" p ")" n> r> ")")
+(iflet* "(if-let* (" p ")" n> r> ")")
+(whenlet* "(when-let* (" p ")" n> r> ")")
+(andlet* "(and-let* (" p ")" n> r> ")")
+(cond "(cond" n "(" q "))" >)
 (pcase "(pcase " (p "scrutinee") n "(" q "))" >)
 (lt "(let (" p ")" n> r> ")")
 (lt* "(let* (" p ")" n> r> ")")
 (rc "(letrec (" p ")" n> r> ")")
 (dtimes "(dotimes (" p ")" n> r> ")")
 (dlist "(dolist (" p ")" n> r> ")")
-(lp "(cl-loop for " p " in " p " do" n> r> ")")
-(cmmnd "(defun " p " (" p ")\n  \"" p "\"" n> "(interactive" p ")" n> r> ")")
-(advce "(defun " (p "adv" name) " (&rest app)" n> p n> "(apply app))" n>
+(loop "(cl-loop for " p " in " p " do" n> r> ")")
+(command "(defun " p " (" p ")\n  \"" p "\"" n> "(interactive" p ")" n> r> ")")
+(advice "(defun " (p "adv" name) " (&rest app)" n> p n> "(apply app))" n>
        "(advice-add #'" (p "fun") " " (p ":around") " #'" (s name) ")")
-(prvide "(provide '" (file-name-base (or (buffer-file-name) (buffer-name))) ")" n
+(provide "(provide '" (file-name-base (or (buffer-file-name) (buffer-name))) ")" n
         ";;; " (file-name-nondirectory (or (buffer-file-name) (buffer-name))) " ends here" n)
 (lg "(message \"LOG %s " (s sexp) ": %S"
     "\" (format-time-string \"%X\") " sexp ")")
@@ -62,6 +65,8 @@ emacs-lisp-mode
                     ";; You should have received a copy of the GNU General Public License\n"
                     ";; along with this program.  If not, see <https://www.gnu.org/licenses/>."))
 
+
+
                 n n
 
                 ";;; Commentary:" n n
@@ -87,7 +92,7 @@ clojure-mode
 
 lisp-mode
 
-(mcr "(defmacro " p " (" p ")\n  \"" p "\"" n> r> ")")
+(macro "(defmacro " p " (" p ")\n  \"" p "\"" n> r> ")")
 (als "(defalias '" p " '" p ")")
 (fn "(defun " p " (" p ")\n  \"" p "\"" n> r> ")")
 (iflet "(if-let (" p ")" n> r> ")")
@@ -109,23 +114,28 @@ text-mode
      "│ " (s str)                       " │" n
      "└─" (make-string (length str) ?─) "─┘" n)
 
-
 latex-mode org-mode :when (texmathp)
-
-(op "\\oplus " r)
-(bx "\\boxtimes " r)
+(lrs "\\prescript{" (p "\\mathcal{P}") "}{"
+     (p "\\mathcal{P}^{\\mathrm{rev}}}")
+     (p "{\\boxtimes} "))
+(o "\\circ" q)
+(op "\\oplus " q)
+(bx "\\boxtimes " q)
 (opr "\\operatorname{" r "}")
+(FF "\mathbb{F}")
 (im "\\operatorname{im} ")
 (hom "\\operatorname*{Hom}" r)
 (par "\\left( " r " \\right)" q)
 (sqr "\\left[ " r " \\right]" q)
 (angle "\\left\\langle " r " \\right\\rangle" q)
-(sum "\\sum_{" p "}^{" p "}" r )
+(sum "\\sum_{" p "}^{" p "}" q )
 (curl "\\left\\{ " r " \\right\\}" q)
 (over "\\overset{" (p "over") "}{" (p "lower") "}" q)
+(under "\\underbrace{" (p "content") "}_{" (p "label") "}" q)
 (bx "\\boxtimes")
 (xrow "\\xrightarrow{" p "}")
-
+(inv "^{-1}" q)
+(id "\\operatorname{id}")
 (bigop (r (completing-read "Operator: "
                            '("\\bigoplus"
                              "\\bigotimes"
@@ -136,17 +146,25 @@ latex-mode org-mode :when (texmathp)
                              "\\bigstar"
                              "\\bigodot"
                              "\\bigvee"
-                             "\\bigwedge"))) "_{" p "}^{" p "}")
+                             "\\bigwedge"))) "_{" p "}^{" p "}" q)
 (cfp "[" (p "\\mathcal{C}") " \\overset{" (p "G") "}{\\boxtimes} " (p "\\mathcal{D}") " ]_{" (p "B") "}" q)
+(pointed "\\mathcal{C}(" (p "A") "," (p "q") ")")
+(fp  " \\overset{" (p "G") "}{\\boxtimes} ")
+(ss "\\subset ")
 (subr (r elem "x")  "_{" (p "1") "}" (p "separator" separator)
       " \\cdots "
       (s separator)  (s elem) "_{" (p "n") "}" q)
 
 (set "\\left\\{ " (r "elems")  " \\mid " (p "restrictions") " \\right\\} " q)
 (FR "\\operatorname{FR}^{" p "," p "}_{" p "}" q)
-(frac "\\frac{" (r "numerator" num) "}{" (p "denominator" denom) "} " q )
+(frac "\\frac{" (r "numerator" num) "}{" (q "denominator" denom) "} " )
+(psup "\\prescript{" p "}{" p "}{" q "}")
 
 org-mode :when (save-excursion (backward-sexp) (bolp))
+(transhead "#+transclude: [[" (p "file") "]] :src " (p "lang") " :heading \"" (r "heading") "\"" q
+           :post (org-transclusion-add))
+(newcell "#+ipynb-newcell")
+(jupy "#+begin_src jupyter-python :exports both :session " (file-name-base)  r n q n "#+end_src" )
 (caption "#+caption: ")
 (drawer ":" p ":" n r ":end:")
 (begin "#+begin_" (s name) n> r> n "#+end_" name)
@@ -158,31 +176,43 @@ org-mode :when (save-excursion (backward-sexp) (bolp))
 (ascii "#+begin_export ascii" n> r> n "#+end_export")
 (html "#+begin_export html" n> r> n "#+end_export")
 (latex "#+begin_export latex" n> r> n "#+end_export")
+
 (comment "#+begin_comment" n> r> n "#+end_comment")
 (verse "#+begin_verse" n> r> n "#+end_verse")
-(src "#+begin_src " p n r n "#+end_src" )
+(src "#+begin_src " p n r n "#+end_src" :post (org-edit-src-code) )
 
 (gnuplot "#+begin_src gnuplot :var data=" (p "table") " :file " (p "plot.png") n r n "#+end_src" :post (org-edit-src-code))
 (elisp "#+begin_src emacs-lisp" n r n "#+end_src" :post (org-edit-src-code))
 (title "#+title: " p n "#+author: Aatmun Baxi" n "#+language: en")
 
 
-;; regular org mode expansions
-org-mode
-(he "\\( " q " \\)" )
-(sh "\\[ " n q n "\\]")
 
+nix-mode
 
-(beg "\\begin{" (p  (completing-read "Environment: " texmathp-environments nil nil) env nil) "}"
-     n r n
-     "\\end{" env "}")
+(buildphase > "buildPhase= ''" n (p "Build Instructions") n " '';")
+(checkPhase > "checkPhase= ''" n (p "") n " '';")
+(configurephase > "configurePhase= ''" n (p "") n " '';")
+(fixupphase > "fixupPhase= ''" n (p "") n " '';")
+(distphase > "distPhase= ''" n (p "") n " '';")
+(patchphase > "patchPhase= ''" n (p "") n " '';")
+(unpackphase > "unpackPhase= ''" n (p "") n " '';")
+(installCheckPhasephase > "installCheckPhasePhase= ''" n (p "") n " '';")
+(installphase > "installphase= ''" n p " mkdir -p $out/bin" n> "for f in $(find . -executable -type f);" n> "do" n> "cp $f $out/bin" n> "done}" n> " '';")
 
-
-
-
+(gitpackage "{ lib" n ", stdenv" n ", fetchFromGitHub" n ", " (p "inputs") n ", " (p "inputs") n "}:" n n>
+            "stdenv.mkDerivation rec {" n> "pname = \"" (p "" pkgn nil) "\";" n> "version = \"" p "\";" n n>
+            "src = fetchFromGitHub {" n> "owner = \"" (p "" own) "\";" n> "repo = \"" (s pkgn) "\";" n>
+            "rev = \"" "v${version}" "\";" n> "sha256 = \"" "${lib.fakeSha256}" "\";" n> "};" n n>
+            "nativeBuildInputs = [ " (p "makeWrapper") " ];" n n> "BuildInputs = [ " (p) " ];" n n>
+            "meta = with lib; {" n>
+            "homepage = \"" "https://github.com/" (s own) "/" (s pkgn) "\";" n>
+            "description = \"" (p) "\";" n>
+            "license = licenses." (p (completing-read "License: " '("agpl3" "asl20" "bsd1" "bsd2" "bsd3" "free" "gpl2" "gpl2Only" "gpl2Plus" "gpl3" "gpl3Only" "gpl3Plus" "isc" "lgpl21Only" "lgpl21Plus" "lgpl2Only" "lgpl2Plus" "lgpl3" "lgpl3Only" "mit" "mpl20" "ofl" "unfree"))) ";" n>
+            "maintainers = with maintainers; [ " (s own) " ];" n>
+            "platforms = platforms."
+            (p (completing-read "Platform: " '("all" "allBut" "arm" "cygwin" "darwin" "freebsd" "gnu" "i686" "illumos" "linux" "mesaPlatforms" "mips" "netbsd" "none" "openbsd" "unix" "x86"))) ";" n> q "};" n> "}")
 
 
 ;; Local Variables:
 ;; outline-regexp: "[a-z]"
-;; major-mode: #'lisp-data-mode
 ;; End:

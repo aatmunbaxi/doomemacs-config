@@ -9,20 +9,17 @@
 ;; `packages.el'. Hence, you'll likely find many `after!'
 ;; blocks that refer to packages that aren't currently installed
 ;; or toggled in
-
-
-
-(doom-load-packages-incrementally '(org
-                                    magit
-                                    recentf
-                                    org-roam
-                                    org-capture
-                                    org-agenda
-                                    embark
-                                    consult))
+;; (doom-load-packages-incrementally '(org
+;;                                     magit
+;;                                     recentf
+;;                                     org-capture
+;;                                     org-agenda
+;;                                     embark
+;;                                     consult))
 
 ;;; * Some functions
 (after! emacs
+  (setopt warning-minimum-level :error)
   (defun my/switch-buffer-other-window ()
     (interactive)
     (save-excursion
@@ -38,35 +35,44 @@
 (when (or (EVA-02-p) (surfacep))
   (display-battery-mode))
 
-(setq! display-time-format "%H:%M %d %b %Y")
+(setopt display-time-format "%H:%M %d %b %Y")
 (display-time-mode)
-
-(when (EVA-02-p)
-  (setq! fancy-splash-image (expand-file-name "splash/you_will_never_be_happy-take-1.svg" doom-user-dir)))
-
+(global-display-line-numbers-mode -1)
+(remove-hook! 'prog-mode-hook #'display-line-numbers-mode)
 ;;; * Setup load path.
-(or (equal (system-name) "pop-os") (surfacep))
 (add-to-list 'load-path "~/.config/doom/")
 (add-to-list 'load-path "~/.doom.d/")
-(setq! local-package-path (expand-file-name "lisp/" doom-user-dir))
+(setopt local-package-path (expand-file-name "lisp/" doom-user-dir))
 
 
 ;;; * Buffer related config
-;;; ** `activities'
+;;; ** activities
 ;; (activities-mode)
+(map! :map global-map
+       (:when (featurep 'activities)
+         (:prefix-map ("C-x C-a" . "activities")
+          :desc "Switch activity"                       "RET"      #'activities-switch
+          :desc "New"                                   "C-n"      #'activities-new
+          :desc "Define"                                "C-d"      #'activities-define
+          :desc "Kill"                                  "C-k"      #'activities-kill
+          :desc "Suspend"                               "C-s"      #'activities-suspend
+          :desc "Resume activity"                       "C-a"      #'activities-resume
+          :desc "List activities"                       "l"        #'activities-list
+          :desc "Switch to buffer with activity"        "b"        #'activities-switch-buffer
+          :desc "Revert state"                          "g"        #'activities-revert)))
 
-;;; ** `dogears'
-(setq! dogears-idle nil)
-(dogears-mode)
-(map!
- :desc "Dogears save"                         "M-g M-s"       #'dogears-remember
- :desc "Dogears forward"                      "M-g M-f"       #'dogears-forward
- :desc "Dogears backward"                     "M-g M-b"       #'dogears-back
- :desc "Dogears list"                         "M-g M-l"       #'dogears-list)
+;;; ** dogears
+;; (after! dogears)(setopt dogears-idle nil)
+;; (dogears-mode)
+;; (map!
+;;  :desc "Dogears save"                         "M-g M-s"       #'dogears-remember
+;;  :desc "Dogears forward"                      "M-g M-f"       #'dogears-forward
+;;  :desc "Dogears backward"                     "M-g M-b"       #'dogears-back
+;;  :desc "Dogears list"                         "M-g M-l"       #'dogears-list)
 
-;;; ** `ace-window'
+;;; ** ace-window
 (when (modulep! :ui window-select)
-  (setq! aw-scope 'global))
+  (setopt aw-scope 'global))
 
 (when (EVA-02-p)
   (defun my/open-eat-other-frame ()
@@ -75,9 +81,9 @@
       (switch-to-buffer (other-buffer buf))
       (switch-to-buffer-other-frame buf))))
 
-;;; ** `popper'
+;;; ** popper
 (after! popper
-  (setq! popper-reference-buffers
+    (setopt popper-reference-buffers
          '("\\*Messages\\*"
            "Output\\*$"
            "\\*compilation\\*"
@@ -91,14 +97,17 @@
            help-mode
            helpful-mode
            compilation-mode))
-  (setq! popper-mode-line '(:eval (propertize " POP " 'face 'highlight))))
+  (setopt popper-mode-line '(:eval (propertize " 儚 " 'face 'highlight))))
 
-
+(map! :map global-map
+       "<escape>"                                      #'popper-toggle
+       "C-<escape>"                                    #'popper-cycle
+       "C-M-<escape>"                                  #'popper-toggle-type)
 (popper-mode +1)
 (popper-echo-mode)
 
 ;;; * Editing
-(setq! kill-whole-line t)
+(setopt kill-whole-line t)
 (global-jinx-mode)
 
 (defun my/find-bounds-of-regexps (open close)
@@ -123,7 +132,16 @@
           (setq parity (1- parity))))
       (when (= parity 0) (cons end (point))))))
 
-;;; ** `easy-kill' and `expand-region' interop
+;;; ** easy-kill bindings
+(map! (:map (text-mode-map prog-mode-map)
+      "C-M-SPC"                                       #'easy-mark
+      "M-SPC"                                         #'easy-kill)
+
+      (:after easy-kill
+      :map easy-kill-base-map
+      ","                                             #'easy-kill-expand-region
+      "."                                             #'easy-kill-contract-region))
+;;; ** easy-kill and expand-region interop
 (after! easy-kill
   (defun easy-kill-expand-region ()
     "Expand kill according to expand-region."
@@ -151,7 +169,7 @@
 
 ;;; ** Mark utilities
 (defun push-mark-no-activate (&optional pt)
-  "Push `point' to local mark ring, without activating the region."
+  "Push point to local mark ring, without activating the region."
   (interactive)
   (push-mark (if pt
                  pt
@@ -159,100 +177,103 @@
   (message "Pushed point to mark ring"))
 
 (defun jump-to-mark ()
-  "Jump to local mark, respecting `mark-ring' order."
+  "Jump to local mark, respecting mark-ring order."
   (interactive)
   (set-mark-command 1))
 
 ;;; ** Smartparens
-(add-hook! prog-mode #'sp-use-smartparens-bindings)
+(add-hook! prog-mode-hook #'sp-use-smartparens-bindings)
 
+(map! :map (prog-mode-map text-mode-map)
+      "C-<right>" #'sp-forward-slurp-sexp
+      "C-<left>" #'sp-forward-barf-sexp
+      "C-M-<right>" #'sp-backward-barf-sexp
+      "C-M-<left>" #'sp-backward-slurp-sexp
+      "M-D"        #'sp-unwrap-sexp)
 ;;; * Font config
-(setq! variable-font "Iosevka Slab"
-       fixed-font (if (EVA-02-p)
-                      "FiraMono Nerd Font"
-                    "FiraCode")
-       variable-sans-serif "Iosevka Aile")
+(setopt variable-font "EB Garamond"
+        fixed-font "Fira Code"
+        variable-sans-serif "Rosario"
+        doom-font fixed-font)
 
 ;;; ** Fontaine
-(after! fontaine
-  (setq! fontaine-presets
-         `((regular-serif
-            :variable-pitch-family ,variable-font
-            :fixed-pitch-family ,fixed-font
-            :default-height 110
-            :default-weight light)
-           (regular-sans
-            :variable-pitch-family ,variable-sans-serif
-            :fixed-pitch-family ,fixed-font
-            :default-height 110
-            :default-weight light)
-           (office-monitor
-            :inherit regular-sans
-            :default-height 135)
-           (medium-serif
-            :inherit regular-serif
-            :default-height 140)
-           (medium-sans
-            :inherit regular-sans
-            :variable-pitch-weight light
-            :default-height 140)
+(setopt fontaine-presets
+        `((regular-serif
+           :variable-pitch-family ,variable-font
+           :fixed-pitch-family ,fixed-font
+           :default-height 110
+           :default-weight light)
+          (regular-sans
+           :variable-pitch-family ,variable-sans-serif
+           :fixed-pitch-family ,fixed-font
+           :default-height 110
+           :default-weight light)
+          (office-monitor
+           :inherit regular-sans
+           :default-height 135)
+          (medium-serif
+           :inherit regular-serif
+           :default-height 140)
+          (medium-sans
+           :inherit regular-sans
+           :variable-pitch-weight light
+           :default-height 140)
 
-           (large-serif
-            :inherit medium-serif
-            :default-height 180)
+          (large-serif
+           :inherit medium-serif
+           :default-height 180)
 
-           (large-sans
-            :inherit medium-sans
-            :default-height 180)
-           (huge-serif
-            :inherit medium-serif
-            :default-height 210)
-           (huge-sans
-            :inherit medium-sans
-            :default-height 210)
+          (large-sans
+           :inherit medium-sans
+           :default-height 180)
+          (huge-serif
+           :inherit medium-serif
+           :default-height 210)
+          (huge-sans
+           :inherit medium-sans
+           :default-height 210)
 
-           (t ; our shared fallback properties
-            :fixed-pitch-family ,fixed-font
-            :fixed-pitch-height 1.0
+          (t ; our shared fallback properties
+           :fixed-pitch-family ,fixed-font
+           :fixed-pitch-height 1.0
 
-            :variable-pitch-family ,variable-font
-            :variable-pitch-weight regular
-            :variable-pitch-height 1.0
+           :variable-pitch-family ,variable-font
+           :variable-pitch-weight regular
+           :variable-pitch-height 1.0
 
-            :fixed-pitch-serif-family ,fixed-font
-            :fixed-pitch-serif-weight nil
-            :fixed-pitch-serif-slant nil
-            :fixed-pitch-serif-height 1.0
+           :fixed-pitch-serif-family ,fixed-font
+           :fixed-pitch-serif-weight nil
+           :fixed-pitch-serif-slant nil
+           :fixed-pitch-serif-height 1.0
 
-            :bold-family nil ; use whatever the underlying face has
-            :bold-weight bold
-            :italic-family nil
-            :italic-slant italic
-            :line-spacing nil))))
+           :bold-family nil ; use whatever the underlying face has
+           :bold-weight bold
+           :italic-family nil
+           :italic-slant italic
+           :line-spacing nil)))
 
 (fontaine-mode)
 (fontaine-set-preset 'medium-sans)
 
 (add-hook! enable-theme-functions #'fontaine-apply-current-preset)
-(add-hook! text-mode #'variable-pitch-mode)
-(remove-hook! text-mode #'display-line-numbers-mode)
+(add-hook!  'text-mode-hook #'variable-pitch-mode)
 
 ;;; * LaTeX
-(setq! TeX-engine 'xetex)
+(setopt TeX-engine 'xetex)
 (after! math-delimiters
-  (setq! math-delimiters-compressed-display-math t))
+  (setopt math-delimiters-compressed-display-math t))
 
-(setq! bibtex-dialect 'biblatex)
+(setopt bibtex-dialect 'biblatex)
 
 ;;; ** Helper functions
 (use-package! latex-utils
   :after (:and org latex)
   :load-path local-package-path)
 
-(after! (:or org latex)
-  (setq! cdlatex-use-dollar-to-ensure-math nil)
+(after! (:and laas (:or org latex))
+  (setopt cdlatex-use-dollar-to-ensure-math nil)
   (defadvice! my/org-try-cdlatex-tab ()
-    "Try cdlatex tab when in `laas-mode'"
+    "Try cdlatex tab when in laas-mode"
     :override #'org-try-cdlatex-tab
     (when laas-mode
       (cond
@@ -294,9 +315,10 @@ When pressed twice, make the sub/superscript roman."
   (add-to-list 'easy-kill-try-things 'sexp))
 
 ;;; ** laas-mode for auto expanding snippets
-(add-hook! org-mode #'laas-mode)
-
-(after! (:and laas (:or org latex))
+(add-hook! 'org-mode-hook #'aas-mode #'laas-mode)
+(use-package! aas
+  :after (laas)
+  :config
   (aas-set-snippets 'laas-mode
                     :cond #'laas-mathp
                     "opr" '(tempel "\\operatorname{" r "}" q)
@@ -314,141 +336,129 @@ When pressed twice, make the sub/superscript roman."
                     "*" "\\ast"
                     "QQ" "\\mathbb{Q}"))
 
-
-
-;;; * eglot
-(use-package! eglot-booster
-  :after eglot
-  :config
-  (eglot-booster-mode))
-
-
-
 ;;; * org-mode
 (after! org
   (plist-put org-latex-preview-appearance-options
              :page-width 0.8)
   (add-hook 'org-latex-preview-auto-ignored-commands 'next-line)
   (add-hook 'org-latex-preview-auto-ignored-commands 'previous-line)
-  (setq! org-latex-preview-numbered t
+  (setopt org-latex-preview-numbered t
          org-latex-preview-live t))
 
 ;;; ** Variables
-(add-hook! org-agenda-mode (setq-local line-spacing 0.35))
+(add-hook! org-agenda-mode-hook (setq-local line-spacing 0.35))
 
-;;; *** `org-agenda'  variables
-(after! org
-  (setq! org-directory "~/Documents/org/"
-         org-default-notes-file "~/Documents/org/notes.org"
-         org-agenda-files '("~/Documents/org/inbox.org"
-                            "~/Documents/org/gtd.org"
-                            "~/Documents/org/tickler.org"
-                            "~/Documents/org/graveyard.org"
-                            "~/Documents/org/maybe.org"
-                            "~/Documents/org/roam/daily/dailies.org")
+;;; *** org-agenda  variables
+(setopt org-directory "~/Documents/org/"
+        org-default-notes-file "~/Documents/org/notes.org"
+        org-agenda-files '("~/Documents/org/inbox.org"
+                           "~/Documents/org/gtd.org"
+                           "~/Documents/org/tickler.org"
+                           "~/Documents/org/graveyard.org"
+                           "~/Documents/org/maybe.org")
 
-         org-refile-targets '((("~/Documents/org/gtd.org")   :maxlevel . 2)
-                              (("~/Documents/org/inbox.org")   :maxlevel . 2)
-                              (("~/Documents/org/tickler.org")  :level . 1)
-                              (("~/Documents/org/maybe.org")  :level . 1)
-                              (("~/Documents/org/notes.org")   :maxlevel . 3)
-                              (("~/Documents/org/research_notes.org")   :maxlevel . 2)
-                              (("~/Documents/org/graveyard.org") :level . 1)
-                              (("~/Documents/org/roam/daily/dailies.org") :maxlevel . 5))
-         org-agenda-include-deadlines t
-         org-agenda-use-time-grid nil
-         org-agenda-block-separator nil
-         org-agenda-compact-blocks t
-         org-agenda-start-day nil ;; i.e. today
-         org-agenda-span 5
-         org-agenda-skip-scheduled-if-done t
-         org-agenda-skip-deadline-if-done t
-         org-agenda-todo-ignore-scheduled 'all
-         org-capture-templates '(("n" "Info/IDEA")
-                                 ("nn" "Info node"
-                                  entry
-                                  (file "~/Documents/org/roam/roam.org")
-                                  "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-                                 ("nt" "Daily: Today"
-                                  entry
-                                  (file+olp+datetree "~/Documents/org/roam/daily/dailies.org")
-                                  "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
-                                  :unnarrowed nil)
-                                 ("ni" "Daily: Idea"
-                                  entry
-                                  (file+olp+datetree "~/Documents/org/roam/daily/dailies.org")
-                                  "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-                                 ("t" "Todo" entry (file "~/Documents/org/inbox.org")
-                                  "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-                                 ("r" "research" entry (file "~/Documents/org/inbox.org")
-                                  "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-                                 ("i" "idea" entry (file "~/Documents/org/inbox.org")
-                                  "* IDEA %?\n%i\n%a\n")
-                                 ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
-                                  ;; Call with C-u C-u interactive argument to insert inactive stamp
-                                  "* %? \n%(funcall 'org-timestamp '(16) 't)"
-                                  :empty-lines 1)
-                                 ("m" "Email workflow")
-                                 ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
-                                  "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
-                                  :immediate-finish t)
-                                 ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
-                                  "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
-                                 ("mr" "Read Later" entry (file"~/Documents/org/inbox.org")
-                                  "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
-                                  :immediate-finish t))
-         org-refile-use-outline-path 'file))
+        org-refile-targets '((("~/Documents/org/gtd.org")   :maxlevel . 2)
+                             (("~/Documents/org/inbox.org")   :maxlevel . 2)
+                             (("~/Documents/org/tickler.org")  :level . 1)
+                             (("~/Documents/org/maybe.org")  :level . 1)
+                             (("~/Documents/org/notes.org")   :maxlevel . 3)
+                             (("~/Documents/org/braindump.org")   :maxlevel . 2)
+                             (("~/Documents/org/graveyard.org") :level . 1)
+                             (("~/Documents/org/journal.org") :maxlevel . 5))
+        org-agenda-include-deadlines t
+        org-agenda-use-time-grid nil
+        org-agenda-block-separator nil
+        org-agenda-compact-blocks t
+        org-agenda-start-day nil ;; i.e. today
+        org-agenda-span 5
+        org-agenda-skip-scheduled-if-done t
+        org-agenda-skip-deadline-if-done t
+        org-agenda-todo-ignore-scheduled 'all
+        org-capture-templates '(("n" "Info/IDEA")
+                                ("nn" "Info node"
+                                 entry
+                                 (file+headline "~/Documents/org/braindump.org" "Braindump")
+                                 "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+                                ("nt" "Daily: Today"
+                                 entry
+                                 (file+olp+datetree "~/Documents/org/journal.org")
+                                 "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
+                                 :unnarrowed nil)
+                                ("ni" "Daily: Idea"
+                                 entry
+                                 (file+olp+datetree "~/Documents/org/journal.org")
+                                 "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+                                ("t" "Todo" entry (file "~/Documents/org/inbox.org")
+                                 "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
+                                ("r" "research" entry (file "~/Documents/org/inbox.org")
+                                 "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
+                                ("i" "idea" entry (file "~/Documents/org/inbox.org")
+                                 "* IDEA %?\n%i\n%a\n")
+                                ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
+                                 ;; Call with C-u C-u interactive argument to insert inactive stamp
+                                 "* %? \n%(funcall 'org-timestamp '(16) 't)"
+                                 :empty-lines 1)
+                                ("m" "Email workflow")
+                                ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
+                                 "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                                 :immediate-finish t)
+                                ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
+                                 "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
+                                ("mr" "Read Later" entry (file"~/Documents/org/inbox.org")
+                                 "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                                 :immediate-finish t))
+        org-refile-use-outline-path 'file)
 
-;;; *** `org' variables
-(after! org
-  (setq! org-outline-path-complete-in-steps nil
-         org-latex-src-block-backend 'engraved
-         org-use-speed-commands t
-         org-archive-location ".%s_archive::"
-         org-file-apps (quote
-                        ((auto-mode . emacs)
-                         ("\\.m\\'" . default)
-                         ("\\.?html?\\'" . /usr/bin/firefox)
-                         ("\\.pdf\\'" . emacs)))
-         org-export-with-drawers '(not "noex")
-         org-structure-template-alist '(("a" . "export ascii")
-                                        ("c" . "center")
-                                        ("C" . "comment")
-                                        ("e" . "equation")
-                                        ("E" . "export")
-                                        ("h" . "export html")
-                                        ("l" . "export latex")
-                                        ("q" . "quote")
-                                        ("s" . "src")
-                                        ("v" . "verse"))
-         org-startup-with-latex-preview nil
-         org-todo-keywords     '((sequence
-                                  "TODO(t)"
-                                  "IDEA(i)"
-                                  "EVENT(e)"
-                                  "WAIT(w)"
-                                  "PROG(g)"
-                                  "MAYBE(m)"
-                                  "DRAFT(D)"
-                                  "|"
-                                  "DONE(d)"
-                                  "CANCELLED(c)"))
-         org-attach-id-dir "~/Documents/org/.attach/"
-         org-latex-pdf-process (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f")
-         org-latex-default-packages-alist '(("" "amssymb" t)
-                                            ("" "amsmath" t ("lualatex" "xetex"))
-                                            ("" "fontspec" t ("lualatex" "xetex"))
-                                            ("AUTO" "inputenc" t ("pdflatex"))
-                                            ("T1" "fontenc" t ("pdflatex")))
-         org-highlight-latex-and-related nil
-         org-startup-folded t
-         org-startup-with-inline-images nil
-         org-fontify-whole-heading-line t
-         org-fontify-done-headline t
-         org-fontify-quote-and-verse-blocks nil
-         org-ellipsis "  "
-         org-image-actual-width 400
-         org-hide-emphasis-markers t))
+;;; *** org variables
+(setopt org-outline-path-complete-in-steps nil
+        org-latex-src-block-backend 'engraved
+        org-use-speed-commands t
+        org-archive-location ".%s_archive::"
+        org-file-apps (quote
+                       ((auto-mode . emacs)
+                        ("\\.m\\'" . default)
+                        ("\\.?html?\\'" . (executable-find "zen"))
+                        ("\\.pdf\\'" . emacs)))
+        org-export-with-drawers '(not "noex")
+        org-highlight-latex-and-related '(native)
+        org-structure-template-alist '(("a" . "export ascii")
+                                       ("c" . "center")
+                                       ("C" . "comment")
+                                       ("e" . "equation")
+                                       ("E" . "export")
+                                       ("h" . "export html")
+                                       ("l" . "export latex")
+                                       ("q" . "quote")
+                                       ("s" . "src")
+                                       ("v" . "verse"))
+        org-startup-with-latex-preview nil
+        org-todo-keywords     '((sequence
+                                 "TODO(t)"
+                                 "IDEA(i)"
+                                 "EVENT(e)"
+                                 "WAIT(w)"
+                                 "PROG(g)"
+                                 "MAYBE(m)"
+                                 "DRAFT(D)"
+                                 "|"
+                                 "DONE(d)"
+                                 "CANCELLED(c)"))
+        org-attach-id-dir "~/Documents/org/.attach/"
+        org-latex-pdf-process (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f")
+        org-latex-default-packages-alist '(("" "amssymb" t)
+                                           ("" "amsmath" t ("lualatex" "xetex"))
+                                           ("" "fontspec" t ("lualatex" "xetex"))
+                                           ("AUTO" "inputenc" t ("pdflatex"))
+                                           ("T1" "fontenc" t ("pdflatex")))
+        org-highlight-latex-and-related nil
+        org-startup-folded t
+        org-startup-with-inline-images nil
+        org-fontify-whole-heading-line t
+        org-fontify-done-headline t
+        org-fontify-quote-and-verse-blocks nil
+        org-ellipsis "  "
+        org-image-actual-width 400
+        org-hide-emphasis-markers t)
 
 (when (modulep! :app calendar)
   (map! :map org-agenda-mode-map
@@ -456,7 +466,7 @@ When pressed twice, make the sub/superscript roman."
 
 ;;;  bibtex
 (after! bibtex
-  (setq! bibtex-autokey-year-length 4
+  (setopt bibtex-autokey-year-length 4
          bibtex-autokey-name-year-separator "-"
          bibtex-autokey-year-title-separator "-"
          bibtex-autokey-titleword-separator "-"
@@ -464,16 +474,16 @@ When pressed twice, make the sub/superscript roman."
          bibtex-autokey-titlewords-stretch 1
          bibtex-autokey-titleword-length 5))
 
-;;; ** `ox-cv'
+;;; ** ox-cv
 (use-package! ox-awesomecv
   :after org)
 
-;;; ** `org-present'
+;;; ** org-present
 (after! org-present
-  (setq! org-present-hide-stars-in-headings t
+  (setopt org-present-hide-stars-in-headings t
          org-present-text-scale 4.5)
 
-  (add-hook! org-present-mode
+  (add-hook! org-present-mode-hook
     (setq-local visual-fill-column-mode 1)
     (setq-local hl-line-mode nil)
     (org-present-hide-cursor)
@@ -481,7 +491,7 @@ When pressed twice, make the sub/superscript roman."
     (setq-local spell-fu-mode nil)
     (hide-mode-line-mode))
 
-  (add-hook! org-present-mode-quit
+  (add-hook! org-present-mode-quit-hook
     (setq-local hl-line-mode 1)
     (setq-local visual-fill-column-mode nil)
     (org-present-show-cursor)
@@ -489,9 +499,9 @@ When pressed twice, make the sub/superscript roman."
     (org-remove-inline-images)
     (hide-mode-line-mode)))
 
-;;; ** `org-super-agenda'
+;;; ** org-super-agenda
 (after! org
-  (setq! org-agenda-custom-commands
+  (setopt org-agenda-custom-commands
          '(("n" "Today's agenda"
             ((agenda "" ((org-super-agenda-groups
                           `((:discard (:file-path "graveyard"))
@@ -604,7 +614,7 @@ When pressed twice, make the sub/superscript roman."
 (after! org
   (org-super-agenda-mode))
 
-;;; ** `org' specific `expand-region' functionality
+;;; ** org specific expand-region functionality
 (after! org
   (defun my/org-beginning-of-defun (&optional arg)
     ";TODO: "
@@ -632,20 +642,18 @@ When pressed twice, make the sub/superscript roman."
                     (org-element-end (org-element-context))))))
 
 
-;;; ** `org-mode-hook' main
-(add-hook! org-mode
+;;; ** org-mode-hook main
+(add-hook! 'org-mode-hook
            #'org-appear-mode
-           #'variable-pitch-mode
-           #'org-latex-preview-auto-mode
-           
+           #'org-latex-preview-mode
            (org-indent-mode -1)
-           (require 'cdlatex)
-           (setq! display-line-numbers-mode nil
-                  tab-width 8
+           (display-line-numbers-mode 0)
+           :local
+           (setq tab-width 8
                   smartparens-mode nil))
 
 
-;;; ** `org' keybindings
+;;; ** org keybindings
 (map! :map global-map
       :desc "Org QL search"                  "C-c s q s"                 #'org-ql-search
       :desc "Org QL find"                    "C-c s q f"                 #'org-ql-find
@@ -669,9 +677,59 @@ When pressed twice, make the sub/superscript roman."
       :desc "Backward LaTeX math"            "M-<iso-lefttab>"           #'backward-latex-math)
 
 
-;;; * `expand-region'
+;;; * org-export
+;;; ** FIX: ox-hugo experimental org
+(after! org
+  (defun fixed?-org-html-format-latex (latex-frag processing-type info)
+    "Format a LaTeX fragment LATEX-FRAG into HTML.
+PROCESSING-TYPE designates the tool used for conversion.  It can
+be `mathjax', `verbatim', `html', nil, t or symbols in
+`org-preview-latex-process-alist', e.g., `dvipng', `dvisvgm' or
+`imagemagick'.  See `org-html-with-latex' for more information.
+INFO is a plist containing export properties."
+    (let ((cache-relpath "") (cache-dir ""))
+      (unless (or (eq processing-type 'mathjax)
+                  (eq processing-type 'html))
+        (let ((bfn (or (buffer-file-name)
+		       (make-temp-name
+		        (expand-file-name "latex" temporary-file-directory))))
+	      (latex-header
+	       (let ((header (plist-get info :latex-header)))
+	         (and header
+		      (concat (mapconcat
+			       (lambda (line) (concat "#+LATEX_HEADER: " line))
+			       (org-split-string header "\n")
+			       "\n")
+			      "\n")))))
+	  (setq cache-relpath
+	        (concat (file-name-as-directory org-preview-latex-image-directory)
+		        (file-name-sans-extension
+		         (file-name-nondirectory bfn)))
+	        cache-dir (file-name-directory bfn))
+	  (setq latex-frag (concat latex-header latex-frag))))
+      (org-export-with-buffer-copy nil ;; <-- this `nil' is the only difference
+                                   :to-buffer (get-buffer-create " *Org HTML Export LaTeX*")
+                                   :drop-visibility t :drop-narrowing t :drop-contents t
+                                   (erase-buffer)
+                                   (insert latex-frag)
+                                   (org-format-latex cache-relpath nil nil cache-dir nil
+		                                     "Creating LaTeX Image..." nil processing-type)
+                                   (buffer-string))))
+
+  (advice-add #'fixed?-org-html-format-latex
+              :override #'org-html-format-latex))
+;;; * org-transclution
+(use-package! org-transclusion-src-heading
+  :after (org org-transclusion)
+  :config
+  (defvar my/outline-regexp-star-group 1)
+  (setopt org-transclusion-src-heading-level-capture-group 1
+          org-transclusion-src-heading-name-capture-group 2)
+  (setq org-transclusion-extensions
+        (nconc '(org-transclusion-src-heading) org-transclusion-extensions)))
+;;; * expand-region
 (after! expand-region
-  (setq! expand-region-fast-keys-enabled nil)
+  (setopt expand-region-fast-keys-enabled nil)
   (defvar-keymap expand-region-repeat-map
     :repeat ((:enter er/expand-region
                      er/contract-region))
@@ -688,72 +746,7 @@ When pressed twice, make the sub/superscript roman."
 (add-to-list 'expand-region-exclude-text-mode-expansions 'org-mode)
 (add-to-list 'expand-region-exclude-text-mode-expansions 'latex-mode)
 
-;;; ** Helper functions
-;;; *** LaTeX stuff expansions
-(after! expand-region
-  (defun er/mark-LaTeX-inside-math ()
-    "Mark text inside LaTeX math delimiters. See `er/mark-LaTeX-math'
-for details."
-    (when (texmathp)
-      (let* ((string (car texmathp-why))
-             (pos (cdr texmathp-why))
-             (reason (assoc string texmathp-tex-commands1))
-             (type (cadr reason)))
-        (cond
-         ;; I never use $ $$ for latex math. I mean, who does??
-         ;; ((eq type 'sw-toggle) ;; $ and $$
-         ;;  (goto-char pos)
-         ;;  (set-mark (1+ (point)))
-         ;;  (forward-sexp 1)
-         ;;  (backward-char 1)
-         ;;  (exchange-point-and-mark))
-         ((or (eq type 'sw-on)
-              (equal string "Org mode embedded math")) ;; \( and \[
-          (re-search-forward texmathp-onoff-regexp)
-          (backward-char 2)
-          (set-mark (+ pos 2))
-          (exchange-point-and-mark))
-         (t (error (format "Unknown reason to be in math mode: %s" type)))))))
-
-  (defun er/mark-latex-inside-pairs ()
-    (if (texmathp)
-        (cl-destructuring-bind (beg . end)
-            (my/find-bounds-of-regexps " *[{([|<]"
-                                       " *[]})|>]")
-          (when-let ((n (length (match-string-no-properties 0))))
-            (set-mark
-             (save-excursion
-               (goto-char beg)
-               (forward-char n)
-               (skip-chars-forward er--space-str)
-               (point)))
-            (goto-char end)
-            (backward-char n)
-            (if (looking-back "\\\\right\\\\*\\|\\\\" (- (point) 7))
-                (backward-char (length (match-string-no-properties 0))))
-            (skip-chars-backward er--space-str)
-            (exchange-point-and-mark)))
-      (er/mark-inside-pairs)))
-
-  (defun er/mark-latex-outside-pairs ()
-    (if (texmathp)
-        (cl-destructuring-bind (beg . end)
-            (my/find-bounds-of-regexps " *[{([|<]"
-                                       " *[]})|>]")
-          (set-mark (save-excursion
-                      (goto-char beg)
-                      ;; (forward-char 1)
-                      (if (looking-back "\\\\left\\\\*\\|\\\\" (- (point) 6))
-                          (backward-char (length (match-string-no-properties 0))))
-                      (skip-chars-forward er--space-str)
-                      (point)))
-          (goto-char end)
-          (skip-chars-backward er--space-str)
-          ;; (backward-char 1)
-          (exchange-point-and-mark))
-      (er/mark-outside-pairs))))
-
-;;; **** `org-mode' and `expand-region' latex interop
+;;; ** org-mode and expand-region latex interop
 
 (defun er/add-latex-in-org-mode-expansions ()
   (require 'expand-region)
@@ -775,68 +768,50 @@ for details."
                  er/mark-latex-inside-pairs
                  er/mark-latex-outside-pairs
                  er/mark-LaTeX-math))))
-(add-hook! org-mode #'er/add-latex-in-org-mode-expansions)
+(add-hook! org-mode-hook #'er/add-latex-in-org-mode-expansions)
 
 
-;;; * `tempel'
+;;; * tempel
 ;;; ** Basic setup
 (after! tempel
   (defun tempel-setup-capf ()
-    ;; Add the Tempel Capf to `completion-at-point-functions'.
-    ;; `tempel-expand' only triggers on exact matches. Alternatively use
-    ;; `tempel-complete' if you want to see all matches, but then you
-    ;; should also configure `tempel-trigger-prefix', such that Tempel
+    ;; Add the Tempel Capf to completion-at-point-functions.
+    ;; tempel-expand only triggers on exact matches. Alternatively use
+    ;; tempel-complete if you want to see all matches, but then you
+    ;; should also configure tempel-trigger-prefix, such that Tempel
     ;; does not trigger too often when you don't expect it. NOTE: We add
-    ;; `tempel-expand' *before* the main programming mode Capf, such
+    ;; tempel-expand *before* the main programming mode Capf, such
     ;; that it will be tried first.
     (setq-local completion-at-point-functions
                 (cons #'tempel-expand
                       completion-at-point-functions)))
 
-  (add-hook! prog-mode #'tempel-setup-capf)
-  (add-hook! text-mode #'tempel-setup-capf)
+  (add-hook! prog-mode-hook #'tempel-setup-capf)
+  (add-hook! text-mode-hook #'tempel-setup-capf)
 
-  (setq! tempel-path (directory-files (concat doom-user-dir "templates") t "eld$")
+  (setopt tempel-path (directory-files (concat doom-user-dir "templates") t "eld$")
          tempel-auto-reload t))
 
-;;; ** `tempel' keybindings
+;;; ** tempel keybindings
 (map! :map tempel-map
       "M-n"                                           #'tempel-next
       "M-e"                                           #'tempel-previous
-      "C-M-k"                                              #'tempel-abort)
+      "C-M-k"                                              #'tempel-abort
+      
+      :map (text-mode-map prog-mode-map)
+       "M-*"                                           #'tempel-insert
+       "C-<tab>"                                       #'tempel-expand)
 
 
-;;; * `org-roam'
-;; Will be removed eventually (maybe).
-;; I think I prefer the zen of `org-node',
-;; but some of the `org-roam' features are
-;; really nice to have
-;;; ** `Variables'
-
-(after! org-roam
-  (setq! org-roam-directory "~/Documents/org/roam/"
-         org-roam-dailies-directory "~/Documents/org/roam/daily/"
-         org-roam-node-display-template
-         (concat "${title:*} "
-                 (propertize "${tags:40}" 'face 'org-modern-tag))
-
-         org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
-         citar-org-roam-note-title-template "${author} - ${title}"
-         citar-org-roam-capture-template-key "b"))
-(add-hook! org-roam-mode  (visual-line-mode
-                           (org-latex-preview 'buffer)))
-(after! org
-  ;; function to add a citar key to ROAM_REFS property
-  ;; for org-roam nodes
-  (defun citar-org-roam-tag-headline ( &optional rest )
-    (interactive)
-    (org-node--add-to-property-keep-space "ROAM_REFS" (s-concat  "@" (car (citar--key-at-point)))))
-  (setq! org-node-warn-title-collisions nil
-         org-node-creation-fn #'org-capture)
-  (org-node-cache-mode))
+;;; * org-node
+(setopt org-mem-watch-dirs '("~/Documents/org/")
+        org-mem-do-sync-with-org-id t
+        org-node-creation-fn #'org-capture)
+(org-mem-updater-mode)
 
 
-;;; ** `org-roam' helper functions
+
+;;; ** org-roam helper functions
 ;; This code is just  helper stuff that I wrote
 ;; to migrate my org-roam collection to a single big file
 ;; as opposed to many small files. Organizationally, I find
@@ -845,7 +820,7 @@ for details."
 ;; open at a time. You can safely delete this code.
 (after! nil
   (defun org-roam-file-to-heading (file buff)
-    "Moves content from single `org-roam' node FILE to a top
+    "Moves content from single org-roam node FILE to a top
 level heading in BUFF"
     (org-with-file-buffer file
       (let ((title (org-get-title))
@@ -870,20 +845,18 @@ level heading in BUFF"
                  (org-set-property prop val)))))
 
   (defun org-roam-files-to-headings (buff)
-    "Refactors all `org-roam' nodes in one-node-per-file
-format to top level headlines in `org' buffer BUFF"
+    "Refactors all org-roam nodes in one-node-per-file
+format to top level headlines in org buffer BUFF"
     (interactive)
     (cl-loop for file in (directory-files org-roam-directory t "\\.org$")
              do
              (my/org-roam-file-to-heading file buff))))
 
 ;;; ** Solving org-roam file ID annoyance
-(quickroam-mode)
-
 (after! org-roam
   (defun my/remove-file-level-org-ID ()
     "Removes file-level org ID property.
-`org-roam' forces new ID creation at the file level
+org-roam forces new ID creation at the file level
 regardless of the type of capture template. I want to use
 headlines as entries, hence the adding of this function
 to the post-capture hook."
@@ -892,91 +865,70 @@ to the post-capture hook."
       (org-delete-property "ID")))
   (add-hook! org-roam-capture-new-node #'my/remove-file-level-org-ID))
 
-;;; ** `org-roam' keybindings
+;;; ** org-roam keybindings
 (map! :map global-map
       :leader
       (:prefix-map ("n r" . "node")
        :desc "Insert node" "i" #'org-node-insert-link
        :desc "Find node" "f" #'org-node-find
-       :desc "Refile node" "w" #'org-node-refile)
+       :desc "Refile node" "w" #'org-node-refile))
 
-      ;; (:prefix-map ("n d" . "dailies")
-      ;;  :desc "Capture today" "n" #'org-roam-dailies-capture-today
-      ;;  :desc "Capture y'day" "y" #'org-roam-dailies-capture-yesterday
-      ;;  :desc "Capture tomorrow" "t" #'org-roam-dailies-capture-tomorrow
-      ;;  :desc "Goto today" "f" #'org-roam-dailies-goto-today
-      ;;  :desc "Goto date" "d" #'org-roam-dailies-goto-date)
-      )
-
-;;; * `citar'
-;;; ** variables
+;;; * citar
+;;; ** citar variables
 (after! citar
-  (setq! citar-bibliography '("~/Documents/bib/zotero_refs.bib")
-         citar-org-roam-subdir "~/Documents/org/roam/"
-         bibtex-completion-library-path '("~/Documents/books/" "~/Documents/bib/pdfs/")
-         citar-org-roam-template-fields '((:citar-title "title")
-                                          (:citar-author "author" "editor")
-                                          (:citar-date "date" "year" "issued")
-                                          (:citar-pages "pages")
-                                          (:citar-type "=type=")
-                                          (:citar-citekey "citekey")
-                                          (:citar-file "file"))
+  (setopt citar-bibliography '("~/Documents/bib/zotero_refs.bib")
+         bibtex-completion-library-path '("~/Documents/pdfs/Articles" "~/Documents/pdfs/Reference Books/")))
 
-         citar-org-roam-capture-template-key "n"))
-
-;;; ** `citar' related keybindings
+;;; ** citar related keybindings
 (defun my/citar-embark-update-prefix-suffix (cite)
   (citar-org-update-prefix-suffix nil))
 
 (map! :map org-mode-map
-      :desc "Find node"         "C-c n r f"      #'org-node-find
+:desc "Find node"         "C-c n r f"      #'org-node-find
 
-      :map citar-embark-map
-      :desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
-      :desc "Open entry"              "e"        #'citar-open-entry
-      :desc "Open files"              "f"        #'citar-open-files
-      :desc "Edit"                    "i"        #'citar-insert-edit
-      :desc "Open link"               "l"        #'citar-open-links
-      :desc "Open notes"              "n"        #'citar-open-notes
-      :desc "Open"                    "o"        #'citar-open
-      :desc "Copy reference"          "r"        #'citar-copy-reference
-      :desc "Add to node refs"        "k"        #'citar-org-roam-tag-headline
+:map global-map
+:desc "Citar open"              "C-c ]"                             #'citar-open
+:map citar-embark-map
+:desc "Open entry"              "e"        #'citar-open-entry
+:desc "Open files"              "f"        #'citar-open-files
+:desc "Edit"                    "i"        #'citar-insert-edit
+:desc "Open link"               "l"        #'citar-open-links
+:desc "Open"                    "o"        #'citar-open
+:desc "Copy reference"          "r"        #'citar-copy-reference
+:desc "Add to node refs"        "k"        #'citar-org-roam-tag-headline
 
-      :map citar-embark-citation-map
-      :desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
-      :desc "Open entry"              "e"        #'citar-open-entry
-      :desc "Open files"              "f"        #'citar-open-files
-      :desc "Edit"                    "i"        #'citar-insert-edit
-      :desc "Open link"               "l"        #'citar-open-links
-      :desc "Open notes"              "n"        #'citar-open-notes
-      :desc "Open"                    "o"        #'citar-open
-      :desc "Copy reference"          "r"        #'citar-copy-reference
-      :desc "Add to node refs"        "k"        #'citar-org-roam-tag-headline)
+:map citar-embark-citation-map
+:desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
+:desc "Open entry"              "e"        #'citar-open-entry
+:desc "Open files"              "f"        #'citar-open-files
+:desc "Edit"                    "i"        #'citar-insert-edit
+:desc "Open link"               "l"        #'citar-open-links
+:desc "Open notes"              "n"        #'citar-open-notes
+:desc "Open"                    "o"        #'citar-open
+:desc "Copy reference"          "r"        #'citar-copy-reference
+:desc "Add to node refs"        "k"        #'citar-org-roam-tag-headline)
 
-;;; * `pdf-view' mode
-(pdf-loader-install)
-(after! pdf-tools
-  (add-hook! pdf-tools-enabled #'pdf-view-themed-minor-mode
-             #'pdf-view-auto-slice-minor-mode))
+;;; * pdf-view mode
+(add-hook! 'pdf-tools-enabled-hook #'pdf-view-themed-minor-mode
+#'pdf-view-auto-slice-minor-mode)
 
-;;; ** `pdf'  keybindings
+;;; ** pdf  keybindings
 (map! :map pdf-view-mode-map
       "M-m"                                           #'pdf-view-auto-slice-minor-mode
       "M-f"                                           #'pdf-view-themed-minor-mode
       "n"                                             #'pdf-view-next-line-or-next-page
       "e"                                             #'pdf-view-previous-line-or-previous-page)
 
-
-;;; * `avy'
-;;; ** `avy' functions
+;;; * avy
+;;; ** avy functions
 (use-package! avy-utils
   :after avy
   :load-path local-package-path)
 
 
-;;; ** `avy' variables
+;;; ** avy variables
 (after! avy
-  (setq! avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o)
+  (setopt avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o)
          avy-timeout-seconds 0.30
          avy-all-windows t
          avy-all-windows-alt nil
@@ -994,10 +946,27 @@ to the post-capture hook."
                               (?K . avy-action-kill-whole-line)
                               (?Y . avy-action-yank-whole-line)
                               (?T . avy-action-teleport-whole-line))))
-;;; * `corfu'
-;;; ** `corfu'  variables
+;;; ** avy map
+(map! :map global-map
+       ;; avy stuff
+       :desc "Goto line"                              "M-g M-g"          #'avy-goto-line
+       :desc "Goto char"                              "M-g i"            #'avy-goto-char
+
+       (:prefix "M-s"
+        :desc "Copy line"                             "y"        #'avy-copy-line
+        :desc "Copy region"                           "M-y"      #'avy-copy-region
+        :desc "Kill whole line"                       "M-k"      #'avy-kill-whole-line
+        :desc "Goto line above"                       "M-p"      #'avy-goto-line-above
+        :desc "Goto line below"                       "M-n"      #'avy-goto-line-below
+        :desc "Kill region"                           "C-y"      #'avy-kill-region
+        :desc "Kill region save region"               "M-w"      #'avy-kill-ring-save-region
+        :desc "Move line"                             "t"        #'avy-move-line
+        :desc "Move region"                           "M-t"      #'avy-move-region
+        :desc "End of line"                           "M-t"      #'avy-goto-end-of-line))
+;;; * corfu
+;;; ** corfu  variables
 (after! corfu
-  (setq! corfu-cycle t
+  (setopt corfu-cycle t
          corfu-auto t
          corfu-auto-prefix 2
          corfu-auto-delay 0.5
@@ -1010,7 +979,7 @@ to the post-capture hook."
                 corfu-auto nil)
     (corfu-mode)))
 
-;;; ** `corfu' hook
+;;; ** corfu hook
 (after! corfu
   (add-hook 'completion-at-point-functions #'cape-file)
   (add-hook 'completion-at-point-functions #'cape-elisp-block)
@@ -1020,7 +989,7 @@ to the post-capture hook."
 
   (add-hook! eshell-mode-hook #'my/eshell-corfu-settings))
 
-;;; ** `corfu'  keybindings
+;;; ** corfu  keybindings
 (map! (:when (modulep! :completion corfu)
         :map corfu-map
         "M-SPC"                                       #'corfu-insert-separator
@@ -1029,8 +998,8 @@ to the post-capture hook."
         "S-TAB"                                       #'corfu-previous))
 
 
-;;; * `consult'
-;;; ** `consult-buffer' sources
+;;; * consult
+;;; ** consult-buffer sources
 (after! (:and consult org-roam)
   (defvar org-source
     (list :name     "Org Buffer"
@@ -1048,8 +1017,8 @@ to the post-capture hook."
           :items
           (lambda ()
             (consult--buffer-query :mode 'org-mode :as #'consult--buffer-pair))))
-  ;; TODO: adapt this to use `org-node'
-  (setq! consult--org-roam-nodes-source
+  ;; TODO: adapt this to use org-node
+  (setopt consult--org-roam-nodes-source
          (list :name     "org nodes"
                :category 'org-heading
                :face 'org-roam-title
@@ -1073,17 +1042,17 @@ to the post-capture hook."
                          (org-roam--get-titles)))))
   (add-to-list 'consult-buffer-sources 'consult--org-roam-nodes-source 'append))
 
-;;; ** `consult-theme' bug fix
+;;; ** consult-theme bug fix
 ;;; For whatever reason, selecting an already-loaded doom theme
-;;; with `consult-theme' does not updaet the variable
-;;; `doom-themes--colors', which is used by `doom-color' to
+;;; with consult-theme does not updaet the variable
+;;; doom-themes--colors, which is used by doom-color to
 ;;; retrieve the palette's colors.
 (defadvice! my/consult-theme (theme)
   :override #'consult-theme
   (interactive
    (list
     (let* ((regexp (consult--regexp-filter
-                    (mapcar (lambda (x) (if (stringp x) x (format "\\`%s\\'" x)))
+                    (mapcar (lambda (x) (if (stringp x) x (format "\\%s\\" x)))
                             consult-themes)))
            (avail-themes (seq-filter
                           (lambda (x) (string-match-p regexp (symbol-name x)))
@@ -1110,7 +1079,7 @@ to the post-capture hook."
     (when theme
       (load-theme theme :no-confirm))))
 
-;;; ** `consult-dir'
+;;; ** consult-dir
 (after! consult-dir
   (defun consult-dir-reference-pdfs ()
     '("~/Documents/bib/pdfs/" "~/Documents/books/"))
@@ -1140,7 +1109,8 @@ to the post-capture hook."
     (add-to-list 'consult-dir-sources 'consult-dir--source-org-dir)))
 
 
-;;; * `lasgun'
+;;; ** consult keybindings
+;;; * lasgun
 (use-package! lasgun
   :defer t
   :commands
@@ -1163,7 +1133,7 @@ to the post-capture hook."
    lasgun-mark-whitespace-end-above
    lasgun-mark-whitespace-end-below)
   :config
-  (setq! lasgun-also-push-mark-ring t
+  (setopt lasgun-also-push-mark-ring t
          lasgun-pop-before-make-multiple-cursors nil)
   (define-lasgun-action lasgun-action-upcase-word t upcase-word)
   (define-lasgun-action lasgun-action-downcase-word t downcase-word)
@@ -1197,7 +1167,7 @@ to the post-capture hook."
         (dolist (pos lasgun-list)
           (goto-char pos)
           (kill-sexp ARG)))
-      ;; killed words now in `kill-ring'
+      ;; killed words now in kill-ring
       (let ((separator (read-from-minibuffer "Separator: " nil nil nil nil " ")))
         (dotimes (i size)
           (insert (substring-no-properties (nth i kill-ring)))
@@ -1220,7 +1190,7 @@ to the post-capture hook."
                 (setq end (point))
                 (kill-new (buffer-substring pos end)))))
 
-        ;;  sexps now in `kill-ring'
+        ;;  sexps now in kill-ring
         (let ((separator (read-from-minibuffer "Separator: " nil nil nil nil " ")))
           (dotimes (i size)
             (insert (substring-no-properties (nth i kill-ring)))
@@ -1266,24 +1236,39 @@ to the post-capture hook."
       ("?" "Specify action" lasgun-prompt-action :transient t)]
      [""
       ("q" "Quit" transient-quit-one)]])
-  (add-hook! transient-exit #'lasgun-clear-lasgun-mark-ring))
+  (add-hook! transient-exit-hook #'lasgun-clear-lasgun-mark-ring))
 
-;;; ** `lasgun' actions
+;;; ** lasgun actions
 (defun my/avy-lg-mark-char-timer (ARG)
   (interactive "P")
   (if (equal ARG '(4))
       (lasgun-mark-char-timer)
     (avy-goto-char-timer)))
 
+;;; ** lasgun bindings
+(map! :map global-map
+       :desc "Avy goto/Lasgun mark"                          "M-n"                    #'my/avy-lg-mark-char-timer
+       :desc "Lasgun make multiple cursors"                          "M-g SPC"                #'lasgun-make-multiple-cursors
+       :desc "Lasgun mark char timer"                        "M-g M-SPC"                  #'lasgun-mark-char-timer)
+
 ;;; * TRAMP-REMOTE-PATH
 (connection-local-set-profile-variables 'remote-path-with-local-cargo
                                         '((tramp-remote-path . ("~/.cargo/bin" tramp-default-remote-path))))
 (connection-local-set-profiles nil 'remote-path-with-local-cargo)
 
-;;; * `embark'
+;;; * embark
 (after! embark
-  (setq! embark-confirm-act-all nil))
-
+  (setopt embark-confirm-act-all nil))
+;;; ** embark bindings
+(map! :map (text-mode-map prog-mode-map vertico-map)
+       "C-."                                           #'embark-act
+       "M-."                                           #'embark-dwim
+       "C-h B"                                         #'embark-bindings
+       
+       :map embark-file-map
+       :desc "Find file read ony" "r"                  #'find-file-read-only
+       :map embark-general-map
+       :desc "Cycle candidates"  "C-."                 #'embark-cycle)
 ;;; * quiver
 (after! latex
   (defun open-quiver-local ()
@@ -1296,34 +1281,41 @@ to the post-capture hook."
     (interactive)
     (start-process "open-quiver" nil "firefox" "--new-window" "https://q.uiver.app")))
 
-;;; * `repeat-mode'
-;;; ** A consistent structural editing keymap
+;;; * repeat-mode
+;;; ** structural lisp map
 (defvar-keymap structural-editing-repeat-map
-  :repeat (:enter (sp-copy-sexp sp-down-sexp
-                                sp-kill-sexp sp-mark-sexp
-                                sp-next-sexp sp-splice-sexp
-                                sp-unwrap-sexp sp-forward-sexp
-                                sp-backward-sexp sp-previous-sexp
-                                sp-transpose-sexp sp-backward-up-sexp
-                                sp-forward-barf-sexp sp-backward-barf-sexp
-                                sp-backward-down-sexp sp-forward-slurp-sexp
-                                sp-backward-slurp-sexp))
-  "w"          #'sp-copy-sexp
-  "d"          #'sp-down-sexp
-  "k"          #'sp-kill-sexp
-  "SPC"        #'sp-mark-sexp
-  "n"          #'sp-next-sexp
-  "M-D"        #'sp-splice-sexp
-  "M-<delete>" #'sp-unwrap-sexp
-  "f"          #'sp-forward-sexp
-  "b"          #'sp-backward-sexp
-  "p"          #'sp-previous-sexp
-  "t"          #'sp-transpose-sexp
-  "u"          #'sp-backward-up-sexp
-  "C-M-i"      #'sp-forward-barf-sexp
-  "C-M-m"      #'sp-backward-barf-sexp
-  "C-i"        #'sp-forward-slurp-sexp
-  "C-m"        #'sp-backward-slurp-sexp)
+:repeat (:enter (sp-copy-sexp sp-down-sexp
+                              sp-kill-sexp sp-mark-sexp
+                              sp-next-sexp sp-splice-sexp
+                              sp-unwrap-sexp sp-forward-sexp
+                              sp-backward-sexp sp-previous-sexp
+                              sp-transpose-sexp sp-backward-up-sexp
+                              sp-forward-barf-sexp sp-backward-barf-sexp
+                              sp-backward-down-sexp sp-forward-slurp-sexp
+                              sp-backward-slurp-sexp sp-backward-unwrap-sexp
+                              mark-sexp))
+"x"           #'exchange-point-and-mark
+"C-M-x"       #'pp-eval-last-sexp
+"\\"          #'indent-region
+"w"          #'sp-copy-sexp
+"d"          #'sp-down-sexp
+"k"          #'sp-kill-sexp
+"SPC"        #'sp-mark-sexp
+"n"          #'sp-next-sexp
+"M-D" #'sp-backward-unwrap-sexp
+"f"          #'sp-forward-sexp
+"b"          #'sp-backward-sexp
+"p"          #'sp-previous-sexp
+"t"          #'sp-transpose-sexp
+"u"          #'sp-backward-up-sexp
+"C-M-i"      #'sp-forward-barf-sexp
+"C-M-m"      #'sp-backward-barf-sexp
+"i"        #'sp-forward-slurp-sexp
+"m"        #'sp-backward-slurp-sexp
+"<right>" #'sp-forward-slurp-sexp
+"<left>" #'sp-forward-barf-sexp
+"M-<right>" #'sp-backward-slurp-sexp
+"M-<left>" #'sp-backward-barf-sexp)
 
 ;;; ** window management repeat map
 ;;;
@@ -1352,7 +1344,7 @@ to the post-capture hook."
   "s" #'ace-swap-window)
 
 
-;;; ** `flycheck' error repeat map
+;;; ** flycheck error repeat map
 (when (modulep! :checkers syntax)
   (defvar-keymap flycheck-repeat-map
     :repeat (:enter (flycheck-buffer
@@ -1368,7 +1360,7 @@ to the post-capture hook."
     "l" #'flycheck-list-errors))
 
 
-;;; ** `multiple-cursor' repeat map
+;;; ** multiple-cursor repeat map
 (when (modulep! :editor multiple-cursors)
   (defvar-keymap mc-repeat-map
     :repeat (:enter (mc/mark-pop
@@ -1383,15 +1375,15 @@ to the post-capture hook."
 
 
 (after! repeat
-  (setq! repeat-help-popup-type #'embark
+  (setopt repeat-help-popup-type #'embark
          repeat-help-auto nil))
-(add-hook! repeat-mode #'repeat-help-mode)
+(add-hook! repeat-mode-hook #'repeat-help-mode)
 
 (repeat-mode)
 
-;;; * `multiple-cursors'
+;;; * multiple-cursors
 (after! multiple-cursors
-  (setq! mc/always-run-for-all nil
+  (setopt mc/always-run-for-all nil
          mc/always-repeat-command nil
          mc/cmds-to-run-once (delq #'org-self-insert-command mc/cmds-to-run-once))
 
@@ -1409,16 +1401,16 @@ to the post-capture hook."
 ;;; ** Julia
 (when (modulep! :lang julia +snail)
   (remove-hook! julia-mode #'julia-repl-mode)
-  (add-hook! julia-mode #'julia-snail-mode))
+  (add-hook! julia-mode-hook #'julia-snail-mode))
 
 (add-to-list 'exec-path "~/.juliaup/bin")
 (when (modulep! :lang julia +lsp)
-  (setq! eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
+  (setopt eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
 
-(setq! julia-snail-executable "~/.juliaup/bin/julia"
+(setopt julia-snail-executable "~/.juliaup/bin/julia"
        julia-snail-extra-args "--threads auto"
        org-babel-julia-command "~/.juliaup/bin/julia")
-;;; ** `common-lisp' configuration
+;;; ** common-lisp configuration
 ;;;  *** Petalisp indentation fixes
 (put 'lazy 'common-lisp-indent-function '(1 &rest 1))
 (put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
@@ -1426,27 +1418,27 @@ to the post-capture hook."
 (put 'lazy-reshape 'common-lisp-indent-function '(1 &rest 1))
 
 
-;;; ** Hook `outli-mode' to programming modes
-(after! outli
-  (add-to-list 'outli-heading-config '(lisp-mode ";;" 59 t)))
-(add-hook! prog-mode #'outli-mode)
+;;; ** outli
+(add-hook! 'prog-mode-hook #'outli-mode)
+;;; ** outli map
+(map! :map outline-minor-mode-map
+      "C-c s ,"                                       #'consult-outline)
 
-;;; ** `gap' config
-(setq! gap-executable "/usr/bin/gap")
-
-;;; ** `haskell'
+;;; ** gap
+(setopt gap-executable (executable-find "gap"))
+;;; ** haskell
 (after! haskell
-  (setq! haskell-compile-command "ghc -Wall -ferror-spans -fforce-recomp -dynamic -c %s")
+  (setopt haskell-compile-command "ghc -Wall -ferror-spans -fforce-recomp -dynamic -c %s")
   (add-to-list 'exec-path "/home/aatmun/.ghcup/bin"))
 
 (when (and (modulep! :haskell +lsp) (modulep! :tools +lsp))
-  (setq! eglot-workspace-configuration '((haskell (plugin (stan (globalOn . :json-false)))))))
+  (setopt eglot-workspace-configuration '((haskell (plugin (stan (globalOn . :json-false)))))))
 
 ;;; * Eyecandy
 ;;; ** Theme
-(setq! doom-theme 'modus-operandi-tinted
+(setopt doom-theme 'modus-operandi-tinted
        modus-themes-mixed-fonts t)
-;;; ** make theme consistent with `qtile'
+;;; ** make theme consistent with qtile
 (after! nil
   (defun my/current-theme-type ()
     "Return type of theme"
@@ -1480,7 +1472,7 @@ to the post-capture hook."
                (setq res (concat res "}")))
       res))
 
-  (setq! modus-to-universal-palette-translation
+  (setopt modus-to-universal-palette-translation
          '((bg-main . bg)
            (bg-dim . bg-alt)
            (border . grey)
@@ -1533,7 +1525,7 @@ to the post-capture hook."
 
   (defadvice! my/consult-theme-set-doom-theme (fn theme)
     :around #'consult-theme
-    (setq! doom-theme theme)
+    (setopt doom-theme theme)
     (funcall fn theme)))
 
 
@@ -1546,7 +1538,7 @@ to the post-capture hook."
 
 (when (not (modulep! :ui modeline))
   (mood-line-mode)
-  (setq! mood-line-format '((" "
+  (setopt mood-line-format '((" "
                              (mood-line-segment-modal)
                              " "
                              (or
@@ -1570,11 +1562,11 @@ to the post-capture hook."
                              (mood-line-segment-process)
                              "  " " "))))
 (spacious-padding-mode)
-(setq! spacious-padding-widths
+(setopt spacious-padding-widths
        '(:internal-border-width 15 :right-divider-width 5 :scroll-bar-width 0))
 
 
-;;; ** `technicolor' configuration
+;;; ** technicolor configuration
 (use-package! technicolor
   :config
   (when (EVA-02-p)
@@ -1584,13 +1576,13 @@ to the post-capture hook."
   (defun technicolor-relative-lighten (color alpha)
     (technicolor-blend 'foreground color alpha))
 
-  (setq! prot-theme-mappings
+  (setopt prot-theme-mappings
          '((foreground . fg-main)
            (background . bg-main)
            (violet . magenta-cooler)
            (green . green-warmer)
            (teal . cyan-cooler)))
-  (setq! miasma-theme-mappings
+  (setopt miasma-theme-mappings
          '((foreground . miasma-light-gray)
            (background . miasma-light-charcoal)
            (red . miasma-terracota)
@@ -1600,7 +1592,7 @@ to the post-capture hook."
            (teal . miasma-moss)
            (cyan . miasma-sky)))
 
-  (setq! technicolor-colors '(foreground background
+  (setopt technicolor-colors '(foreground background
                               red blue
                               green magenta
                               violet teal
@@ -1622,7 +1614,7 @@ to the post-capture hook."
                               ("miasma" miasma-theme-get-color
                                ,miasma-theme-mappings)))
 
-  (setq! technicolor-org-src-block-faces '(("julia"      (technicolor-relative-darken  'magenta 90))
+  (setopt technicolor-org-src-block-faces '(("julia"      (technicolor-relative-darken  'magenta 90))
                                            ("python"     (technicolor-relative-darken  'teal 85))
                                            ("go"     (technicolor-relative-darken  'cyan 90))
                                            ("lisp"       (technicolor-relative-darken  'green 90))
@@ -1631,7 +1623,7 @@ to the post-capture hook."
                                            ("sh"         (technicolor-relative-darken  'green 85))))
 
   (defun my/technicolor-update-org-src-block-faces ()
-    "Update `org-src-block-faces' list"
+    "Update org-src-block-faces list"
     (progn
       (setq org-src-block-faces
             (cl-loop for cell in technicolor-org-src-block-faces collect
@@ -1647,180 +1639,174 @@ to the post-capture hook."
     (my/technicolor-update-org-src-block-faces)))
 
 ;;; ** customizing faces
-(after! org-modern
-  (custom-set-faces!
-    `(org-modern-time-inactive :inherit org-modern-label
-      :background ,(technicolor-blend 'background 'red 95)
-      :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 100) 20))
+(custom-set-faces!
+  `(org-modern-time-inactive :inherit org-modern-label
+    :background ,(technicolor-blend 'background 'red 95)
+    :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 100) 20))
 
-    `(org-modern-date-inactive :inherit org-modern-label
-      :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
-      :foreground ,(technicolor-blend 'foreground 'background 100))
+  `(org-modern-date-inactive :inherit org-modern-label
+    :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
+    :foreground ,(technicolor-blend 'foreground 'background 100))
 
-    `(org-modern-time-active :inherit org-modern-label :background ,(technicolor-blend 'background 'green 85)
-      :foreground ,(technicolor-blend 'foreground 'background 90))
+  `(org-modern-time-active :inherit org-modern-label :background ,(technicolor-blend 'background 'green 85)
+    :foreground ,(technicolor-blend 'foreground 'background 90))
 
-    `(org-modern-date-active :inherit org-modern-label :background ,(technicolor-blend 'background 'blue 85)
-      :foreground ,(technicolor-blend 'foreground 'background 90)))
-  (set-face-attribute 'org-modern-todo nil :foreground (technicolor-get-color 'green)))
+  `(org-modern-date-active :inherit org-modern-label :background ,(technicolor-blend 'background 'blue 85)
+    :foreground ,(technicolor-blend 'foreground 'background 90)))
+(set-face-attribute 'org-modern-todo nil :foreground (technicolor-relative-lighten 'green 30))
 
 
-;;; ** `org-modern'
-(add-hook! org-agenda-finalize
+;;; ** org-modern
+(global-org-modern-mode)
+(after! org-modern)
+(add-hook! org-agenda-finalize-hook
            #'org-modern-agenda
            #'org-latex-preview-auto-mode)
 
-(setq! org-latex-preview-preamble
+(setopt org-latex-preview-preamble
        "\\documentclass{article}[DEFAULT-PACKAGES]
 [PACKAGES]
 \\usepackage{xcolor}
 \\usepackage{amssymb}
 \\usepackage{amsmath}")
 
-(after! org-modern
-  (setq! org-modern-block-fringe nil)
+(setopt org-modern-block-fringe nil)
+(defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten 'cyan 10 )))
+  "Face for org modern IDEA tag")
+(defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10) ))
+  "Face for org modern IDEA tag")
+(defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10) ))
+  "Face for org modern IDEA tag")
+(defface org-modern-wait `((t :inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
+  "Face for org modern WAIT tag")
+(defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 20)))
+  "Face for org modern PROG tag")
+(defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
+  "Face for org modern MAYBE tag")
+(defun my/technicolor-customizations ()
+  (set-face-attribute 'org-super-agenda-header  nil
+                      :foreground (technicolor-get-color 'blue) :background 'unspecified
+                      :box nil
+                      :height 1.0)
+  (set-face-attribute 'org-agenda-date nil  :foreground (technicolor-get-color 'foreground)
+                      :background 'unspecified
+                      :box nil
+                      :underline nil
+                      :height 1.1)
+  (set-face-attribute 'org-agenda-date-weekend  nil
+                      :foreground (technicolor-blend 'foreground 'background 50)
+                      :background 'unspecified
+                      :box nil
+                      :underline nil
+                      :height 'unspecified)
+  (set-face-attribute 'org-agenda-date-weekend-today  nil
+                      :foreground (technicolor-blend 'foreground 'background 50)
+                      :background 'unspecified
+                      :box t
+                      :height 'unspecified)
+  (set-face-attribute 'org-modern-idea nil :foreground (technicolor-lighten 'cyan 10))
+  (set-face-attribute 'org-modern-todo nil :foreground (technicolor-relative-lighten 'green 30))
+  (set-face-attribute 'org-modern-draft nil :foreground (technicolor-lighten 'cyan 10))
+  (set-face-attribute 'org-modern-wait nil :foreground (technicolor-relative-lighten 'red 20))
+  (set-face-attribute 'org-modern-maybe nil :foreground (technicolor-blend 'background 'green 60))
+  (set-face-attribute 'org-modern-prog nil
+                      :foreground (technicolor-relative-lighten 'green 10) :background 'unspecified)
 
-  (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10 )))
-    "Face for org modern IDEA tag")
-  (defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10) ))
-    "Face for org modern IDEA tag")
-  (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10) ))
-    "Face for org modern IDEA tag")
-  (defface org-modern-wait `((t :inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
-    "Face for org modern WAIT tag")
-  (defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 20)))
-    "Face for org modern PROG tag")
-  (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
-    "Face for org modern MAYBE tag")
+  (set-face-attribute 'org-modern-time-inactive nil :foreground (technicolor-blend 'background 'green 20))
+  (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
+                      :background (technicolor-blend 'background 'red 95)
+                      :foreground (technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
+  (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
+                      :background (technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
+                      :foreground (technicolor-blend 'foreground 'background 100))
+  (set-face-attribute 'org-modern-time-active nil :inherit 'org-modern-label
+                      :background (technicolor-blend 'background 'green 85)
+                      :foreground (technicolor-blend 'foreground 'background 90))
+  (set-face-attribute 'org-modern-date-active nil :inherit 'org-modern-label
+                      :background (technicolor-blend 'background 'blue 85)
+                      :foreground (technicolor-blend 'foreground 'background 90)))
+(add-hook! doom-load-theme-hook #'my/technicolor-customizations)
 
-  (defun my/technicolor-customizations ()
-    (set-face-attribute 'org-super-agenda-header  nil
-                        :foreground (technicolor-get-color 'blue) :background 'unspecified
-                        :box nil
-                        :height 1.0)
-    (set-face-attribute 'org-agenda-date nil  :foreground (technicolor-get-color 'foreground)
-                        :background 'unspecified
-                        :box nil
-                        :underline nil
-                        :height 1.1)
-    (set-face-attribute 'org-agenda-date-weekend  nil
-                        :foreground (technicolor-blend 'foreground 'background 50)
-                        :background 'unspecified
-                        :box nil
-                        :underline nil
-                        :height 'unspecified)
-    (set-face-attribute 'org-agenda-date-weekend-today  nil
-                        :foreground (technicolor-blend 'foreground 'background 50)
-                        :background 'unspecified
-                        :box t
-                        :height 'unspecified)
-    (set-face-attribute 'org-modern-idea nil :foreground (technicolor-lighten 'cyan 10))
-    (set-face-attribute 'org-modern-todo nil :foreground (technicolor-get-color 'green))
-    (set-face-attribute 'org-modern-draft nil :foreground (technicolor-lighten 'cyan 10))
-    (set-face-attribute 'org-modern-wait nil :foreground (technicolor-relative-lighten 'red 20))
-    (set-face-attribute 'org-modern-maybe nil :foreground (technicolor-blend 'background 'green 60))
-    (set-face-attribute 'org-modern-prog nil
-                        :foreground (technicolor-relative-lighten 'green 10) :background 'unspecified)
 
-    (set-face-attribute 'org-modern-time-inactive nil :foreground (technicolor-blend 'background 'green 20))
-    (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
-                        :background (technicolor-blend 'background 'red 95)
-                        :foreground (technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
-    (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
-                        :background (technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
-                        :foreground (technicolor-blend 'foreground 'background 100))
-    (set-face-attribute 'org-modern-time-active nil :inherit 'org-modern-label
-                        :background (technicolor-blend 'background 'green 85)
-                        :foreground (technicolor-blend 'foreground 'background 90))
-    (set-face-attribute 'org-modern-date-active nil :inherit 'org-modern-label
-                        :background (technicolor-blend 'background 'blue 85)
-                        :foreground (technicolor-blend 'foreground 'background 90)))
-  (add-hook! doom-load-theme #'my/technicolor-customizations))
+(setopt org-modern-todo-faces
+        `(("IDEA" . org-modern-idea)
+          ("EVENT" . org-modern-event)
+          ("TODO" . org-modern-todo)
+          ("WAIT" . org-modern-wait)
+          ("PROG" . org-modern-prog)
+          ("MAYBE" . org-modern-maybe)
+          ("DRAFT" . org-modern-draft)))
 
-(after! org-modern
-  (setq! org-modern-todo-faces
-         `(("IDEA" . org-modern-idea)
-           ("EVENT" . org-modern-event)
-           ("TODO" . org-modern-todo)
-           ("WAIT" . org-modern-wait)
-           ("PROG" . org-modern-prog)
-           ("MAYBE" . org-modern-maybe)
-           ("DRAFT" . org-modern-draft)))
+(custom-set-faces!
+  '(org-level-1 :inherit outline-1 :height 1.7)
+  '(org-level-2 :inherit outline-2 :height 1.5)
+  '(org-level-3 :inherit outline-3 :height 1.3)
+  '(org-level-4 :inherit outline-4 :height 1.2)
+  '(org-level-5 :inherit outline-5 :height 1.1))
 
-  (custom-set-faces!
-    '(org-level-1 :inherit outline-1 :height 1.7)
-    '(org-level-2 :inherit outline-2 :height 1.5)
-    '(org-level-3 :inherit outline-3 :height 1.3)
-    '(org-level-4 :inherit outline-4 :height 1.2)
-    '(org-level-5 :inherit outline-5 :height 1.1))
+(setopt org-modern-list '((43 . "➤")
+                          (45 . "–")
+                          (42 . "•"))
+        org-modern-footnote (cons nil (cadr org-script-display))
+        org-modern-block-name
+        '((t . t)
+          ("src" "»" "«")
+          ("example" "»–" "–«")
+          ("quote" "❝" "❞")
+          ("export" "⏩" "⏪"))
+        org-modern-progress nil
+        org-modern-priority nil
+        org-modern-horizontal-rule (make-string 36 ?─)
+        org-modern-keyword
+        '((t . t)
+          ("title" . "𝙏")
+          ("subtitle" . "𝙩")
+          ("author" . "𝘼")
+          ("email" . #("" 0 1 (display (raise -0.14))))
+          ("date" . "𝘿")
+          ("property" . "☸")
+          ("options" . "⌥")
+          ("startup" . "⏻")
+          ("macro" . "𝓜")
+          ("bind" . #("" 0 1 (display (raise -0.1))))
+          ("bibliography" . "")
+          ("print_bibliography" . #("" 0 1 (display (raise -0.1))))
+          ("cite_export" . "⮭")
+          ("print_glossary" . #("ᴬᶻ" 0 1 (display (raise -0.1))))
+          ("glossary_sources" . #("" 0 1 (display (raise -0.14))))
+          ("include" . "⇤")
+          ("setupfile" . "⇚")
+          ("html_head" . "🅷")
+          ("html" . "🅗")
+          ("latex_class" . "🄻")
+          ("latex_class_options" . #("🄻" 1 2 (display (raise -0.14))))
+          ("latex_header" . "🅻")
+          ("latex_header_extra" . "🅻⁺")
+          ("latex" . "🅛")
+          ("beamer_theme" . "🄱")
+          ("beamer_color_theme" . #("🄱" 1 2 (display (raise -0.12))))
+          ("beamer_font_theme" . "🄱𝐀")
+          ("beamer_header" . "🅱")
+          ("beamer" . "🅑")
+          ("attr_latex" . "🄛")
+          ("attr_html" . "🄗")
+          ("attr_org" . "⒪")
+          ("call" . #("" 0 1 (display (raise -0.15))))
+          ("name" . "⁍")
+          ("header" . "›")
+          ("caption" . "☰")
+          ("results" . "⮞")))
 
-  (setq! org-modern-list '((43 . "➤")
-                           (45 . "–")
-                           (42 . "•"))
-         org-modern-footnote (cons nil (cadr org-script-display))
-         org-modern-block-name
-         '((t . t)
-           ("src" "»" "«")
-           ("example" "»–" "–«")
-           ("quote" "❝" "❞")
-           ("export" "⏩" "⏪"))
-         org-modern-progress nil
-         org-modern-priority nil
-         org-modern-horizontal-rule (make-string 36 ?─)
-         org-modern-keyword
-         '((t . t)
-           ("title" . "𝙏")
-           ("subtitle" . "𝙩")
-           ("author" . "𝘼")
-           ("email" . #("" 0 1 (display (raise -0.14))))
-           ("date" . "𝘿")
-           ("property" . "☸")
-           ("options" . "⌥")
-           ("startup" . "⏻")
-           ("macro" . "𝓜")
-           ("bind" . #("" 0 1 (display (raise -0.1))))
-           ("bibliography" . "")
-           ("print_bibliography" . #("" 0 1 (display (raise -0.1))))
-           ("cite_export" . "⮭")
-           ("print_glossary" . #("ᴬᶻ" 0 1 (display (raise -0.1))))
-           ("glossary_sources" . #("" 0 1 (display (raise -0.14))))
-           ("include" . "⇤")
-           ("setupfile" . "⇚")
-           ("html_head" . "🅷")
-           ("html" . "🅗")
-           ("latex_class" . "🄻")
-           ("latex_class_options" . #("🄻" 1 2 (display (raise -0.14))))
-           ("latex_header" . "🅻")
-           ("latex_header_extra" . "🅻⁺")
-           ("latex" . "🅛")
-           ("beamer_theme" . "🄱")
-           ("beamer_color_theme" . #("🄱" 1 2 (display (raise -0.12))))
-           ("beamer_font_theme" . "🄱𝐀")
-           ("beamer_header" . "🅱")
-           ("beamer" . "🅑")
-           ("attr_latex" . "🄛")
-           ("attr_html" . "🄗")
-           ("attr_org" . "⒪")
-           ("call" . #("" 0 1 (display (raise -0.15))))
-           ("name" . "⁍")
-           ("header" . "›")
-           ("caption" . "☰")
-           ("results" . "⮞"))))
+;;; ** visual-fill-column-mode
+;; (after! visual-fill-column
+;;   (setopt visual-fill-column-width 130
+;;          visual-fill-column-center-text t))
 
-(global-org-modern-mode)
+;; (add-hook! (text-mode-hook prog-mode-hook) #'visual-fill-column-mode)
 
-;;; ** `visual-fill-column-mode'
-(after! visual-fill-column
-  (setq! visual-fill-column-width 130
-         visual-fill-column-center-text t))
 
-(add-hook! (text-mode prog-mode) #'visual-fill-column-mode)
-
-;;; * personal stuff
-(require 'setup-personal)
-
-;;; * `wttr'
-(setq! wttrin-default-cities '("College Station" "Colleyville"))
+;;; * wttr
+(setopt wttrin-default-cities '("College Station" "Colleyville"))
 
 ;; Fix: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
 (defadvice! wwtrin-fetch-raw-string (query)
@@ -1834,10 +1820,10 @@ to the post-capture hook."
          (lambda (status) (switch-to-buffer (current-buffer))))
       (decode-coding-string (buffer-string) 'utf-8))))
 
-;;; * `elfeed' and `elfeed-tube'
-(setq! rmh-elfeed-org-files '("notes.org"))
+;;; * elfeed and elfeed-tube
+(setopt rmh-elfeed-org-files '("notes.org"))
 
-;;; ** `elfeed' helper functions
+;;; ** elfeed helper functions
 (after! elfeed
   (defun elfeed-show-eww-open (&optional use-generic-p)
     "open with eww"
@@ -1868,15 +1854,7 @@ MYTAG"
       "Toggle a tag on an Elfeed search selection"
       (interactive)
       (elfeed-search-toggle-all mytag))))
-
-;;; * email
-(when (EVA-02-p)
-  (require 'setup-email))
-
-;;; * `org-gcal'
-(when (EVA-02-p)
-  (require 'setup-org-gcal))
-;;; ** `elfeed'  keybindings
+;;; ** elfeed  keybindings
 (after! elfeed
   (map! :map elfeed-show-mode-map
         "F"       #'elfeed-tube-fetch
@@ -1892,10 +1870,16 @@ MYTAG"
         "d"      (elfeed-tag-selection-as 'junk)
         "l"      (elfeed-tag-selection-as 'readlater)))
 
+
+;;; * email
+(when (EVA-02-p)
+  (require 'setup-email))
+
+
 ;;; * Other Keybindings
 ;;; ** Global keybindings
 (when (featurep 'activities)
-  (setq! edebug-inhibit-emacs-lisp-mode-bindings t))
+  (setopt edebug-inhibit-emacs-lisp-mode-bindings t))
 
 (map!
  :desc "Buffer list"                                   "M-u"                    #'consult-buffer
@@ -1903,28 +1887,18 @@ MYTAG"
  :desc "Consult Dir"                                   "C-x C-d"                #'consult-dir
  :desc "Consult mark"                                  "C-M-,"                  #'consult-mark
  :desc "Other window"                                  "M-o"                    #'other-window
- :desc "Avy goto/Lasgun mark"                          "M-n"                    #'my/avy-lg-mark-char-timer
- :desc "Lasgun make multiple cursors"                          "M-g SPC"                #'lasgun-make-multiple-cursors
- :desc "Lasgun mark char timer"                        "M-g M-SPC"                  #'lasgun-mark-char-timer
+ 
+ 
  :desc "Backward kill sexp"                            "C-M-<backspace>"        #'backward-kill-sexp
  :desc "Move window top/bottom"                        "M-l"                    #'move-to-window-line-top-bottom
  :desc "Hippie expand"                                 "M-/"                    #'hippie-expand
-
- "C-."                                           #'embark-act
- "M-."                                           #'embark-dwim
- "C-h B"                                         #'embark-bindings
+ 
 
  "C-c o T"                                       #'eat
  "C-c o t"                                       #'eat
 
 
- "C-c ]"                             #'citar-insert-reference
-
- ;; `popper' bindings
- "<escape>"                                      #'popper-toggle
- "C-<escape>"                                    #'popper-cycle
- "C-M-<escape>"                                  #'popper-toggle-type
-
+ 
  ;; navigating marks
  "C-M-;"                                         #'better-jumper-set-jump
  "C-,"                                           #'push-mark-no-activate
@@ -1932,77 +1906,21 @@ MYTAG"
 
  "C-;"                                           #'iedit-mode
 
- ;; `easy-mark' and `easy-kill'
- "C-M-SPC"                                       #'easy-mark
- "M-SPC"                                         #'easy-kill
-
- ;; `tempel'
- "M-*"                                           #'tempel-insert
- "C-<tab>"                                       #'tempel-expand
-
- :desc "Lasgun" "C-c t g"                        #'lasgun-transient
+ :desc "Lasgun" "C-c t g"                        #'lasgun-transient)
 
 
- (:when (featurep 'activities)
-   (:prefix-map ("C-x C-a" . "activities")
-    :desc "Switch activity"                       "RET"      #'activities-switch
-    :desc "New"                                   "C-n"      #'activities-new
-    :desc "Define"                                "C-d"      #'activities-define
-    :desc "Kill"                                  "C-k"      #'activities-kill
-    :desc "Suspend"                               "C-s"      #'activities-suspend
-    :desc "Resume activity"                       "C-a"      #'activities-resume
-    :desc "List activities"                       "l"        #'activities-list
-    :desc "Switch to buffer with activity"        "b"        #'activities-switch-buffer
-    :desc "Revert state"                          "g"        #'activities-revert))
+;;; ** easy-kill  keybindings
 
 
- (:prefix "C-c w"
-  :desc "Swap window"                           "o"        #'ace-swap-window
-  :desc "Delete other window"                   "0"        #'ace-delete-window)
-
- ;; `avy' stuff
- :desc "Goto line"                              "M-g M-g"          #'avy-goto-line
- :desc "Goto char"                              "M-g i"            #'avy-goto-char
-
- (:prefix "M-s"
-  :desc "Copy line"                             "y"        #'avy-copy-line
-  :desc "Copy region"                           "M-y"      #'avy-copy-region
-  :desc "Kill whole line"                       "M-k"      #'avy-kill-whole-line
-  :desc "Goto line above"                       "M-p"      #'avy-goto-line-above
-  :desc "Goto line below"                       "M-n"      #'avy-goto-line-below
-  :desc "Kill region"                           "C-y"      #'avy-kill-region
-  :desc "Kill region save region"               "M-w"      #'avy-kill-ring-save-region
-  :desc "Move line"                             "t"        #'avy-move-line
-  :desc "Move region"                           "M-t"      #'avy-move-region
-  :desc "End of line"                           "M-t"      #'avy-goto-end-of-line))
-
-
-(map! :map outline-mode-map
-      :leader
-      "s ," #'consult-outline
-      :map outli-mode-map
-      :leader
-      "s ," #'consult-outline)
-
-;;; ** `easy-kill'  keybindings
-(map! :map easy-kill-base-map
-      ","                                             #'easy-kill-expand-region
-      "."                                             #'easy-kill-contract-region)
-
-;;; ** `vertico' keybindings
+;;; ** vertico keybindings
 (map! :map vertico-map
       "C-x C-j"                                       #'consult-dir-jump-file
       "C-x C-d"                                       #'consult-dir)
 
-;;; ** `outline-minor-mode'  map
-(map! :map outline-minor-mode-map
-      "C-c s ,"                                       #'consult-outline)
 
-;;; ** `embark' maps
-(map! :map embark-file-map
-      :desc "Find file read ony" "r"                  #'find-file-read-only
-      :map embark-general-map
-      :desc "Cycle candidates"  "C-."                 #'embark-cycle)
+
+;;; ** embark maps
+
 
 
 ;; (when init-file-debug
@@ -2015,7 +1933,7 @@ MYTAG"
 (map! :map minibuffer-mode-map
       "C-c C-." #'embark-select)
 
-;;; ** `eat' maps
+;;; ** eat maps
 (map! :map (eat-mode-map
             julia-repl-mode-map
             eat-line-mode-map)

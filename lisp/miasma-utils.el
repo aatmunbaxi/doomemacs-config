@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (defvar miasma-palette
   '((miasma-light-charcoal . "#222222")
     (miasma-charcoal . "#1c1c1c")

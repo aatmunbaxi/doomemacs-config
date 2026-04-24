@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 ;;;###autoload
 (defun forward-latex-math ()
   "Move forward across the next LaTeX equation.

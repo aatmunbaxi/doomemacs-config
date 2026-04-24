@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 
 (require 'avy)
 ;;;###autoload
@@ -7,6 +8,13 @@
   (let ((avy-all-windows)
         (current-prefix-arg (if arg 4)))
     (call-interactively 'avy-isearch)))
+(defun my/avy-jinx-correct (pt &optional arg)
+  "Correct word at point."
+  (interactive "P")
+  (let ((avy-all-windows)
+        (current-prefix-arg (if arg 4)))
+    (save-excursion (goto-char pt)
+                    (call-interactively 'jinx-correct-word))))
 
 ;;;###autoload
 (defun avy-action-exchange (pt)
