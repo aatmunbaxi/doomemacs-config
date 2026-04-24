@@ -70,16 +70,13 @@
 ;;  :desc "Dogears backward"                     "M-g M-b"       #'dogears-back
 ;;  :desc "Dogears list"                         "M-g M-l"       #'dogears-list)
 
-;;; ** ace-window
+;;; * window management
 (when (modulep! :ui window-select)
   (setopt aw-scope 'global))
-
-(when (EVA-02-p)
-  (defun my/open-eat-other-frame ()
-    (interactive)
-    (let ((buf (eat)))
-      (switch-to-buffer (other-buffer buf))
-      (switch-to-buffer-other-frame buf))))
+;;; ** window bindings
+(map! :map global-map
+      :desc "Other window"                                  "M-o"                    #'other-window
+      :desc "Move window top/bottom"                        "M-l"                    #'move-to-window-line-top-bottom)
 
 ;;; ** popper
 (after! popper
@@ -105,6 +102,19 @@
        "C-M-<escape>"                                  #'popper-toggle-type)
 (popper-mode +1)
 (popper-echo-mode)
+;;; * eat
+;;; ** eat bindings
+(map! (:map global-map
+       :desc "Open terminal"   "C-c o T"           #'eat
+       :desc "Open terminal"   "C-c o t"           #'eat)
+      (:map (eat-mode-map
+             eat-line-mode-map)
+       "M-o" #'other-window
+       "M-u" #'consult-buffer)
+      (:after julia-repl
+       :map   julia-repl-mode-map
+       "M-o" #'other-window
+       "M-u" #'consult-buffer))
 
 ;;; * Editing
 (setopt kill-whole-line t)
@@ -132,6 +142,10 @@
           (setq parity (1- parity))))
       (when (= parity 0) (cons end (point))))))
 
+
+(map! :map global-map
+      "M-/"    #'hippie-expand
+       "C-;"                                           #'iedit-mode)
 ;;; ** easy-kill bindings
 (map! (:map (text-mode-map prog-mode-map)
       "C-M-SPC"                                       #'easy-mark
@@ -181,14 +195,31 @@
   (interactive)
   (set-mark-command 1))
 
+(after! better-jumper
+  (defvar my/inhibit-better-jumper-push nil
+    "Guard to prevent infinite recursion between `push-mark' and `better-jumper-set-jump'.")
+  
+  (defadvice! my/push-mark-to-better-jumper (&optional location &rest _)
+    "Push better jumper list when mark ring pushed"
+    :after #'push-mark
+    (unless my/inhibit-better-jumper-push
+      (let ((my/inhibit-better-jumper-push t)
+            (pos (or location (point-marker))))
+        (better-jumper-set-jump pos)))))
+
+(map! :map global-map
+      "C-,"                                         #'better-jumper-set-jump
+      "M-,"                                           #'better-jumper-jump-backward
+      "C-M-,"                                           #'better-jumper-jump-forward)
 ;;; ** Smartparens
 (add-hook! prog-mode-hook #'sp-use-smartparens-bindings)
 
-(map! :map (prog-mode-map text-mode-map)
+(map! :map smartparens-mode-map
       "C-<right>" #'sp-forward-slurp-sexp
       "C-<left>" #'sp-forward-barf-sexp
       "C-M-<right>" #'sp-backward-barf-sexp
       "C-M-<left>" #'sp-backward-slurp-sexp
+      
       "M-D"        #'sp-unwrap-sexp)
 ;;; * Font config
 (setopt variable-font "EB Garamond"
@@ -998,6 +1029,12 @@ to the post-capture hook."
         "S-TAB"                                       #'corfu-previous))
 
 
+;;; * vertico
+;;; ** vertico bindings
+(map! (:after consult-dir
+       :map vertico-map
+              "C-x C-j"                                       #'consult-dir-jump-file
+              "C-x C-d"                                       #'consult-dir))
 ;;; * consult
 ;;; ** consult-buffer sources
 (after! (:and consult org-roam)
@@ -1043,10 +1080,13 @@ to the post-capture hook."
   (add-to-list 'consult-buffer-sources 'consult--org-roam-nodes-source 'append))
 
 ;;; ** consult-theme bug fix
-;;; For whatever reason, selecting an already-loaded doom theme
-;;; with consult-theme does not updaet the variable
-;;; doom-themes--colors, which is used by doom-color to
-;;; retrieve the palette's colors.
+;;; ** consult bindings
+(map! :map global-map
+            :desc "Buffer list"                                   "M-u"                    #'consult-buffer
+            :desc "Buffer other window"                           "M-U"                    #'my/switch-buffer-other-window
+            :desc "Consult Dir"                                   "C-x C-d"                #'consult-dir
+            :desc "Consult mark"                                  "C-M-,"                  #'consult-mark)
+;;; ** fix load-theme issues
 (defadvice! my/consult-theme (theme)
   :override #'consult-theme
   (interactive
@@ -1246,10 +1286,12 @@ to the post-capture hook."
     (avy-goto-char-timer)))
 
 ;;; ** lasgun bindings
-(map! :map global-map
-       :desc "Avy goto/Lasgun mark"                          "M-n"                    #'my/avy-lg-mark-char-timer
-       :desc "Lasgun make multiple cursors"                          "M-g SPC"                #'lasgun-make-multiple-cursors
-       :desc "Lasgun mark char timer"                        "M-g M-SPC"                  #'lasgun-mark-char-timer)
+(map!
+ (:after lasgun
+  :desc "Lasgun menu"          "C-c t g" #'lasgun-transient
+  :desc "Avy goto/Lasgun mark"                          "M-n"                    #'my/avy-lg-mark-char-timer
+  :desc "Lasgun make multiple cursors"                          "M-g SPC"                #'lasgun-make-multiple-cursors
+  :desc "Lasgun mark char timer"                        "M-g M-SPC"                  #'lasgun-mark-char-timer))
 
 ;;; * TRAMP-REMOTE-PATH
 (connection-local-set-profile-variables 'remote-path-with-local-cargo
@@ -1266,9 +1308,12 @@ to the post-capture hook."
        "C-h B"                                         #'embark-bindings
        
        :map embark-file-map
-       :desc "Find file read ony" "r"                  #'find-file-read-only
+       "r"                  #'find-file-read-only
        :map embark-general-map
-       :desc "Cycle candidates"  "C-."                 #'embark-cycle)
+       "C-."                 #'embark-cycle
+       
+       :map minibuffer-mode-map
+       "C-c C-." #'embark-select)
 ;;; * quiver
 (after! latex
   (defun open-quiver-local ()
@@ -1876,53 +1921,6 @@ MYTAG"
   (require 'setup-email))
 
 
-;;; * Other Keybindings
-;;; ** Global keybindings
-(when (featurep 'activities)
-  (setopt edebug-inhibit-emacs-lisp-mode-bindings t))
-
-(map!
- :desc "Buffer list"                                   "M-u"                    #'consult-buffer
- :desc "Buffer other window"                           "M-U"                    #'my/switch-buffer-other-window
- :desc "Consult Dir"                                   "C-x C-d"                #'consult-dir
- :desc "Consult mark"                                  "C-M-,"                  #'consult-mark
- :desc "Other window"                                  "M-o"                    #'other-window
- 
- 
- :desc "Backward kill sexp"                            "C-M-<backspace>"        #'backward-kill-sexp
- :desc "Move window top/bottom"                        "M-l"                    #'move-to-window-line-top-bottom
- :desc "Hippie expand"                                 "M-/"                    #'hippie-expand
- 
-
- "C-c o T"                                       #'eat
- "C-c o t"                                       #'eat
-
-
- 
- ;; navigating marks
- "C-M-;"                                         #'better-jumper-set-jump
- "C-,"                                           #'push-mark-no-activate
- "M-,"                                           #'jump-to-mark
-
- "C-;"                                           #'iedit-mode
-
- :desc "Lasgun" "C-c t g"                        #'lasgun-transient)
-
-
-;;; ** easy-kill  keybindings
-
-
-;;; ** vertico keybindings
-(map! :map vertico-map
-      "C-x C-j"                                       #'consult-dir-jump-file
-      "C-x C-d"                                       #'consult-dir)
-
-
-
-;;; ** embark maps
-
-
-
 ;; (when init-file-debug
 ;;   (use-package! benchmark-init
 ;;     :ensure t
@@ -1930,12 +1928,5 @@ MYTAG"
 ;;     ;; To disable collection of benchmark data after init is done.
 ;;     (add-hook 'after-init-hook 'benchmark-init/deactivate)))
 
-(map! :map minibuffer-mode-map
-      "C-c C-." #'embark-select)
 
-;;; ** eat maps
-(map! :map (eat-mode-map
-            julia-repl-mode-map
-            eat-line-mode-map)
-      :desc "Other window" "M-o" #'other-window
-      :desc "Switch buffer" "M-u" #'consult-buffer)
+
