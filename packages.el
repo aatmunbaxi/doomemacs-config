@@ -135,6 +135,7 @@
 
 
 (package! posframe)
+(package! repeat-help)
 (package! popterm :recipe (:host github :repo "CsBigDataHub/popterm.el"))
 (package! overleaf :recipe (:host github :repo "vale981/overleaf.el"))
 ;;; $ Disable packages

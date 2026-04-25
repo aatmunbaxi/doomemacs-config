@@ -27,7 +27,7 @@
        ;;  ido                             ; the other *other* search engine...
        ;; ivy                              ; a search engine for love and life
        (corfu +orderless)
-       vertico 
+       (vertico +icons) 
 
        :ui
        ;;  deft                            ; notational velocity for Emacs
@@ -120,7 +120,7 @@
 
        :lang
        ;; agda                             ; types of types of types of types...
-       (cc +lsp +tree-sitter)              ; C/C++/Obj-C madness
+       ;; (cc +lsp +tree-sitter)              ; C/C++/Obj-C madness
        (clojure +lsp +tree-sitter)         ; java with a lisp
        common-lisp                         ; if you've seen one lisp, you've seen them all
        ;; coq                              ; proofs-as-programs
@@ -132,7 +132,7 @@
        ;; elm                              ; care for a cup of TEA?
        emacs-lisp                          ; drown in parentheses
        ;; erlang                           ; an elegant language for a more civilized age
-       ess                                 ; emacs speaks statistics
+       ;; ess                                 ; emacs speaks statistics
        ;; faust                            ; dsp, but you get to keep your soul
        ;; (fortran +lsp)
        ;; fsharp                           ; ML stands for Microsoft's Language
@@ -142,7 +142,7 @@
        (haskell +lsp +tree-sitter)         ; a language that's lazier than I am
        hy                                  ; readability of scheme w/ speed of python
        ;; idris                            ; a language you can depend on
-       json                                ; At least it ain't XML
+       ;; json                                ; At least it ain't XML
        ;; (java +meghanada)                ; the poster child for carpal tunnel syndrome
        ;; javascript                       ; all(hope(abandon(ye(who(enter(here))))))
        (julia +snail +lsp)                 
@@ -152,7 +152,7 @@
        ;; factor
        ;; ledger                           ; an accounting system in Emacs
        ;; lua                              ; one-based indices? one-based indices
-       markdown                            ; writing docs for people to ignore
+       ;; markdown                            ; writing docs for people to ignore
        ;; nim                              ; python + lisp at the speed of c
        (nix +lsp)                          ; I hereby declare "nix geht mehr!"
        ;; ocaml                            ; an objective camel
@@ -167,7 +167,7 @@
        ;; rest                             ; Emacs as a REST client
        ;; rst                              ; ReST in peace
        ;; (ruby +rails)                    ; 1.step {|i| p "Ruby is #{i.even? ? 'love' : 'life'}"}
-       (rust +lsp +tree-sitter)            ; Fe2O3.unwrap().unwrap().unwrap().unwrap()
+       ;; (rust +lsp +tree-sitter)            ; Fe2O3.unwrap().unwrap().unwrap().unwrap()
        ;; scala                            ; java, but good
        ;; scheme                           ; a fully conniving family of lisps
        sh                                  ; she sells {ba,z,fi}sh shells on the C xor

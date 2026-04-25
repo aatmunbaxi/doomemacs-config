@@ -9,13 +9,14 @@
 ;; `packages.el'. Hence, you'll likely find many `after!'
 ;; blocks that refer to packages that aren't currently installed
 ;; or toggled in
-;; (doom-load-packages-incrementally '(org
-;;                                     magit
-;;                                     recentf
-;;                                     org-capture
-;;                                     org-agenda
-;;                                     embark
-;;                                     consult))
+(doom-load-packages-incrementally '(org
+                                    magit
+                                    recentf
+                                    org-capture
+                                    org-agenda
+                                    org-modern
+                                    embark
+                                    consult))
 
 ;;; * Some functions
 (after! emacs
@@ -49,7 +50,7 @@
 ;;; ** activities
 ;; (activities-mode)
 (map! :map global-map
-       (:when (featurep 'activities)
+      (:after activities
          (:prefix-map ("C-x C-a" . "activities")
           :desc "Switch activity"                       "RET"      #'activities-switch
           :desc "New"                                   "C-n"      #'activities-new
@@ -96,10 +97,11 @@
            compilation-mode))
   (setopt popper-mode-line '(:eval (propertize " 儚 " 'face 'highlight))))
 
-(map! :map global-map
+(map! (:after popper
+       :map global-map
        "<escape>"                                      #'popper-toggle
        "C-<escape>"                                    #'popper-cycle
-       "C-M-<escape>"                                  #'popper-toggle-type)
+       "C-M-<escape>"                                  #'popper-toggle-type))
 (popper-mode +1)
 (popper-echo-mode)
 ;;; * eat
@@ -109,8 +111,8 @@
        :desc "Open terminal"   "C-c o t"           #'eat)
       (:map (eat-mode-map
              eat-line-mode-map)
-       "M-o" #'other-window
-       "M-u" #'consult-buffer)
+            "M-o" #'other-window
+            "M-u" #'consult-buffer)
       (:after julia-repl
        :map   julia-repl-mode-map
        "M-o" #'other-window
@@ -118,8 +120,7 @@
 
 ;;; * Editing
 (setopt kill-whole-line t)
-(global-jinx-mode)
-
+(add-hook! '(prog-mode-hook text-mode-hook) #'jinx-mode)
 (defun my/find-bounds-of-regexps (open close)
   (let ((start (point))
         (parity 0)
@@ -144,17 +145,18 @@
 
 
 (map! :map global-map
-      "M-/"    #'hippie-expand
-       "C-;"                                           #'iedit-mode)
+      "M-/"          #'hippie-expand
+      "C-;"          #'iedit-mode)
 ;;; ** easy-kill bindings
-(map! (:map (text-mode-map prog-mode-map)
-      "C-M-SPC"                                       #'easy-mark
-      "M-SPC"                                         #'easy-kill)
+(after! easy-kill
+  (map! (:map global-map
+              "C-M-SPC"                                       #'easy-mark
+              "M-SPC"                                         #'easy-kill)
 
-      (:after easy-kill
-      :map easy-kill-base-map
-      ","                                             #'easy-kill-expand-region
-      "."                                             #'easy-kill-contract-region))
+        (:after easy-kill
+         :map easy-kill-base-map
+         ","                                             #'easy-kill-expand-region
+         "."                                             #'easy-kill-contract-region)))
 ;;; ** easy-kill and expand-region interop
 (after! easy-kill
   (defun easy-kill-expand-region ()
@@ -197,7 +199,7 @@
 
 (after! better-jumper
   (defvar my/inhibit-better-jumper-push nil
-    "Guard to prevent infinite recursion between `push-mark' and `better-jumper-set-jump'.")
+    "Prevent infinite recursion between `push-mark' and `better-jumper-set-jump'.")
   
   (defadvice! my/push-mark-to-better-jumper (&optional location &rest _)
     "Push better jumper list when mark ring pushed"
@@ -212,89 +214,97 @@
       "M-,"                                           #'better-jumper-jump-backward
       "C-M-,"                                           #'better-jumper-jump-forward)
 ;;; ** Smartparens
-(add-hook! prog-mode-hook #'sp-use-smartparens-bindings)
+(after! smartparens
+  (add-hook! prog-mode-hook #'sp-use-smartparens-bindings)
 
-(map! :map smartparens-mode-map
-      "C-<right>" #'sp-forward-slurp-sexp
-      "C-<left>" #'sp-forward-barf-sexp
-      "C-M-<right>" #'sp-backward-barf-sexp
-      "C-M-<left>" #'sp-backward-slurp-sexp
-      
-      "M-D"        #'sp-unwrap-sexp)
+  (map! :map smartparens-mode-map
+        "C-<right>" #'sp-forward-slurp-sexp
+        "C-<left>" #'sp-forward-barf-sexp
+        "C-M-<right>" #'sp-backward-barf-sexp
+        "C-M-<left>" #'sp-backward-slurp-sexp
+        
+        "M-D"        #'sp-unwrap-sexp))
 ;;; * Font config
-(setopt variable-font "EB Garamond"
-        fixed-font "Fira Code"
+(setq variable-font "EB Garamond"
+      fixed-font "JetBrains Mono"
         variable-sans-serif "Rosario"
         doom-font fixed-font)
 
 ;;; ** Fontaine
-(setopt fontaine-presets
-        `((regular-serif
-           :variable-pitch-family ,variable-font
-           :fixed-pitch-family ,fixed-font
-           :default-height 110
-           :default-weight light)
-          (regular-sans
-           :variable-pitch-family ,variable-sans-serif
-           :fixed-pitch-family ,fixed-font
-           :default-height 110
-           :default-weight light)
-          (office-monitor
-           :inherit regular-sans
-           :default-height 135)
-          (medium-serif
-           :inherit regular-serif
-           :default-height 140)
-          (medium-sans
-           :inherit regular-sans
-           :variable-pitch-weight light
-           :default-height 140)
+(after! fontaine
+  (setopt fontaine-presets
+          `((regular-serif
+             :variable-pitch-family ,variable-font
+             :fixed-pitch-family ,fixed-font
+             :default-height 110)
+            (regular-sans
+             :variable-pitch-family ,variable-sans-serif
+             :fixed-pitch-family ,fixed-font
+             :default-height 110)
+            (office-monitor
+             :inherit regular-sans
+             :default-height 135)
+            (medium-serif
+             :inherit regular-serif
+             :default-height 140)
+            (medium-sans
+             :inherit regular-sans
+             :variable-pitch-weight light
+             :default-height 140)
 
-          (large-serif
-           :inherit medium-serif
-           :default-height 180)
+            (large-serif
+             :inherit medium-serif
+             :default-height 180)
 
-          (large-sans
-           :inherit medium-sans
-           :default-height 180)
-          (huge-serif
-           :inherit medium-serif
-           :default-height 210)
-          (huge-sans
-           :inherit medium-sans
-           :default-height 210)
+            (large-sans
+             :inherit medium-sans
+             :default-height 180)
+            (huge-serif
+             :inherit medium-serif
+             :default-height 210)
+            (huge-sans
+             :inherit medium-sans
+             :default-height 210)
 
-          (t ; our shared fallback properties
-           :fixed-pitch-family ,fixed-font
-           :fixed-pitch-height 1.0
+            (t ; our shared fallback properties
+             :fixed-pitch-family ,fixed-font
+             :fixed-pitch-height 1.0
 
-           :variable-pitch-family ,variable-font
-           :variable-pitch-weight regular
-           :variable-pitch-height 1.0
+             :variable-pitch-family ,variable-font
+             :variable-pitch-weight regular
+             :variable-pitch-height 1.0
 
-           :fixed-pitch-serif-family ,fixed-font
-           :fixed-pitch-serif-weight nil
-           :fixed-pitch-serif-slant nil
-           :fixed-pitch-serif-height 1.0
+             :fixed-pitch-serif-family ,fixed-font
+             :fixed-pitch-serif-weight nil
+             :fixed-pitch-serif-slant nil
+             :fixed-pitch-serif-height 1.0
 
-           :bold-family nil ; use whatever the underlying face has
-           :bold-weight bold
-           :italic-family nil
-           :italic-slant italic
-           :line-spacing nil)))
+             :bold-family nil ; use whatever the underlying face has
+             :bold-weight bold
+             :italic-family nil
+             :italic-slant italic
+             :line-spacing nil)))
+  (fontaine-set-preset 'medium-sans)
+  (add-hook! enable-theme-functions #'fontaine-apply-current-preset))
 
 (fontaine-mode)
-(fontaine-set-preset 'medium-sans)
 
-(add-hook! enable-theme-functions #'fontaine-apply-current-preset)
-(add-hook!  'text-mode-hook #'variable-pitch-mode)
+(add-hook! 'text-mode-hook #'variable-pitch-mode)
 
 ;;; * LaTeX
-(setopt TeX-engine 'xetex)
-(after! math-delimiters
+(after! LaTeX
+  (setopt TeX-engine 'xetex))
+
+(after! (:and math-delimiters (:or LaTeX org))
   (setopt math-delimiters-compressed-display-math t))
 
-(setopt bibtex-dialect 'biblatex)
+(after! (:and (:or LaTeX org) bibtex)
+  (setopt bibtex-dialect 'biblatex))
+(after! (:and org laas)
+  (add-hook! 'LaTeX-mode-hook
+             #'laas-mode
+             #'org-latex-preview-mode
+             #'cdlatex-mode))
 
 ;;; ** Helper functions
 (use-package! latex-utils
@@ -367,6 +377,7 @@ When pressed twice, make the sub/superscript roman."
                     "*" "\\ast"
                     "QQ" "\\mathbb{Q}"))
 
+;;; ** LaTeX bindings
 ;;; * org-mode
 (after! org
   (plist-put org-latex-preview-appearance-options
@@ -374,8 +385,13 @@ When pressed twice, make the sub/superscript roman."
   (add-hook 'org-latex-preview-auto-ignored-commands 'next-line)
   (add-hook 'org-latex-preview-auto-ignored-commands 'previous-line)
   (setopt org-latex-preview-numbered t
-         org-latex-preview-live t))
-
+          org-latex-preview-live t )
+  (custom-set-faces!
+    '(org-level-1 :inherit outline-1 :height 1.7)
+    '(org-level-2 :inherit outline-2 :height 1.5)
+    '(org-level-3 :inherit outline-3 :height 1.3)
+    '(org-level-4 :inherit outline-4 :height 1.2)
+    '(org-level-5 :inherit outline-5 :height 1.1)))
 ;;; ** Variables
 (add-hook! org-agenda-mode-hook (setq-local line-spacing 0.35))
 
@@ -489,14 +505,20 @@ When pressed twice, make the sub/superscript roman."
         org-fontify-quote-and-verse-blocks nil
         org-ellipsis "  "
         org-image-actual-width 400
-        org-hide-emphasis-markers t)
+        org-hide-emphasis-markers t
+        org-latex-preview-preamble
+        "\\documentclass{article}[DEFAULT-PACKAGES]
+[PACKAGES]
+\\usepackage{xcolor}
+\\usepackage{amssymb}
+\\usepackage{amsmath}")
 
-(when (modulep! :app calendar)
-  (map! :map org-agenda-mode-map
+(map! (:when (modulep! :app calendar)
+        :map org-agenda-mode-map
         :desc "Calendar" "C" #'=calendar))
 
 ;;;  bibtex
-(after! bibtex
+(after! (:or bibtex org latex)
   (setopt bibtex-autokey-year-length 4
          bibtex-autokey-name-year-separator "-"
          bibtex-autokey-year-title-separator "-"
@@ -507,7 +529,7 @@ When pressed twice, make the sub/superscript roman."
 
 ;;; ** ox-cv
 (use-package! ox-awesomecv
-  :after org)
+  :defer t)
 
 ;;; ** org-present
 (after! org-present
@@ -750,14 +772,28 @@ INFO is a plist containing export properties."
   (advice-add #'fixed?-org-html-format-latex
               :override #'org-html-format-latex))
 ;;; * org-transclution
-(use-package! org-transclusion-src-heading
-  :after (org org-transclusion)
+(use-package! org-transclusion
+  :after org
+  :defer t
   :config
+  (org-transclusion-set-extensions
+   'org-transclusion-extensions
+   (add-to-list 'org-transclusion-extensions 'org-transclusion-src-heading))
   (defvar my/outline-regexp-star-group 1)
   (setopt org-transclusion-src-heading-level-capture-group 1
-          org-transclusion-src-heading-name-capture-group 2)
-  (setq org-transclusion-extensions
-        (nconc '(org-transclusion-src-heading) org-transclusion-extensions)))
+          org-transclusion-src-heading-name-capture-group 2))
+
+(use-package! org-transclusion-src-heading
+  :load-path "~/code/org-transclusion-src-heading/"
+  :after (org)
+  :config
+  (defun my/outline-level ()
+    "Determine outline level assuming
+`outline-regexp' captures asterisks into
+`org-transclusion-src-heading-level-capture-group'."
+    (if  (looking-at outline-regexp)
+        (length (match-string org-transclusion-src-heading-level-capture-group))
+      0)))
 ;;; * expand-region
 (after! expand-region
   (setopt expand-region-fast-keys-enabled nil)
@@ -829,7 +865,7 @@ INFO is a plist containing export properties."
       "M-e"                                           #'tempel-previous
       "C-M-k"                                              #'tempel-abort
       
-      :map (text-mode-map prog-mode-map)
+      :map global-map
        "M-*"                                           #'tempel-insert
        "C-<tab>"                                       #'tempel-expand)
 
@@ -838,7 +874,8 @@ INFO is a plist containing export properties."
 (setopt org-mem-watch-dirs '("~/Documents/org/")
         org-mem-do-sync-with-org-id t
         org-node-creation-fn #'org-capture)
-(org-mem-updater-mode)
+(after! org
+  (org-mem-updater-mode))
 
 
 
@@ -1287,22 +1324,23 @@ to the post-capture hook."
 
 ;;; ** lasgun bindings
 (map!
+ "M-n"                    #'my/avy-lg-mark-char-timer
+ :desc "Lasgun menu"          "C-c o g" #'lasgun-transient
+ 
  (:after lasgun
-  :desc "Lasgun menu"          "C-c t g" #'lasgun-transient
-  :desc "Avy goto/Lasgun mark"                          "M-n"                    #'my/avy-lg-mark-char-timer
   :desc "Lasgun make multiple cursors"                          "M-g SPC"                #'lasgun-make-multiple-cursors
   :desc "Lasgun mark char timer"                        "M-g M-SPC"                  #'lasgun-mark-char-timer))
 
 ;;; * TRAMP-REMOTE-PATH
-(connection-local-set-profile-variables 'remote-path-with-local-cargo
-                                        '((tramp-remote-path . ("~/.cargo/bin" tramp-default-remote-path))))
-(connection-local-set-profiles nil 'remote-path-with-local-cargo)
+;; (connection-local-set-profile-variables 'remote-path-with-local-cargo
+;;                                         '((tramp-remote-path . ("~/.cargo/bin" tramp-default-remote-path))))
+;; (connection-local-set-profiles nil 'remote-path-with-local-cargo)
 
 ;;; * embark
 (after! embark
   (setopt embark-confirm-act-all nil))
 ;;; ** embark bindings
-(map! :map (text-mode-map prog-mode-map vertico-map)
+(map! :map global-map
        "C-."                                           #'embark-act
        "M-."                                           #'embark-dwim
        "C-h B"                                         #'embark-bindings
@@ -1315,55 +1353,55 @@ to the post-capture hook."
        :map minibuffer-mode-map
        "C-c C-." #'embark-select)
 ;;; * quiver
-(after! latex
+(after! (:or org latex)
   (defun open-quiver-local ()
     "Open quiver program locally"
     (interactive)
-    (start-process "open-quiver" nil "firefox" "--new-window" "~/working/quiver/src/index.html"))
+    (start-process "open-quiver" nil "zen" "--new-window" "~/working/quiver/src/index.html"))
 
   (defun open-quiver-web ()
     "Open quiver program on the web"
     (interactive)
-    (start-process "open-quiver" nil "firefox" "--new-window" "https://q.uiver.app")))
+    (start-process "open-quiver" nil "zen" "--new-window" "https://q.uiver.app")))
 
 ;;; * repeat-mode
 ;;; ** structural lisp map
-(defvar-keymap structural-editing-repeat-map
-:repeat (:enter (sp-copy-sexp sp-down-sexp
-                              sp-kill-sexp sp-mark-sexp
-                              sp-next-sexp sp-splice-sexp
-                              sp-unwrap-sexp sp-forward-sexp
-                              sp-backward-sexp sp-previous-sexp
-                              sp-transpose-sexp sp-backward-up-sexp
-                              sp-forward-barf-sexp sp-backward-barf-sexp
-                              sp-backward-down-sexp sp-forward-slurp-sexp
-                              sp-backward-slurp-sexp sp-backward-unwrap-sexp
-                              mark-sexp))
-"x"           #'exchange-point-and-mark
-"C-M-x"       #'pp-eval-last-sexp
-"\\"          #'indent-region
-"w"          #'sp-copy-sexp
-"d"          #'sp-down-sexp
-"k"          #'sp-kill-sexp
-"SPC"        #'sp-mark-sexp
-"n"          #'sp-next-sexp
-"M-D" #'sp-backward-unwrap-sexp
-"f"          #'sp-forward-sexp
-"b"          #'sp-backward-sexp
-"p"          #'sp-previous-sexp
-"t"          #'sp-transpose-sexp
-"u"          #'sp-backward-up-sexp
-"C-M-i"      #'sp-forward-barf-sexp
-"C-M-m"      #'sp-backward-barf-sexp
-"i"        #'sp-forward-slurp-sexp
-"m"        #'sp-backward-slurp-sexp
-"<right>" #'sp-forward-slurp-sexp
-"<left>" #'sp-forward-barf-sexp
-"M-<right>" #'sp-backward-slurp-sexp
-"M-<left>" #'sp-backward-barf-sexp)
+(after! smartparens
+  (defvar-keymap structural-editing-repeat-map
+    :repeat (:enter (sp-copy-sexp sp-down-sexp
+                                  sp-kill-sexp sp-mark-sexp
+                                  sp-next-sexp sp-splice-sexp
+                                  sp-unwrap-sexp sp-forward-sexp
+                                  sp-backward-sexp sp-previous-sexp
+                                  sp-transpose-sexp sp-backward-up-sexp
+                                  sp-forward-barf-sexp sp-backward-barf-sexp
+                                  sp-backward-down-sexp sp-forward-slurp-sexp
+                                  sp-backward-slurp-sexp sp-backward-unwrap-sexp
+                                  mark-sexp))
+    "x"           #'exchange-point-and-mark
+    "C-M-x"       #'pp-eval-last-sexp
+    "\\"          #'indent-region
+    "w"          #'sp-copy-sexp
+    "d"          #'sp-down-sexp
+    "k"          #'sp-kill-sexp
+    "SPC"        #'sp-mark-sexp
+    "n"          #'sp-next-sexp
+    "M-D" #'sp-backward-unwrap-sexp
+    "f"          #'sp-forward-sexp
+    "b"          #'sp-backward-sexp
+    "p"          #'sp-previous-sexp
+    "t"          #'sp-transpose-sexp
+    "u"          #'sp-backward-up-sexp
+    "C-M-i"      #'sp-forward-barf-sexp
+    "C-M-m"      #'sp-backward-barf-sexp
+    "i"        #'sp-forward-slurp-sexp
+    "m"        #'sp-backward-slurp-sexp
+    "<right>" #'sp-forward-slurp-sexp
+    "<left>" #'sp-forward-barf-sexp
+    "M-<right>" #'sp-backward-slurp-sexp
+    "M-<left>" #'sp-backward-barf-sexp))
 
 ;;; ** window management repeat map
-;;;
 (defvar-keymap window-manage-repeat-map
   :repeat (:enter (split-window-right
                    split-window-below
@@ -1407,25 +1445,24 @@ to the post-capture hook."
 
 ;;; ** multiple-cursor repeat map
 (when (modulep! :editor multiple-cursors)
-  (defvar-keymap mc-repeat-map
-    :repeat (:enter (mc/mark-pop
-                     mc/mark-next-like-this
-                     mc/mark-previous-like-this))
-    "," #'mc/mark-pop
-    "." #'jump-to-mark
-    "n" #'mc/mark-next-like-this
-    "N" #'mc/unmark-next-like-this
-    "p" #'mc/mark-previous-like-this
-    "P" #'mc/unmark-previous-like-this))
+  (after! multiple-cursors
+    (defvar-keymap mc-repeat-map
+      :repeat (:enter (mc/mark-pop
+                       mc/mark-next-like-this
+                       mc/mark-previous-like-this))
+      "," #'mc/mark-pop
+      "." #'jump-to-mark
+      "n" #'mc/mark-next-like-this
+      "N" #'mc/unmark-next-like-this
+      "p" #'mc/mark-previous-like-this
+      "P" #'mc/unmark-previous-like-this)))
 
+(after!  repeat 
+  (setopt repeat-help-popup-type 'which-key
+          repeat-help-auto nil)
+  (add-hook! 'repeat-mode-hook #'repeat-help-mode))
 
-(after! repeat
-  (setopt repeat-help-popup-type #'embark
-         repeat-help-auto nil))
-(add-hook! repeat-mode-hook #'repeat-help-mode)
-
-(repeat-mode)
-
+(add-hook! '(prog-mode-hook text-mode-hook) #'repeat-mode)
 ;;; * multiple-cursors
 (after! multiple-cursors
   (setopt mc/always-run-for-all nil
@@ -1448,14 +1485,15 @@ to the post-capture hook."
   (remove-hook! julia-mode #'julia-repl-mode)
   (add-hook! julia-mode-hook #'julia-snail-mode))
 
-(add-to-list 'exec-path "~/.juliaup/bin")
-(when (modulep! :lang julia +lsp)
-  (setopt eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
+;; (add-to-list 'exec-path "~/.juliaup/bin")
+;; (when (modulep! :lang julia +lsp)
+;;   (setopt eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
 
-(setopt julia-snail-executable "~/.juliaup/bin/julia"
-       julia-snail-extra-args "--threads auto"
-       org-babel-julia-command "~/.juliaup/bin/julia")
-;;; ** common-lisp configuration
+(after! julia-snail
+  (setopt julia-snail-executable "~/.juliaup/bin/julia"
+          julia-snail-extra-args "--threads auto"
+          org-babel-julia-command "~/.juliaup/bin/julia"))
+;;; ** common-lisp 
 ;;;  *** Petalisp indentation fixes
 (put 'lazy 'common-lisp-indent-function '(1 &rest 1))
 (put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
@@ -1476,7 +1514,8 @@ to the post-capture hook."
   (setopt haskell-compile-command "ghc -Wall -ferror-spans -fforce-recomp -dynamic -c %s")
   (add-to-list 'exec-path "/home/aatmun/.ghcup/bin"))
 
-(when (and (modulep! :haskell +lsp) (modulep! :tools +lsp))
+(when (and (modulep! :haskell +lsp)
+           (modulep! :tools +lsp))
   (setopt eglot-workspace-configuration '((haskell (plugin (stan (globalOn . :json-false)))))))
 
 ;;; * Eyecandy
@@ -1613,6 +1652,7 @@ to the post-capture hook."
 
 ;;; ** technicolor configuration
 (use-package! technicolor
+  :defer t
   :config
   (when (EVA-02-p)
     (require 'miasma-utils))
@@ -1621,13 +1661,13 @@ to the post-capture hook."
   (defun technicolor-relative-lighten (color alpha)
     (technicolor-blend 'foreground color alpha))
 
-  (setopt prot-theme-mappings
+  (setq prot-theme-mappings
          '((foreground . fg-main)
            (background . bg-main)
            (violet . magenta-cooler)
            (green . green-warmer)
            (teal . cyan-cooler)))
-  (setopt miasma-theme-mappings
+  (setq miasma-theme-mappings
          '((foreground . miasma-light-gray)
            (background . miasma-light-charcoal)
            (red . miasma-terracota)
@@ -1659,7 +1699,7 @@ to the post-capture hook."
                               ("miasma" miasma-theme-get-color
                                ,miasma-theme-mappings)))
 
-  (setopt technicolor-org-src-block-faces '(("julia"      (technicolor-relative-darken  'magenta 90))
+  (setq technicolor-org-src-block-faces '(("julia"      (technicolor-relative-darken  'magenta 90))
                                            ("python"     (technicolor-relative-darken  'teal 85))
                                            ("go"     (technicolor-relative-darken  'cyan 90))
                                            ("lisp"       (technicolor-relative-darken  'green 90))
@@ -1684,163 +1724,155 @@ to the post-capture hook."
     (my/technicolor-update-org-src-block-faces)))
 
 ;;; ** customizing faces
-(custom-set-faces!
-  `(org-modern-time-inactive :inherit org-modern-label
-    :background ,(technicolor-blend 'background 'red 95)
-    :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 100) 20))
+(after! org-modern
+  (custom-set-faces!
+    `(org-modern-time-inactive :inherit org-modern-label
+      :background ,(technicolor-blend 'background 'red 95)
+      :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 100) 20))
 
-  `(org-modern-date-inactive :inherit org-modern-label
-    :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
-    :foreground ,(technicolor-blend 'foreground 'background 100))
+    `(org-modern-date-inactive :inherit org-modern-label
+      :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
+      :foreground ,(technicolor-blend 'foreground 'background 100))
 
-  `(org-modern-time-active :inherit org-modern-label :background ,(technicolor-blend 'background 'green 85)
-    :foreground ,(technicolor-blend 'foreground 'background 90))
+    `(org-modern-time-active :inherit org-modern-label :background ,(technicolor-blend 'background 'green 85)
+      :foreground ,(technicolor-blend 'foreground 'background 90))
 
-  `(org-modern-date-active :inherit org-modern-label :background ,(technicolor-blend 'background 'blue 85)
-    :foreground ,(technicolor-blend 'foreground 'background 90)))
-(set-face-attribute 'org-modern-todo nil :foreground (technicolor-relative-lighten 'green 30))
+    `(org-modern-date-active :inherit org-modern-label :background ,(technicolor-blend 'background 'blue 85)
+      :foreground ,(technicolor-blend 'foreground 'background 90)))
+  (set-face-attribute 'org-modern-todo nil :foreground (technicolor-relative-lighten 'green 30)))
 
 
 ;;; ** org-modern
-(global-org-modern-mode)
-(after! org-modern)
-(add-hook! org-agenda-finalize-hook
-           #'org-modern-agenda
-           #'org-latex-preview-auto-mode)
+(after! org-agenda
+  (add-hook! 'org-agenda-finalize-hook
+             #'org-modern-agenda
+             #'org-latex-preview-auto-mode))
+(after! org
+  (add-hook! 'org-mode-hook #'org-modern-mode))
 
-(setopt org-latex-preview-preamble
-       "\\documentclass{article}[DEFAULT-PACKAGES]
-[PACKAGES]
-\\usepackage{xcolor}
-\\usepackage{amssymb}
-\\usepackage{amsmath}")
+(after! org-modern
+  (setopt org-modern-block-fringe nil)
+  (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten 'cyan 10 )))
+    "Face for org modern IDEA tag")
+  (defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10) ))
+    "Face for org modern IDEA tag")
+  (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10) ))
+    "Face for org modern IDEA tag")
+  (defface org-modern-wait `((t :inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
+    "Face for org modern WAIT tag")
+  (defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 20)))
+    "Face for org modern PROG tag")
+  (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
+    "Face for org modern MAYBE tag"))
 
-(setopt org-modern-block-fringe nil)
-(defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten 'cyan 10 )))
-  "Face for org modern IDEA tag")
-(defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10) ))
-  "Face for org modern IDEA tag")
-(defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10) ))
-  "Face for org modern IDEA tag")
-(defface org-modern-wait `((t :inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
-  "Face for org modern WAIT tag")
-(defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 20)))
-  "Face for org modern PROG tag")
-(defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
-  "Face for org modern MAYBE tag")
-(defun my/technicolor-customizations ()
-  (set-face-attribute 'org-super-agenda-header  nil
-                      :foreground (technicolor-get-color 'blue) :background 'unspecified
-                      :box nil
-                      :height 1.0)
-  (set-face-attribute 'org-agenda-date nil  :foreground (technicolor-get-color 'foreground)
-                      :background 'unspecified
-                      :box nil
-                      :underline nil
-                      :height 1.1)
-  (set-face-attribute 'org-agenda-date-weekend  nil
-                      :foreground (technicolor-blend 'foreground 'background 50)
-                      :background 'unspecified
-                      :box nil
-                      :underline nil
-                      :height 'unspecified)
-  (set-face-attribute 'org-agenda-date-weekend-today  nil
-                      :foreground (technicolor-blend 'foreground 'background 50)
-                      :background 'unspecified
-                      :box t
-                      :height 'unspecified)
-  (set-face-attribute 'org-modern-idea nil :foreground (technicolor-lighten 'cyan 10))
-  (set-face-attribute 'org-modern-todo nil :foreground (technicolor-relative-lighten 'green 30))
-  (set-face-attribute 'org-modern-draft nil :foreground (technicolor-lighten 'cyan 10))
-  (set-face-attribute 'org-modern-wait nil :foreground (technicolor-relative-lighten 'red 20))
-  (set-face-attribute 'org-modern-maybe nil :foreground (technicolor-blend 'background 'green 60))
-  (set-face-attribute 'org-modern-prog nil
-                      :foreground (technicolor-relative-lighten 'green 10) :background 'unspecified)
+(after! (:and org-modern technicolor)
+  (defun my/technicolor-customizations ()
+    (set-face-attribute 'org-super-agenda-header  nil
+                        :foreground (technicolor-get-color 'blue) :background 'unspecified
+                        :box nil
+                        :height 1.0)
+    (set-face-attribute 'org-agenda-date nil  :foreground (technicolor-get-color 'foreground)
+                        :background 'unspecified
+                        :box nil
+                        :underline nil
+                        :height 1.1)
+    (set-face-attribute 'org-agenda-date-weekend  nil
+                        :foreground (technicolor-blend 'foreground 'background 50)
+                        :background 'unspecified
+                        :box nil
+                        :underline nil
+                        :height 'unspecified)
+    (set-face-attribute 'org-agenda-date-weekend-today  nil
+                        :foreground (technicolor-blend 'foreground 'background 50)
+                        :background 'unspecified
+                        :box t
+                        :height 'unspecified)
+    (set-face-attribute 'org-modern-idea nil :foreground (technicolor-lighten 'cyan 10))
+    (set-face-attribute 'org-modern-todo nil :foreground (technicolor-relative-lighten 'green 30))
+    (set-face-attribute 'org-modern-draft nil :foreground (technicolor-lighten 'cyan 10))
+    (set-face-attribute 'org-modern-wait nil :foreground (technicolor-relative-lighten 'red 20))
+    (set-face-attribute 'org-modern-maybe nil :foreground (technicolor-blend 'background 'green 60))
+    (set-face-attribute 'org-modern-prog nil
+                        :foreground (technicolor-relative-lighten 'green 10) :background 'unspecified)
 
-  (set-face-attribute 'org-modern-time-inactive nil :foreground (technicolor-blend 'background 'green 20))
-  (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
-                      :background (technicolor-blend 'background 'red 95)
-                      :foreground (technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
-  (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
-                      :background (technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
-                      :foreground (technicolor-blend 'foreground 'background 100))
-  (set-face-attribute 'org-modern-time-active nil :inherit 'org-modern-label
-                      :background (technicolor-blend 'background 'green 85)
-                      :foreground (technicolor-blend 'foreground 'background 90))
-  (set-face-attribute 'org-modern-date-active nil :inherit 'org-modern-label
-                      :background (technicolor-blend 'background 'blue 85)
-                      :foreground (technicolor-blend 'foreground 'background 90)))
-(add-hook! doom-load-theme-hook #'my/technicolor-customizations)
+    (set-face-attribute 'org-modern-time-inactive nil :foreground (technicolor-blend 'background 'green 20))
+    (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
+                        :background (technicolor-blend 'background 'red 95)
+                        :foreground (technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
+    (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
+                        :background (technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
+                        :foreground (technicolor-blend 'foreground 'background 100))
+    (set-face-attribute 'org-modern-time-active nil :inherit 'org-modern-label
+                        :background (technicolor-blend 'background 'green 85)
+                        :foreground (technicolor-blend 'foreground 'background 90))
+    (set-face-attribute 'org-modern-date-active nil :inherit 'org-modern-label
+                        :background (technicolor-blend 'background 'blue 85)
+                        :foreground (technicolor-blend 'foreground 'background 90)))
+  (add-hook! doom-load-theme-hook #'my/technicolor-customizations))
 
 
-(setopt org-modern-todo-faces
-        `(("IDEA" . org-modern-idea)
-          ("EVENT" . org-modern-event)
-          ("TODO" . org-modern-todo)
-          ("WAIT" . org-modern-wait)
-          ("PROG" . org-modern-prog)
-          ("MAYBE" . org-modern-maybe)
-          ("DRAFT" . org-modern-draft)))
+(after! org-modern
+  (setopt org-modern-list '((43 . "➤")
+                            (45 . "–")
+                            (42 . "•"))
+          org-modern-footnote (cons nil (cadr org-script-display))
+          org-modern-block-name
+          '((t . t)
+            ("src" "»" "«")
+            ("example" "»–" "–«")
+            ("quote" "❝" "❞")
+            ("export" "⏩" "⏪"))
+          org-modern-progress nil
+          org-modern-priority nil
+          org-modern-horizontal-rule (make-string 36 ?─)
+          org-modern-keyword
+          '((t . t)
+            ("title" . "𝙏")
+            ("subtitle" . "𝙩")
+            ("author" . "𝘼")
+            ("email" . #("" 0 1 (display (raise -0.14))))
+            ("date" . "𝘿")
+            ("property" . "☸")
+            ("options" . "⌥")
+            ("startup" . "⏻")
+            ("macro" . "𝓜")
+            ("bind" . #("" 0 1 (display (raise -0.1))))
+            ("bibliography" . "")
+            ("print_bibliography" . #("" 0 1 (display (raise -0.1))))
+            ("cite_export" . "⮭")
+            ("print_glossary" . #("ᴬᶻ" 0 1 (display (raise -0.1))))
+            ("glossary_sources" . #("" 0 1 (display (raise -0.14))))
+            ("include" . "⇤")
+            ("setupfile" . "⇚")
+            ("html_head" . "🅷")
+            ("html" . "🅗")
+            ("latex_class" . "🄻")
+            ("latex_class_options" . #("🄻" 1 2 (display (raise -0.14))))
+            ("latex_header" . "🅻")
+            ("latex_header_extra" . "🅻⁺")
+            ("latex" . "🅛")
+            ("beamer_theme" . "🄱")
+            ("beamer_color_theme" . #("🄱" 1 2 (display (raise -0.12))))
+            ("beamer_font_theme" . "🄱𝐀")
+            ("beamer_header" . "🅱")
+            ("beamer" . "🅑")
+            ("attr_latex" . "🄛")
+            ("attr_html" . "🄗")
+            ("attr_org" . "⒪")
+            ("call" . #("" 0 1 (display (raise -0.15))))
+            ("name" . "⁍")
+            ("header" . "›")
+            ("caption" . "☰")
+            ("results" . "⮞")))
 
-(custom-set-faces!
-  '(org-level-1 :inherit outline-1 :height 1.7)
-  '(org-level-2 :inherit outline-2 :height 1.5)
-  '(org-level-3 :inherit outline-3 :height 1.3)
-  '(org-level-4 :inherit outline-4 :height 1.2)
-  '(org-level-5 :inherit outline-5 :height 1.1))
-
-(setopt org-modern-list '((43 . "➤")
-                          (45 . "–")
-                          (42 . "•"))
-        org-modern-footnote (cons nil (cadr org-script-display))
-        org-modern-block-name
-        '((t . t)
-          ("src" "»" "«")
-          ("example" "»–" "–«")
-          ("quote" "❝" "❞")
-          ("export" "⏩" "⏪"))
-        org-modern-progress nil
-        org-modern-priority nil
-        org-modern-horizontal-rule (make-string 36 ?─)
-        org-modern-keyword
-        '((t . t)
-          ("title" . "𝙏")
-          ("subtitle" . "𝙩")
-          ("author" . "𝘼")
-          ("email" . #("" 0 1 (display (raise -0.14))))
-          ("date" . "𝘿")
-          ("property" . "☸")
-          ("options" . "⌥")
-          ("startup" . "⏻")
-          ("macro" . "𝓜")
-          ("bind" . #("" 0 1 (display (raise -0.1))))
-          ("bibliography" . "")
-          ("print_bibliography" . #("" 0 1 (display (raise -0.1))))
-          ("cite_export" . "⮭")
-          ("print_glossary" . #("ᴬᶻ" 0 1 (display (raise -0.1))))
-          ("glossary_sources" . #("" 0 1 (display (raise -0.14))))
-          ("include" . "⇤")
-          ("setupfile" . "⇚")
-          ("html_head" . "🅷")
-          ("html" . "🅗")
-          ("latex_class" . "🄻")
-          ("latex_class_options" . #("🄻" 1 2 (display (raise -0.14))))
-          ("latex_header" . "🅻")
-          ("latex_header_extra" . "🅻⁺")
-          ("latex" . "🅛")
-          ("beamer_theme" . "🄱")
-          ("beamer_color_theme" . #("🄱" 1 2 (display (raise -0.12))))
-          ("beamer_font_theme" . "🄱𝐀")
-          ("beamer_header" . "🅱")
-          ("beamer" . "🅑")
-          ("attr_latex" . "🄛")
-          ("attr_html" . "🄗")
-          ("attr_org" . "⒪")
-          ("call" . #("" 0 1 (display (raise -0.15))))
-          ("name" . "⁍")
-          ("header" . "›")
-          ("caption" . "☰")
-          ("results" . "⮞")))
+  (setopt org-modern-todo-faces
+          `(("IDEA" . org-modern-idea)
+            ("EVENT" . org-modern-event)
+            ("TODO" . org-modern-todo)
+            ("WAIT" . org-modern-wait)
+            ("PROG" . org-modern-prog)
+            ("MAYBE" . org-modern-maybe)
+            ("DRAFT" . org-modern-draft))))
 
 ;;; ** visual-fill-column-mode
 ;; (after! visual-fill-column
@@ -1849,9 +1881,9 @@ to the post-capture hook."
 
 ;; (add-hook! (text-mode-hook prog-mode-hook) #'visual-fill-column-mode)
 
-
 ;;; * wttr
-(setopt wttrin-default-cities '("College Station" "Colleyville"))
+(after! wttr
+  (setopt wttrin-default-cities '("College Station" "Colleyville")))
 
 ;; Fix: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
 (defadvice! wwtrin-fetch-raw-string (query)
@@ -1930,3 +1962,6 @@ MYTAG"
 
 
 
+;; Local Variables:
+;; outline-regexp: ";;; \\(\\*+\\) \\(.*\\)$"
+;; End:
