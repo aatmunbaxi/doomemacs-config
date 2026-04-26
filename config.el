@@ -38,6 +38,9 @@
 
 (setopt display-time-format "%H:%M %d %b %Y")
 (display-time-mode)
+
+
+
 (global-display-line-numbers-mode -1)
 (remove-hook! 'prog-mode-hook #'display-line-numbers-mode)
 ;;; * Setup load path.
@@ -701,10 +704,14 @@ When pressed twice, make the sub/superscript roman."
            #'org-latex-preview-mode
            (org-indent-mode -1)
            (display-line-numbers-mode 0)
+           #'org-modern-mode
            :local
            (setq tab-width 8
                   smartparens-mode nil))
-
+(after! org-agenda
+  (add-hook! 'org-agenda-finalize-hook
+             #'org-modern-agenda
+             #'org-latex-preview-auto-mode))
 
 ;;; ** org keybindings
 (map! :map global-map
@@ -1445,17 +1452,16 @@ to the post-capture hook."
 
 ;;; ** multiple-cursor repeat map
 (when (modulep! :editor multiple-cursors)
-  (after! multiple-cursors
-    (defvar-keymap mc-repeat-map
-      :repeat (:enter (mc/mark-pop
-                       mc/mark-next-like-this
-                       mc/mark-previous-like-this))
-      "," #'mc/mark-pop
-      "." #'jump-to-mark
-      "n" #'mc/mark-next-like-this
-      "N" #'mc/unmark-next-like-this
-      "p" #'mc/mark-previous-like-this
-      "P" #'mc/unmark-previous-like-this)))
+  (defvar-keymap mc-repeat-map
+    :repeat (:enter (mc/mark-pop
+                     mc/mark-next-like-this
+                     mc/mark-previous-like-this))
+    "," #'mc/mark-pop
+    "." #'jump-to-mark
+    "n" #'mc/mark-next-like-this
+    "N" #'mc/unmark-next-like-this
+    "p" #'mc/mark-previous-like-this
+    "P" #'mc/unmark-previous-like-this))
 
 (after!  repeat 
   (setopt repeat-help-popup-type 'which-key
@@ -1480,7 +1486,7 @@ to the post-capture hook."
     (add-to-list 'mc/cmds-to-run-once cmd)))
 
 ;;; * Programming language configurations
-;;; ** Julia
+;;; ** julia
 (when (modulep! :lang julia +snail)
   (remove-hook! julia-mode #'julia-repl-mode)
   (add-hook! julia-mode-hook #'julia-snail-mode))
@@ -1494,7 +1500,7 @@ to the post-capture hook."
           julia-snail-extra-args "--threads auto"
           org-babel-julia-command "~/.juliaup/bin/julia"))
 ;;; ** common-lisp 
-;;;  *** Petalisp indentation fixes
+;;; *** petalisp indentation fixes
 (put 'lazy 'common-lisp-indent-function '(1 &rest 1))
 (put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
 (put 'lazy-multiple-value 'common-lisp-indent-function '(1 1 &rest 1))
@@ -1615,10 +1621,16 @@ to the post-capture hook."
 
 
 ;;; ** global eyecandy
-(custom-set-faces!
+(custom-set-faces! nil
   '(font-lock-keyword-face :inherit t :italic t)
   '(font-lock-operator-face :italic t)
   '(font-lock-doc-face :weight light))
+
+(add-hook! '(prog-mode-hook
+             text-mode-hook
+             conf-mode-hook
+             help-mode-hook)
+           #'rainbow-mode)
 
 (when (not (modulep! :ui modeline))
   (mood-line-mode)
@@ -1650,12 +1662,8 @@ to the post-capture hook."
        '(:internal-border-width 15 :right-divider-width 5 :scroll-bar-width 0))
 
 
-;;; ** technicolor configuration
-(use-package! technicolor
-  :defer t
-  :config
-  (when (EVA-02-p)
-    (require 'miasma-utils))
+;;; ** technicolor 
+(after! (:and modus-themes doom-themes)
   (defun technicolor-relative-darken (color alpha)
     (technicolor-blend 'background color alpha))
   (defun technicolor-relative-lighten (color alpha)
@@ -1715,7 +1723,6 @@ to the post-capture hook."
                      `(,(car cell) (:background ,(eval (nth 1 cell)) :extend t))))
       (when (equal major-mode #'org-mode)
         (font-lock-fontify-buffer t))))
-
   (my/technicolor-update-org-src-block-faces)
 
   (defadvice! my/technicolor-reload-org-src-block-faces (THEME &optional NO-CONFIRM NO-ENABLE)
@@ -1723,40 +1730,20 @@ to the post-capture hook."
     :after #'load-theme
     (my/technicolor-update-org-src-block-faces)))
 
-;;; ** customizing faces
-(after! org-modern
-  (custom-set-faces!
-    `(org-modern-time-inactive :inherit org-modern-label
-      :background ,(technicolor-blend 'background 'red 95)
-      :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 100) 20))
-
-    `(org-modern-date-inactive :inherit org-modern-label
-      :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
-      :foreground ,(technicolor-blend 'foreground 'background 100))
-
-    `(org-modern-time-active :inherit org-modern-label :background ,(technicolor-blend 'background 'green 85)
-      :foreground ,(technicolor-blend 'foreground 'background 90))
-
-    `(org-modern-date-active :inherit org-modern-label :background ,(technicolor-blend 'background 'blue 85)
-      :foreground ,(technicolor-blend 'foreground 'background 90)))
-  (set-face-attribute 'org-modern-todo nil :foreground (technicolor-relative-lighten 'green 30)))
+;;; *** customizing general faces
+(custom-theme-set-faces! nil
+  `(region :background ,(technicolor-blend 'cyan 'background 30) :extend t)
+  `(font-lock-keyword-face :slant italic))
 
 
-;;; ** org-modern
-(after! org-agenda
-  (add-hook! 'org-agenda-finalize-hook
-             #'org-modern-agenda
-             #'org-latex-preview-auto-mode))
-(after! org
-  (add-hook! 'org-mode-hook #'org-modern-mode))
-
+;;; *** org-modern face customization
 (after! org-modern
   (setopt org-modern-block-fringe nil)
   (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten 'cyan 10 )))
     "Face for org modern IDEA tag")
-  (defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10) ))
+  (defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10)))
     "Face for org modern IDEA tag")
-  (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10) ))
+  (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10)))
     "Face for org modern IDEA tag")
   (defface org-modern-wait `((t :inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
     "Face for org modern WAIT tag")
@@ -1765,52 +1752,43 @@ to the post-capture hook."
   (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
     "Face for org modern MAYBE tag"))
 
-(after! (:and org-modern technicolor)
-  (defun my/technicolor-customizations ()
-    (set-face-attribute 'org-super-agenda-header  nil
-                        :foreground (technicolor-get-color 'blue) :background 'unspecified
-                        :box nil
-                        :height 1.0)
-    (set-face-attribute 'org-agenda-date nil  :foreground (technicolor-get-color 'foreground)
-                        :background 'unspecified
-                        :box nil
-                        :underline nil
-                        :height 1.1)
-    (set-face-attribute 'org-agenda-date-weekend  nil
-                        :foreground (technicolor-blend 'foreground 'background 50)
-                        :background 'unspecified
-                        :box nil
-                        :underline nil
-                        :height 'unspecified)
-    (set-face-attribute 'org-agenda-date-weekend-today  nil
-                        :foreground (technicolor-blend 'foreground 'background 50)
-                        :background 'unspecified
-                        :box t
-                        :height 'unspecified)
-    (set-face-attribute 'org-modern-idea nil :foreground (technicolor-lighten 'cyan 10))
-    (set-face-attribute 'org-modern-todo nil :foreground (technicolor-relative-lighten 'green 30))
-    (set-face-attribute 'org-modern-draft nil :foreground (technicolor-lighten 'cyan 10))
-    (set-face-attribute 'org-modern-wait nil :foreground (technicolor-relative-lighten 'red 20))
-    (set-face-attribute 'org-modern-maybe nil :foreground (technicolor-blend 'background 'green 60))
-    (set-face-attribute 'org-modern-prog nil
-                        :foreground (technicolor-relative-lighten 'green 10) :background 'unspecified)
+(after! technicolor
+  (custom-theme-set-faces! nil
+    `(org-super-agenda-header   :foreground ,(technicolor-get-color 'blue)
+      :background unspecified :box nil :height 1.0)
+    
+    `(org-agenda-date   :foreground ,(technicolor-get-color 'foreground)
+      :background unspecified :box nil :underline nil :height 1.1)
+    
+    `(org-agenda-date-weekend   :foreground ,(technicolor-blend 'foreground 'background 50)
+      :background unspecified :box nil :underline nil :height unspecified)
+    
+    `(org-agenda-date-weekend-today   :foreground ,(technicolor-blend 'foreground 'background 50)
+      :background unspecified :box t :height unspecified)
+    
+    `(org-modern-idea  :foreground ,(technicolor-lighten 'cyan 10))
+    `(org-modern-todo  :foreground ,(technicolor-relative-lighten 'green 30))
+    `(org-modern-draft  :foreground ,(technicolor-lighten 'cyan 10))
+    `(org-modern-wait  :foreground ,(technicolor-relative-lighten 'red 20))
+    `(org-modern-maybe  :foreground ,(technicolor-blend 'background 'green 60))
+    `(org-modern-prog  :foreground ,(technicolor-relative-lighten 'green 10)
+      :background unspecified)
+    
+    `(org-modern-time-inactive  :foreground ,(technicolor-blend 'background 'green 20))
+    `(org-modern-date-inactive  :inherit 'org-modern-label
+      :background ,(technicolor-blend 'background 'red 95)
+      :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
+    `(org-modern-date-inactive  :inherit 'org-modern-label
+      :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
+      :foreground ,(technicolor-blend 'foreground 'background 100))
+    `(org-modern-time-active  :inherit 'org-modern-label
+      :background ,(technicolor-blend 'background 'green 85)
+      :foreground ,(technicolor-blend 'foreground 'background 90))
+    `(org-modern-date-active  :inherit 'org-modern-label :
+      background ,(technicolor-blend 'background 'blue 85)
+      :foreground ,(technicolor-blend 'foreground 'background 90))))
 
-    (set-face-attribute 'org-modern-time-inactive nil :foreground (technicolor-blend 'background 'green 20))
-    (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
-                        :background (technicolor-blend 'background 'red 95)
-                        :foreground (technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
-    (set-face-attribute 'org-modern-date-inactive nil :inherit 'org-modern-label
-                        :background (technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
-                        :foreground (technicolor-blend 'foreground 'background 100))
-    (set-face-attribute 'org-modern-time-active nil :inherit 'org-modern-label
-                        :background (technicolor-blend 'background 'green 85)
-                        :foreground (technicolor-blend 'foreground 'background 90))
-    (set-face-attribute 'org-modern-date-active nil :inherit 'org-modern-label
-                        :background (technicolor-blend 'background 'blue 85)
-                        :foreground (technicolor-blend 'foreground 'background 90)))
-  (add-hook! doom-load-theme-hook #'my/technicolor-customizations))
-
-
+;;; ** org-modern glyphs
 (after! org-modern
   (setopt org-modern-list '((43 . "➤")
                             (45 . "–")
