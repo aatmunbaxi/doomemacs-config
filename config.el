@@ -46,7 +46,7 @@
 ;;; * Setup load path.
 (add-to-list 'load-path "~/.config/doom/")
 (add-to-list 'load-path "~/.doom.d/")
-(setopt local-package-path (expand-file-name "lisp/" doom-user-dir))
+(setq local-package-path (expand-file-name "lisp/" doom-user-dir))
 
 
 ;;; * Buffer related config
@@ -124,42 +124,20 @@
 ;;; * Editing
 (setopt kill-whole-line t)
 (add-hook! '(prog-mode-hook text-mode-hook) #'jinx-mode)
-(defun my/find-bounds-of-regexps (open close)
-  (let ((start (point))
-        (parity 0)
-        (open-close (concat "\\(?:" open "\\|" close "\\)"))
-        end)
-    (save-excursion
-      (while (and (not (= parity -1))
-                  (re-search-backward open-close nil t))
-        (if (looking-at open)
-            (setq parity (1- parity))
-          (setq parity (1+ parity))))
-      (setq end (point))
-      (goto-char start)
-      (while (and (not (= parity 0))
-                  (re-search-forward open-close nil t))
-        (if (looking-back
-             close
-             (- (point) (length (match-string-no-properties 0))))
-            (setq parity (1+ parity))
-          (setq parity (1- parity))))
-      (when (= parity 0) (cons end (point))))))
-
 
 (map! :map global-map
       "M-/"          #'hippie-expand
+      :map (prog-mode-map text-mode-map)
       "C-;"          #'iedit-mode)
 ;;; ** easy-kill bindings
-(after! easy-kill
-  (map! (:map global-map
-              "C-M-SPC"                                       #'easy-mark
-              "M-SPC"                                         #'easy-kill)
+(map! (:map global-map
+            "C-M-SPC"                                       #'easy-mark
+            "M-SPC"                                         #'easy-kill)
 
-        (:after easy-kill
-         :map easy-kill-base-map
-         ","                                             #'easy-kill-expand-region
-         "."                                             #'easy-kill-contract-region)))
+      (:after easy-kill
+       :map easy-kill-base-map
+       ","                                             #'easy-kill-expand-region
+       "."                                             #'easy-kill-contract-region))
 ;;; ** easy-kill and expand-region interop
 (after! easy-kill
   (defun easy-kill-expand-region ()
@@ -214,8 +192,8 @@
 
 (map! :map global-map
       "C-,"                                         #'better-jumper-set-jump
-      "M-,"                                           #'better-jumper-jump-backward
-      "C-M-,"                                           #'better-jumper-jump-forward)
+      "M-,"                                         #'better-jumper-jump-backward
+      "C-M-,"                                       #'better-jumper-jump-forward)
 ;;; ** Smartparens
 (after! smartparens
   (add-hook! prog-mode-hook #'sp-use-smartparens-bindings)
@@ -225,13 +203,12 @@
         "C-<left>" #'sp-forward-barf-sexp
         "C-M-<right>" #'sp-backward-barf-sexp
         "C-M-<left>" #'sp-backward-slurp-sexp
-        
         "M-D"        #'sp-unwrap-sexp))
 ;;; * Font config
 (setq variable-font "EB Garamond"
       fixed-font "JetBrains Mono"
-        variable-sans-serif "Rosario"
-        doom-font fixed-font)
+      variable-sans-serif "Rosario"
+      doom-font fixed-font)
 
 ;;; ** Fontaine
 (after! fontaine
@@ -254,11 +231,9 @@
              :inherit regular-sans
              :variable-pitch-weight light
              :default-height 140)
-
             (large-serif
              :inherit medium-serif
              :default-height 180)
-
             (large-sans
              :inherit medium-sans
              :default-height 180)
@@ -268,7 +243,6 @@
             (huge-sans
              :inherit medium-sans
              :default-height 210)
-
             (t ; our shared fallback properties
              :fixed-pitch-family ,fixed-font
              :fixed-pitch-height 1.0
@@ -534,6 +508,7 @@ When pressed twice, make the sub/superscript roman."
 
 ;;; ** ox-cv
 (use-package! ox-awesomecv
+  :after org
   :defer t)
 
 ;;; ** org-present
@@ -669,7 +644,7 @@ When pressed twice, make the sub/superscript roman."
                            :order 3)
                           (:auto-tags t
                            :order 50))))))))))
-(after! org
+(after! org-agenda
   (org-super-agenda-mode))
 
 ;;; ** org specific expand-region functionality
@@ -801,41 +776,42 @@ INFO is a plist containing export properties."
     :repeat ((:enter er/expand-region
                      er/contract-region))
     "," #'er/expand-region
-    "." #'er/contract-region))
+    "." #'er/contract-region)
 
-(advice-add 'er--first-invocation
-            :override
-            (defun my/er--first-invocation ()
-              "t if this is the first invocation of er/expand-region or er/contract-region"
-              (not (memq last-command
-                         '(er/expand-region er/contract-region
-                           easy-kill-expand-region easy-kill-contract-region)))))
-(add-to-list 'expand-region-exclude-text-mode-expansions 'org-mode)
-(add-to-list 'expand-region-exclude-text-mode-expansions 'latex-mode)
+  (advice-add 'er--first-invocation
+              :override
+              (defun my/er--first-invocation ()
+                "t if this is the first invocation of er/expand-region or er/contract-region"
+                (not (memq last-command
+                           '(er/expand-region er/contract-region
+                             easy-kill-expand-region easy-kill-contract-region)))))
+  (add-to-list 'expand-region-exclude-text-mode-expansions 'org-mode)
+  (add-to-list 'expand-region-exclude-text-mode-expansions 'latex-mode))
 
 ;;; ** org-mode and expand-region latex interop
 
-(defun er/add-latex-in-org-mode-expansions ()
-  (require 'expand-region)
-  ;; Make Emacs recognize \ as an escape character in org
-  (modify-syntax-entry ?\\ "\\" org-mode-syntax-table)
-  ;; Paragraph end at end of math environment
-  (setq paragraph-start (concat paragraph-start "\\|\\\\end{\\([A-Za-z0-9*]+\\)}"))
-  ;; (setq paragraph-separate (concat paragraph-separate "\\|\\\\end{\\([A-Za-z0-9*]+\\)}"))
-  ;; Better forward/backward defun in Org
-  (setq-local beginning-of-defun-function 'my/org-beginning-of-defun)
-  ;; Latex mode expansions
-  (set (make-local-variable 'er/try-expand-list)
-       (append (cl-set-difference er/try-expand-list
-                                  '(er/mark-method-call
-                                    er/mark-inside-pairs
-                                    er/mark-outside-pairs))
-               '(LaTeX-mark-environment
-                 er/mark-LaTeX-inside-math
-                 er/mark-latex-inside-pairs
-                 er/mark-latex-outside-pairs
-                 er/mark-LaTeX-math))))
-(add-hook! org-mode-hook #'er/add-latex-in-org-mode-expansions)
+(after! org
+  (defun er/add-latex-in-org-mode-expansions ()
+    (require 'expand-region)
+    ;; Make Emacs recognize \ as an escape character in org
+    (modify-syntax-entry ?\\ "\\" org-mode-syntax-table)
+    ;; Paragraph end at end of math environment
+    (setq paragraph-start (concat paragraph-start "\\|\\\\end{\\([A-Za-z0-9*]+\\)}"))
+    ;; (setq paragraph-separate (concat paragraph-separate "\\|\\\\end{\\([A-Za-z0-9*]+\\)}"))
+    ;; Better forward/backward defun in Org
+    (setq-local beginning-of-defun-function 'my/org-beginning-of-defun)
+    ;; Latex mode expansions
+    (set (make-local-variable 'er/try-expand-list)
+         (append (cl-set-difference er/try-expand-list
+                                    '(er/mark-method-call
+                                      er/mark-inside-pairs
+                                      er/mark-outside-pairs))
+                 '(LaTeX-mark-environment
+                   er/mark-LaTeX-inside-math
+                   er/mark-latex-inside-pairs
+                   er/mark-latex-outside-pairs
+                   er/mark-LaTeX-math))))
+  (add-hook! 'org-mode-hook #'er/add-latex-in-org-mode-expansions))
 
 
 ;;; * tempel
@@ -1014,14 +990,15 @@ to the post-capture hook."
                               (?K . avy-action-kill-whole-line)
                               (?Y . avy-action-yank-whole-line)
                               (?T . avy-action-teleport-whole-line))))
-;;; ** avy map
+;;; ** avy keybindings
 (map! :map global-map
-       ;; avy stuff
-       :desc "Goto line"                              "M-g M-g"          #'avy-goto-line
-       :desc "Goto char"                              "M-g i"            #'avy-goto-char
+      (:prefix "M-g"
+       :desc "Goto line"                              "M-g"          #'avy-goto-line
+       :desc "Goto char"                              "i"            #'avy-goto-char)
 
        (:prefix "M-s"
         :desc "Copy line"                             "y"        #'avy-copy-line
+        :desc "Goto isearch"                          "C-s"      #'avy-isearch
         :desc "Copy region"                           "M-y"      #'avy-copy-region
         :desc "Kill whole line"                       "M-k"      #'avy-kill-whole-line
         :desc "Goto line above"                       "M-p"      #'avy-goto-line-above
@@ -1366,7 +1343,7 @@ to the post-capture hook."
 
 ;;; * repeat-mode
 ;;; ** structural lisp map
-(after! smartparens
+(after! (:and repeat smartparens)
   (defvar-keymap structural-editing-repeat-map
     :repeat (:enter (sp-copy-sexp sp-down-sexp
                                   sp-kill-sexp sp-mark-sexp
@@ -1402,45 +1379,47 @@ to the post-capture hook."
     "M-<left>" #'sp-backward-barf-sexp))
 
 ;;; ** window management repeat map
-(defvar-keymap window-manage-repeat-map
-  :repeat (:enter (split-window-right
-                   split-window-below
-                   ace-swap-window
-                   ace-window)
-           :exit (find-file
-                  recentf-open-files
-                  bookmark-jump
-                  eat
-                  +eshell/here
-                  consult-dir
-                  consult-buffer
-                  ibuffer))
-  "o" #'other-window
-  "0" #'delete-window
-  "2" #'split-window-below
-  "3" #'split-window-right
-  "=" #'enlarge-window-horizontally
-  "-" #'shrink-window-horizontally
-  "}" #'enlarge-window
-  "{" #'shrink-window
-  "u" #'consult-buffer
-  "s" #'ace-swap-window)
+(after! repeat
+  (defvar-keymap window-manage-repeat-map
+    :repeat (:enter (split-window-right
+                     split-window-below
+                     ace-swap-window
+                     ace-window)
+             :exit (find-file
+                    recentf-open-files
+                    bookmark-jump
+                    eat
+                    +eshell/here
+                    consult-dir
+                    consult-buffer
+                    ibuffer))
+    "o" #'other-window
+    "0" #'delete-window
+    "2" #'split-window-below
+    "3" #'split-window-right
+    "=" #'enlarge-window-horizontally
+    "-" #'shrink-window-horizontally
+    "}" #'enlarge-window
+    "{" #'shrink-window
+    "u" #'consult-buffer
+    "s" #'ace-swap-window))
 
 
 ;;; ** flycheck error repeat map
-(when (modulep! :checkers syntax)
-  (defvar-keymap flycheck-repeat-map
-    :repeat (:enter (flycheck-buffer
-                     flycheck-previous-error
-                     flycheck-display-error-at-point
-                     flycheck-explain-error-at-point)
-             :exit (flycheck-list-errors))
-    "n" #'flycheck-next-error
-    "p" #'flycheck-previous-error
-    "h" #'flycheck-display-error-at-point
-    "e" #'flycheck-explain-error-at-point
+(after! flycheck
+  (when (modulep! :checkers syntax)
+    (defvar-keymap flycheck-repeat-map
+      :repeat (:enter (flycheck-buffer
+                       flycheck-previous-error
+                       flycheck-display-error-at-point
+                       flycheck-explain-error-at-point)
+               :exit (flycheck-list-errors))
+      "n" #'flycheck-next-error
+      "p" #'flycheck-previous-error
+      "h" #'flycheck-display-error-at-point
+      "e" #'flycheck-explain-error-at-point
 
-    "l" #'flycheck-list-errors))
+      "l" #'flycheck-list-errors)))
 
 
 ;;; ** multiple-cursor repeat map
@@ -1456,7 +1435,7 @@ to the post-capture hook."
     "p" #'mc/mark-previous-like-this
     "P" #'mc/unmark-previous-like-this))
 
-(after!  repeat 
+(after! repeat 
   (setopt repeat-help-popup-type 'which-key
           repeat-help-auto nil)
   (add-hook! 'repeat-mode-hook #'repeat-help-mode))
@@ -1494,10 +1473,11 @@ to the post-capture hook."
           org-babel-julia-command "~/.juliaup/bin/julia"))
 ;;; ** common-lisp 
 ;;; *** petalisp indentation fixes
-(put 'lazy 'common-lisp-indent-function '(1 &rest 1))
-(put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
-(put 'lazy-multiple-value 'common-lisp-indent-function '(1 1 &rest 1))
-(put 'lazy-reshape 'common-lisp-indent-function '(1 &rest 1))
+(after! cl-indent
+  (put 'lazy 'common-lisp-indent-function '(1 &rest 1))
+  (put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
+  (put 'lazy-multiple-value 'common-lisp-indent-function '(1 1 &rest 1))
+  (put 'lazy-reshape 'common-lisp-indent-function '(1 &rest 1)))
 
 
 ;;; ** outli
@@ -1713,12 +1693,12 @@ to the post-capture hook."
                                ,miasma-theme-mappings)))
 
   (setq technicolor-org-src-block-faces '(("julia"      (technicolor-relative-darken  'magenta 90))
-                                           ("python"     (technicolor-relative-darken  'teal 85))
-                                           ("go"     (technicolor-relative-darken  'cyan 90))
-                                           ("lisp"       (technicolor-relative-darken  'green 90))
-                                           ("emacs-lisp" (technicolor-relative-darken  'magenta 85))
-                                           ("rust"       (technicolor-relative-darken  'red 80))
-                                           ("sh"         (technicolor-relative-darken  'green 85))))
+                                          ("python"     (technicolor-relative-darken  'teal 85))
+                                          ("go"         (technicolor-relative-darken  'cyan 90))
+                                          ("lisp"       (technicolor-relative-darken  'green 90))
+                                          ("emacs-lisp" (technicolor-relative-darken  'magenta 85))
+                                          ("rust"       (technicolor-relative-darken  'red 80))
+                                          ("sh"         (technicolor-relative-darken  'green 85))))
 
   (defun my/technicolor-update-org-src-block-faces ()
     "Update org-src-block-faces list"
@@ -1737,10 +1717,9 @@ to the post-capture hook."
 
 ;;; *** customizing general faces
 (custom-theme-set-faces! nil
-  `(region :background ,(technicolor-blend 'violet 'background 20) :extend t)
+  `(region :background ,(technicolor-blend 'background 'violet 60))
   `(font-lock-keyword-face :slant italic)
   `(font-latex-math-face :slant normal :foreground ,(technicolor-blend 'foreground 'violet 20)))
-
 
 ;;; *** org-modern face customization
 (after! technicolor
@@ -1797,7 +1776,6 @@ to the post-capture hook."
 
 ;;; ** org-modern glyphs
 (after! org-modern
-  
   (setopt org-modern-list '((43 . "➤")
                             (45 . "–")
                             (42 . "•"))
@@ -1868,9 +1846,8 @@ to the post-capture hook."
 ;; (add-hook! (text-mode-hook prog-mode-hook) #'visual-fill-column-mode)
 
 ;;; * wttr
-(after! wttr
-  (setopt wttrin-default-cities '("College Station" "Colleyville")))
-
+(setopt wttrin-default-cities '("College Station" "Colleyville"))
+;;; ** wttr hacky fix
 ;; Fix: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
 (defadvice! wwtrin-fetch-raw-string (query)
   "Make sure we fetch the acutual weather view"
