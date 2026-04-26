@@ -395,126 +395,128 @@ When pressed twice, make the sub/superscript roman."
     '(org-level-3 :inherit outline-3 :height 1.3)
     '(org-level-4 :inherit outline-4 :height 1.2)
     '(org-level-5 :inherit outline-5 :height 1.1)))
-;;; ** Variables
 (add-hook! org-agenda-mode-hook (setq-local line-spacing 0.35))
 
-;;; *** org-agenda  variables
-(setopt org-directory "~/Documents/org/"
-        org-default-notes-file "~/Documents/org/notes.org"
-        org-agenda-files '("~/Documents/org/inbox.org"
-                           "~/Documents/org/gtd.org"
-                           "~/Documents/org/tickler.org"
-                           "~/Documents/org/graveyard.org"
-                           "~/Documents/org/maybe.org")
-
-        org-refile-targets '((("~/Documents/org/gtd.org")   :maxlevel . 2)
-                             (("~/Documents/org/inbox.org")   :maxlevel . 2)
-                             (("~/Documents/org/tickler.org")  :level . 1)
-                             (("~/Documents/org/maybe.org")  :level . 1)
-                             (("~/Documents/org/notes.org")   :maxlevel . 3)
-                             (("~/Documents/org/braindump.org")   :maxlevel . 2)
-                             (("~/Documents/org/graveyard.org") :level . 1)
-                             (("~/Documents/org/journal.org") :maxlevel . 5))
-        org-agenda-include-deadlines t
-        org-agenda-use-time-grid nil
-        org-agenda-block-separator nil
-        org-agenda-compact-blocks t
-        org-agenda-start-day nil ;; i.e. today
-        org-agenda-span 5
-        org-agenda-skip-scheduled-if-done t
-        org-agenda-skip-deadline-if-done t
-        org-agenda-todo-ignore-scheduled 'all
-        org-capture-templates '(("n" "Info/IDEA")
-                                ("nn" "Info node"
-                                 entry
-                                 (file+headline "~/Documents/org/braindump.org" "Braindump")
-                                 "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-                                ("nt" "Daily: Today"
-                                 entry
-                                 (file+olp+datetree "~/Documents/org/journal.org")
-                                 "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
-                                 :unnarrowed nil)
-                                ("ni" "Daily: Idea"
-                                 entry
-                                 (file+olp+datetree "~/Documents/org/journal.org")
-                                 "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-                                ("t" "Todo" entry (file "~/Documents/org/inbox.org")
-                                 "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-                                ("r" "research" entry (file "~/Documents/org/inbox.org")
-                                 "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-                                ("i" "idea" entry (file "~/Documents/org/inbox.org")
-                                 "* IDEA %?\n%i\n%a\n")
-                                ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
-                                 ;; Call with C-u C-u interactive argument to insert inactive stamp
-                                 "* %? \n%(funcall 'org-timestamp '(16) 't)"
-                                 :empty-lines 1)
-                                ("m" "Email workflow")
-                                ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
-                                 "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
-                                 :immediate-finish t)
-                                ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
-                                 "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
-                                ("mr" "Read Later" entry (file"~/Documents/org/inbox.org")
-                                 "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
-                                 :immediate-finish t))
-        org-refile-use-outline-path 'file)
-
-;;; *** org variables
-(setopt org-outline-path-complete-in-steps nil
-        org-latex-src-block-backend 'engraved
-        org-use-speed-commands t
-        org-archive-location ".%s_archive::"
-        org-file-apps (quote
-                       ((auto-mode . emacs)
-                        ("\\.m\\'" . default)
-                        ("\\.?html?\\'" . (executable-find "zen"))
-                        ("\\.pdf\\'" . emacs)))
-        org-export-with-drawers '(not "noex")
-        org-highlight-latex-and-related '(native)
-        org-structure-template-alist '(("a" . "export ascii")
-                                       ("c" . "center")
-                                       ("C" . "comment")
-                                       ("e" . "equation")
-                                       ("E" . "export")
-                                       ("h" . "export html")
-                                       ("l" . "export latex")
-                                       ("q" . "quote")
-                                       ("s" . "src")
-                                       ("v" . "verse"))
-        org-startup-with-latex-preview nil
-        org-todo-keywords     '((sequence
-                                 "TODO(t)"
-                                 "IDEA(i)"
-                                 "EVENT(e)"
-                                 "WAIT(w)"
-                                 "PROG(g)"
-                                 "MAYBE(m)"
-                                 "DRAFT(D)"
-                                 "|"
-                                 "DONE(d)"
-                                 "CANCELLED(c)"))
-        org-attach-id-dir "~/Documents/org/.attach/"
-        org-latex-pdf-process (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f")
-        org-latex-default-packages-alist '(("" "amssymb" t)
-                                           ("" "amsmath" t ("lualatex" "xetex"))
-                                           ("" "fontspec" t ("lualatex" "xetex"))
-                                           ("AUTO" "inputenc" t ("pdflatex"))
-                                           ("T1" "fontenc" t ("pdflatex")))
-        org-highlight-latex-and-related nil
-        org-startup-folded t
-        org-startup-with-inline-images nil
-        org-fontify-whole-heading-line t
-        org-fontify-done-headline t
-        org-fontify-quote-and-verse-blocks nil
-        org-ellipsis "  "
-        org-image-actual-width 400
-        org-hide-emphasis-markers t
-        org-latex-preview-preamble
-        "\\documentclass{article}[DEFAULT-PACKAGES]
+;;; ** org-agenda variables
+(after! org-agenda
+  (setopt  org-agenda-files '("~/Documents/org/inbox.org"
+                             "~/Documents/org/gtd.org"
+                             "~/Documents/org/tickler.org"
+                             "~/Documents/org/graveyard.org"
+                             "~/Documents/org/maybe.org")
+          org-agenda-include-deadlines t
+          org-agenda-use-time-grid nil
+          org-agenda-block-separator nil
+          org-agenda-compact-blocks t
+          org-agenda-start-day nil ;; i.e. today
+          org-agenda-span 5
+          org-agenda-skip-scheduled-if-done t
+          org-agenda-skip-deadline-if-done t
+          org-agenda-todo-ignore-scheduled 'all))
+;;; ** org-refile variables
+(after! org-refile
+  (setopt org-refile-use-outline-path 'file
+          org-refile-targets '((("~/Documents/org/gtd.org")   :maxlevel . 2)
+                               (("~/Documents/org/inbox.org")   :maxlevel . 2)
+                               (("~/Documents/org/tickler.org")  :level . 1)
+                               (("~/Documents/org/maybe.org")  :level . 1)
+                               (("~/Documents/org/notes.org")   :maxlevel . 3)
+                               (("~/Documents/org/braindump.org")   :maxlevel . 2)
+                               (("~/Documents/org/graveyard.org") :level . 1)
+                               (("~/Documents/org/journal.org") :maxlevel . 5))))
+;;; ** org-refile variables
+(after! org-capture
+  (setopt org-capture-templates '(("n" "Info/IDEA")
+                                  ("nn" "Info node"
+                                   entry
+                                   (file+headline "~/Documents/org/braindump.org" "Braindump")
+                                   "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+                                  ("nt" "Daily: Today"
+                                   entry
+                                   (file+olp+datetree "~/Documents/org/journal.org")
+                                   "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
+                                   :unnarrowed nil)
+                                  ("ni" "Daily: Idea"
+                                   entry
+                                   (file+olp+datetree "~/Documents/org/journal.org")
+                                   "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+                                  ("t" "Todo" entry (file "~/Documents/org/inbox.org")
+                                   "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
+                                  ("r" "research" entry (file "~/Documents/org/inbox.org")
+                                   "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
+                                  ("i" "idea" entry (file "~/Documents/org/inbox.org")
+                                   "* IDEA %?\n%i\n%a\n")
+                                  ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
+                                   ;; Call with C-u C-u interactive argument to insert inactive stamp
+                                   "* %? \n%(funcall 'org-timestamp '(16) 't)"
+                                   :empty-lines 1)
+                                  ("m" "Email workflow")
+                                  ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
+                                   "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                                   :immediate-finish t)
+                                  ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
+                                   "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
+                                  ("mr" "Read Later" entry (file"~/Documents/org/inbox.org")
+                                   "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                                   :immediate-finish t))))
+;;; ** org variables
+(after! org
+  (setopt org-directory "~/Documents/org/"
+          org-default-notes-file "~/Documents/org/notes.org"
+   org-outline-path-complete-in-steps nil
+          org-latex-src-block-backend 'engraved
+          org-use-speed-commands t
+          org-archive-location ".%s_archive::"
+          org-file-apps (quote
+                         ((auto-mode . emacs)
+                          ("\\.m\\'" . default)
+                          ("\\.?html?\\'" . (executable-find "zen"))
+                          ("\\.pdf\\'" . emacs)))
+          org-export-with-drawers '(not "noex")
+          org-highlight-latex-and-related '(native latex)
+          org-structure-template-alist '(("a" . "export ascii")
+                                         ("c" . "center")
+                                         ("C" . "comment")
+                                         ("e" . "equation")
+                                         ("E" . "export")
+                                         ("h" . "export html")
+                                         ("l" . "export latex")
+                                         ("q" . "quote")
+                                         ("s" . "src")
+                                         ("v" . "verse"))
+          org-startup-with-latex-preview nil
+          org-todo-keywords     '((sequence
+                                   "TODO(t)"
+                                   "IDEA(i)"
+                                   "EVENT(e)"
+                                   "WAIT(w)"
+                                   "PROG(g)"
+                                   "MAYBE(m)"
+                                   "DRAFT(D)"
+                                   "|"
+                                   "DONE(d)"
+                                   "CANCELLED(c)"))
+          org-attach-id-dir "~/Documents/org/.attach/"
+          org-latex-pdf-process (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f")
+          org-latex-default-packages-alist '(("" "amssymb" t)
+                                             ("" "amsmath" t ("lualatex" "xetex"))
+                                             ("" "fontspec" t ("lualatex" "xetex"))
+                                             ("AUTO" "inputenc" t ("pdflatex"))
+                                             ("T1" "fontenc" t ("pdflatex")))
+          org-startup-folded t
+          org-startup-with-inline-images nil
+          org-fontify-whole-heading-line t
+          org-fontify-done-headline t
+          org-fontify-quote-and-verse-blocks nil
+          org-ellipsis "  "
+          org-image-actual-width 400
+          org-hide-emphasis-markers t
+          org-latex-preview-preamble
+          "\\documentclass{article}[DEFAULT-PACKAGES]
 [PACKAGES]
 \\usepackage{xcolor}
 \\usepackage{amssymb}
-\\usepackage{amsmath}")
+\\usepackage{amsmath}"))
 
 (map! (:when (modulep! :app calendar)
         :map org-agenda-mode-map
@@ -699,19 +701,17 @@ When pressed twice, make the sub/superscript roman."
 
 
 ;;; ** org-mode-hook main
-(add-hook! 'org-mode-hook
-           #'org-appear-mode
-           #'org-latex-preview-mode
-           (org-indent-mode -1)
-           (display-line-numbers-mode 0)
-           #'org-modern-mode
-           :local
-           (setq tab-width 8
-                  smartparens-mode nil))
+(after! org
+  (add-hook! 'org-mode-hook
+             #'org-appear-mode
+             #'org-latex-preview-mode
+             (org-indent-mode -1)
+             (display-line-numbers-mode 0)
+             (org-modern-mode 1)))
 (after! org-agenda
   (add-hook! 'org-agenda-finalize-hook
              #'org-modern-agenda
-             #'org-latex-preview-auto-mode))
+             #'org-latex-preview-mode))
 
 ;;; ** org keybindings
 (map! :map global-map
@@ -778,7 +778,7 @@ INFO is a plist containing export properties."
 
   (advice-add #'fixed?-org-html-format-latex
               :override #'org-html-format-latex))
-;;; * org-transclution
+;;; * org-transclusion
 (use-package! org-transclusion
   :after org
   :defer t
@@ -786,21 +786,14 @@ INFO is a plist containing export properties."
   (org-transclusion-set-extensions
    'org-transclusion-extensions
    (add-to-list 'org-transclusion-extensions 'org-transclusion-src-heading))
-  (defvar my/outline-regexp-star-group 1)
-  (setopt org-transclusion-src-heading-level-capture-group 1
+  (setopt org-transclusion-src-heading-level-capture-group my/outline-level-capture-group
           org-transclusion-src-heading-name-capture-group 2))
 
 (use-package! org-transclusion-src-heading
   :load-path "~/code/org-transclusion-src-heading/"
   :after (org)
-  :config
-  (defun my/outline-level ()
-    "Determine outline level assuming
-`outline-regexp' captures asterisks into
-`org-transclusion-src-heading-level-capture-group'."
-    (if  (looking-at outline-regexp)
-        (length (match-string org-transclusion-src-heading-level-capture-group))
-      0)))
+  :config)
+
 ;;; * expand-region
 (after! expand-region
   (setopt expand-region-fast-keys-enabled nil)
@@ -1509,6 +1502,12 @@ to the post-capture hook."
 
 ;;; ** outli
 (add-hook! 'prog-mode-hook #'outli-mode)
+(after! outline
+  (setq my/outline-level-capture-group 1)
+  (defun my/outline-level ()
+    (if  (looking-at outline-regexp)
+        (length (match-string my/outline-level-capture-group))
+      0)))
 ;;; ** outli map
 (map! :map outline-minor-mode-map
       "C-c s ,"                                       #'consult-outline)
@@ -1663,12 +1662,11 @@ to the post-capture hook."
 
 
 ;;; ** technicolor 
-(after! (:and modus-themes doom-themes)
-  (defun technicolor-relative-darken (color alpha)
+(defun technicolor-relative-darken (color alpha)
     (technicolor-blend 'background color alpha))
   (defun technicolor-relative-lighten (color alpha)
     (technicolor-blend 'foreground color alpha))
-
+(after! emacs
   (setq prot-theme-mappings
          '((foreground . fg-main)
            (background . bg-main)
@@ -1684,6 +1682,13 @@ to the post-capture hook."
            (green . miasma-eucalyptus)
            (teal . miasma-moss)
            (cyan . miasma-sky)))
+  (after! ef-themes
+    (defun my/get-ef-theme-color (color)
+      (if-let* ((curr-theme doom-theme)
+                (palette-name (intern (format "%s-palette" curr-theme)))
+                (pos (cl-position color (mapcar #'car (symbol-value palette-name)))))
+          (cadr (nth pos (symbol-value palette-name)))
+        'unspecified)))
 
   (setopt technicolor-colors '(foreground background
                               red blue
@@ -1695,7 +1700,7 @@ to the post-capture hook."
                               ("^modus-.*" modus-themes-get-color-value
                                ,prot-theme-mappings)
 
-                              ("^ef-.*" ef-themes-get-color-value
+                              ("^ef-.*" my/get-ef-theme-color
                                ,prot-theme-mappings)
 
                               ("^catppuccin" technicolor--get-catppuccin-color
@@ -1732,12 +1737,13 @@ to the post-capture hook."
 
 ;;; *** customizing general faces
 (custom-theme-set-faces! nil
-  `(region :background ,(technicolor-blend 'cyan 'background 30) :extend t)
-  `(font-lock-keyword-face :slant italic))
+  `(region :background ,(technicolor-blend 'violet 'background 20) :extend t)
+  `(font-lock-keyword-face :slant italic)
+  `(font-latex-math-face :slant normal :foreground ,(technicolor-blend 'foreground 'violet 20)))
 
 
 ;;; *** org-modern face customization
-(after! org-modern
+(after! technicolor
   (setopt org-modern-block-fringe nil)
   (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten 'cyan 10 )))
     "Face for org modern IDEA tag")
@@ -1766,12 +1772,13 @@ to the post-capture hook."
     `(org-agenda-date-weekend-today   :foreground ,(technicolor-blend 'foreground 'background 50)
       :background unspecified :box t :height unspecified)
     
-    `(org-modern-idea  :foreground ,(technicolor-lighten 'cyan 10))
-    `(org-modern-todo  :foreground ,(technicolor-relative-lighten 'green 30))
+    `(org-modern-idea  :foreground ,(technicolor-get-color 'background) :background ,(technicolor-lighten 'cyan 10))
+    `(org-modern-todo  :foreground ,(technicolor-get-color 'background)
+      :background ,(technicolor-blend 'background 'green 10))
     `(org-modern-draft  :foreground ,(technicolor-lighten 'cyan 10))
-    `(org-modern-wait  :foreground ,(technicolor-relative-lighten 'red 20))
-    `(org-modern-maybe  :foreground ,(technicolor-blend 'background 'green 60))
-    `(org-modern-prog  :foreground ,(technicolor-relative-lighten 'green 10)
+    `(org-modern-wait  :foreground ,(technicolor-blend 'foreground 'red 20))
+    `(org-modern-maybe  :background ,(technicolor-blend 'background 'green 70))
+    `(org-modern-prog  :foreground ,(technicolor-blend 'foreground 'green 10)
       :background unspecified)
     
     `(org-modern-time-inactive  :foreground ,(technicolor-blend 'background 'green 20))
@@ -1790,6 +1797,7 @@ to the post-capture hook."
 
 ;;; ** org-modern glyphs
 (after! org-modern
+  
   (setopt org-modern-list '((43 . "➤")
                             (45 . "–")
                             (42 . "•"))
@@ -1909,7 +1917,7 @@ MYTAG"
       "Toggle a tag on an Elfeed search selection"
       (interactive)
       (elfeed-search-toggle-all mytag))))
-;;; ** elfeed  keybindings
+;;; ** elfeed keybindings
 (after! elfeed
   (map! :map elfeed-show-mode-map
         "F"       #'elfeed-tube-fetch
@@ -1937,8 +1945,6 @@ MYTAG"
 ;;     :config
 ;;     ;; To disable collection of benchmark data after init is done.
 ;;     (add-hook 'after-init-hook 'benchmark-init/deactivate)))
-
-
 
 ;; Local Variables:
 ;; outline-regexp: ";;; \\(\\*+\\) \\(.*\\)$"
