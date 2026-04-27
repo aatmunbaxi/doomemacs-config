@@ -1,6 +1,5 @@
 ;; -*- lexical-binding: t; -*-
-;;; Commentary
-;;
+;;; * Commentary
 ;; Generally speaking, this configuration is motivated
 ;; by the tenet of "be as lazy as possible" while
 ;; not causing any load order errors and accommodating
@@ -8,7 +7,7 @@
 ;; and packages to have active in `init.el' and
 ;; `packages.el'. Hence, you'll likely find many `after!'
 ;; blocks that refer to packages that aren't currently installed
-;; or toggled in
+;; or toggled in.
 (doom-load-packages-incrementally '(org
                                     magit
                                     recentf
@@ -38,8 +37,6 @@
 
 (setopt display-time-format "%H:%M %d %b %Y")
 (display-time-mode)
-
-
 
 (global-display-line-numbers-mode -1)
 (remove-hook! 'prog-mode-hook #'display-line-numbers-mode)
@@ -359,8 +356,8 @@ When pressed twice, make the sub/superscript roman."
 (after! org
   (plist-put org-latex-preview-appearance-options
              :page-width 0.8)
-  (add-hook 'org-latex-preview-auto-ignored-commands 'next-line)
-  (add-hook 'org-latex-preview-auto-ignored-commands 'previous-line)
+  (add-hook 'org-latex-preview-mode-ignored-commands 'next-line)
+  (add-hook 'org-latex-preview-mode-ignored-commands 'previous-line)
   (setopt org-latex-preview-numbered t
           org-latex-preview-live t )
   (custom-set-faces!
@@ -520,7 +517,7 @@ When pressed twice, make the sub/superscript roman."
     (setq-local visual-fill-column-mode 1)
     (setq-local hl-line-mode nil)
     (org-present-hide-cursor)
-    (org-display-inline-images)
+    (org-link-preview-region)
     (setq-local spell-fu-mode nil)
     (hide-mode-line-mode))
 
@@ -529,7 +526,7 @@ When pressed twice, make the sub/superscript roman."
     (setq-local visual-fill-column-mode nil)
     (org-present-show-cursor)
     (setq-local spell-fu-mode 1)
-    (org-remove-inline-images)
+    (org-link-preview-clear)
     (hide-mode-line-mode)))
 
 ;;; ** org-super-agenda
@@ -714,7 +711,7 @@ When pressed twice, make the sub/superscript roman."
 
 ;;; * org-export
 ;;; ** FIX: ox-hugo experimental org
-(after! org
+(after! ox-html
   (defun fixed?-org-html-format-latex (latex-frag processing-type info)
     "Format a LaTeX fragment LATEX-FRAG into HTML.
 PROCESSING-TYPE designates the tool used for conversion.  It can
@@ -750,7 +747,6 @@ INFO is a plist containing export properties."
                                    (org-format-latex cache-relpath nil nil cache-dir nil
 		                                     "Creating LaTeX Image..." nil processing-type)
                                    (buffer-string))))
-
   (advice-add #'fixed?-org-html-format-latex
               :override #'org-html-format-latex))
 ;;; * org-transclusion
@@ -840,20 +836,21 @@ INFO is a plist containing export properties."
       "M-n"                                           #'tempel-next
       "M-e"                                           #'tempel-previous
       "C-M-k"                                              #'tempel-abort
-      
+                        
       :map global-map
        "M-*"                                           #'tempel-insert
        "C-<tab>"                                       #'tempel-expand)
 
 
 ;;; * org-node
-(setopt org-mem-watch-dirs '("~/Documents/org/")
-        org-mem-do-sync-with-org-id t
-        org-node-creation-fn #'org-capture)
+(after! org-mem
+  (setopt org-mem-watch-dirs '("~/Documents/org/")
+          org-mem-do-sync-with-org-id t))
+(after! org-node
+  (setopt org-node-creation-fn #'org-capture)
+  (org-node-cache-mode))
 (after! org
   (org-mem-updater-mode))
-
-
 
 ;;; ** org-roam helper functions
 ;; This code is just  helper stuff that I wrote
@@ -920,43 +917,42 @@ to the post-capture hook."
 ;;; * citar
 ;;; ** citar variables
 (after! citar
-  (setopt citar-bibliography '("~/Documents/bib/zotero_refs.bib")
-         bibtex-completion-library-path '("~/Documents/pdfs/Articles" "~/Documents/pdfs/Reference Books/")))
+  (setopt citar-bibliography '("~/Documents/bib/zotero_refs.bib")))
 
 ;;; ** citar related keybindings
 (defun my/citar-embark-update-prefix-suffix (cite)
   (citar-org-update-prefix-suffix nil))
 
 (map! :map org-mode-map
-:desc "Find node"         "C-c n r f"      #'org-node-find
+:desc "Find node"         "C-c n r f"       #'org-node-find
 
 :map global-map
-:desc "Citar open"              "C-c ]"                             #'citar-open
+:desc "Citar open"              "C-c ]"     #'citar-open
 :map citar-embark-map
-:desc "Open entry"              "e"        #'citar-open-entry
-:desc "Open files"              "f"        #'citar-open-files
-:desc "Edit"                    "i"        #'citar-insert-edit
-:desc "Open link"               "l"        #'citar-open-links
-:desc "Open"                    "o"        #'citar-open
-:desc "Copy reference"          "r"        #'citar-copy-reference
-:desc "Add to node refs"        "k"        #'citar-org-roam-tag-headline
+:desc "Open entry"              "e"         #'citar-open-entry
+:desc "Open files"              "f"         #'citar-open-files
+:desc "Edit"                    "i"         #'citar-insert-edit
+:desc "Open link"               "l"         #'citar-open-links
+:desc "Open"                    "o"         #'citar-open
+:desc "Copy reference"          "r"         #'citar-copy-reference
+:desc "Add to node refs"        "k"         #'citar-org-roam-tag-headline
 
 :map citar-embark-citation-map
-:desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
-:desc "Open entry"              "e"        #'citar-open-entry
-:desc "Open files"              "f"        #'citar-open-files
-:desc "Edit"                    "i"        #'citar-insert-edit
-:desc "Open link"               "l"        #'citar-open-links
-:desc "Open notes"              "n"        #'citar-open-notes
-:desc "Open"                    "o"        #'citar-open
-:desc "Copy reference"          "r"        #'citar-copy-reference
-:desc "Add to node refs"        "k"        #'citar-org-roam-tag-headline)
+:desc "Prefix/Suffix"           "p"         #'my/citar-embark-update-prefix-suffix
+:desc "Open entry"              "e"         #'citar-open-entry
+:desc "Open files"              "f"         #'citar-open-files
+:desc "Edit"                    "i"         #'citar-insert-edit
+:desc "Open link"               "l"         #'citar-open-links
+:desc "Open notes"              "n"         #'citar-open-notes
+:desc "Open"                    "o"         #'citar-open
+:desc "Copy reference"          "r"         #'citar-copy-reference
+:desc "Add to node refs"        "k"         #'citar-org-roam-tag-headline)
 
 ;;; * pdf-view mode
 (add-hook! 'pdf-tools-enabled-hook #'pdf-view-themed-minor-mode
 #'pdf-view-auto-slice-minor-mode)
 
-;;; ** pdf  keybindings
+;;; ** pdf keybindings
 (map! :map pdf-view-mode-map
       "M-m"                                           #'pdf-view-auto-slice-minor-mode
       "M-f"                                           #'pdf-view-themed-minor-mode
@@ -1012,11 +1008,11 @@ to the post-capture hook."
 ;;; ** corfu  variables
 (after! corfu
   (setopt corfu-cycle t
-         corfu-auto t
-         corfu-auto-prefix 2
-         corfu-auto-delay 0.5
-         corfu-quit-at-boundary 'separator
-         corfu-preview-current 'insert)
+          corfu-auto t
+          corfu-auto-prefix 2
+          corfu-auto-delay 0.5
+          corfu-quit-at-boundary 'separator
+          corfu-preview-current 'insert)
 
   (defun my/eshell-corfu-settings ()
     (setq-local corfu-quit-at-boundary nil
@@ -1025,23 +1021,23 @@ to the post-capture hook."
     (corfu-mode)))
 
 ;;; ** corfu hook
-(after! corfu
-  (add-hook 'completion-at-point-functions #'cape-file)
-  (add-hook 'completion-at-point-functions #'cape-elisp-block)
-  (add-hook 'completion-at-point-functions #'cape-keyword)
-  (add-hook 'completion-at-point-functions #'cape-tex)
+(after! cape
+  (add-hook! 'completion-at-point-functions #'cape-file)
+  (add-hook! 'completion-at-point-functions #'cape-elisp-block)
+  (add-hook! 'completion-at-point-functions #'cape-keyword)
+  (add-hook! 'completion-at-point-functions #'cape-tex)
   (add-to-list 'completion-at-point-functions (cape-capf-super #'tempel-complete))
 
-  (add-hook! eshell-mode-hook #'my/eshell-corfu-settings))
+  (add-hook! 'eshell-mode-hook #'my/eshell-corfu-settings))
 
 ;;; ** corfu  keybindings
-(map! (:when (modulep! :completion corfu)
-        :map corfu-map
-        "M-SPC"                                       #'corfu-insert-separator
-        "RET"                                         #'corfu-insert
-        "TAB"                                         #'corfu-next
-        "S-TAB"                                       #'corfu-previous))
-
+(map!
+ (:after corfu
+  :map corfu-map
+  "M-SPC"                                       #'corfu-insert-separator
+  "RET"                                         #'corfu-insert
+  "TAB"                                         #'corfu-next
+  "S-TAB"                                       #'corfu-previous))
 
 ;;; * vertico
 ;;; ** vertico bindings
@@ -1093,7 +1089,6 @@ to the post-capture hook."
                          (org-roam--get-titles)))))
   (add-to-list 'consult-buffer-sources 'consult--org-roam-nodes-source 'append))
 
-;;; ** consult-theme bug fix
 ;;; ** consult bindings
 (map! :map global-map
             :desc "Buffer list"                                   "M-u"                    #'consult-buffer
@@ -1125,13 +1120,17 @@ to the post-capture hook."
        :state (lambda (action theme)
                 (pcase action
                   ('return (consult-theme (or theme saved-theme)))
-                  ((and 'preview (guard theme)) (consult-theme theme))))
+                  ((and 'preview (guard theme))
+                   (progn (setq doom-theme theme)
+                          (consult-theme theme)))))
        :default (symbol-name (or saved-theme 'default))))))
   (when (eq theme 'default) (setq theme nil))
   (unless (eq theme (car custom-enabled-themes))
     (mapc #'disable-theme custom-enabled-themes)
     (when theme
-      (load-theme theme :no-confirm))))
+      (load-theme theme :no-confirm)
+      (setq doom-theme theme))))
+
 
 ;;; ** consult-dir
 (after! consult-dir
@@ -1190,6 +1189,7 @@ to the post-capture hook."
   (setopt lasgun-also-push-mark-ring t
          lasgun-pop-before-make-multiple-cursors nil)
   (define-lasgun-action lasgun-action-upcase-word t upcase-word)
+  (define-lasgun-action lasgun-action-rotate-text t rotate-text)
   (define-lasgun-action lasgun-action-downcase-word t downcase-word)
   (define-lasgun-action lasgun-action-kill-word nil kill-word)
   (define-lasgun-action lasgun-action-kill-whole-line nil kill-whole-line)
@@ -1283,7 +1283,8 @@ to the post-capture hook."
      ["Actions"
       ("SPC" "Make cursors" lasgun-make-multiple-cursors)
       ("." "Embark act" lasgun-embark-act-all)
-      ("$" "Jinx correct" lasgun-action-jinx-correct :transient t)]
+      ("$" "Jinx correct" lasgun-action-jinx-correct :transient t)
+      ("r" "Rotate text" lasgun-action-rotate-text :transient t)]
      ["" :description ""
       ("m" "Toggle math delims" lasgun-action-toggle-math-delims :transient t)
       (";" "Comment line" lasgun-action-comment-line :transient t)
@@ -1308,27 +1309,20 @@ to the post-capture hook."
   :desc "Lasgun make multiple cursors"                          "M-g SPC"                #'lasgun-make-multiple-cursors
   :desc "Lasgun mark char timer"                        "M-g M-SPC"                  #'lasgun-mark-char-timer))
 
-;;; * TRAMP-REMOTE-PATH
-;; (connection-local-set-profile-variables 'remote-path-with-local-cargo
-;;                                         '((tramp-remote-path . ("~/.cargo/bin" tramp-default-remote-path))))
-;; (connection-local-set-profiles nil 'remote-path-with-local-cargo)
-
 ;;; * embark
 (after! embark
   (setopt embark-confirm-act-all nil))
 ;;; ** embark bindings
 (map! :map global-map
-       "C-."                                           #'embark-act
-       "M-."                                           #'embark-dwim
-       "C-h B"                                         #'embark-bindings
-       
-       :map embark-file-map
-       "r"                  #'find-file-read-only
-       :map embark-general-map
-       "C-."                 #'embark-cycle
-       
-       :map minibuffer-mode-map
-       "C-c C-." #'embark-select)
+      "C-."                                           #'embark-act
+      "M-."                                           #'embark-dwim
+      "C-h B"                                         #'embark-bindings
+      :map embark-file-map
+      "r"                  #'find-file-read-only
+      :map embark-general-map
+      "C-."                 #'embark-cycle
+      :map minibuffer-mode-map
+      "C-c C-." #'embark-select)
 ;;; * quiver
 (after! (:or org latex)
   (defun open-quiver-local ()
@@ -1341,7 +1335,7 @@ to the post-capture hook."
     (interactive)
     (start-process "open-quiver" nil "zen" "--new-window" "https://q.uiver.app")))
 
-;;; * repeat-mode
+;;; * repeat maps
 ;;; ** structural lisp map
 (after! (:and repeat smartparens)
   (defvar-keymap structural-editing-repeat-map
@@ -1460,7 +1454,7 @@ to the post-capture hook."
 ;;; * Programming language configurations
 ;;; ** julia
 (when (modulep! :lang julia +snail)
-  (remove-hook! julia-mode #'julia-repl-mode)
+  (add-hook! julia-mode #'julia-repl-mode)
   (add-hook! julia-mode-hook #'julia-snail-mode))
 
 ;; (add-to-list 'exec-path "~/.juliaup/bin")
@@ -1718,8 +1712,28 @@ to the post-capture hook."
 ;;; *** customizing general faces
 (custom-theme-set-faces! nil
   `(region :background ,(technicolor-blend 'background 'violet 60))
+  `(org-drawer :family ,fixed-font)
+  `(org-meta-line :inherit t :family ,fixed-font)
+  `(org-date :inherit t :family ,fixed-font)
+  `(org-property-value :inherit t :family ,fixed-font)
+  `(org-column-title :inherit t :family ,fixed-font)
+  `(org-table :inherit t :family ,fixed-font)
+  `(org-block :inherit t :family ,fixed-font)
+  `(org-block-begin-line :inherit t :family ,fixed-font)
   `(font-lock-keyword-face :slant italic)
-  `(font-latex-math-face :slant normal :foreground ,(technicolor-blend 'foreground 'violet 20)))
+  `(notmuch-search-unread-face :inherit t :weight ultra-bold)
+  `(font-latex-math-face :slant normal
+    :foreground ,(technicolor-blend 'foreground 'violet 20)
+    :weight bold
+    :height 0.8
+    :family fixed-font
+    :slant normal)
+  '(outline-1 :height 1.2)
+  '(outline-2 :height 1.1)
+  '(outline-3 :height 1.05)
+  '(org-level-1 :height 1.5 :inherit t :weight bold)
+  '(org-level-2 :height 1.3 :inherit t :weight bold)
+  '(org-level-3 :height 1.2 :inherit t :weight bold))
 
 ;;; *** org-modern face customization
 (after! technicolor
@@ -1846,7 +1860,8 @@ to the post-capture hook."
 ;; (add-hook! (text-mode-hook prog-mode-hook) #'visual-fill-column-mode)
 
 ;;; * wttr
-(setopt wttrin-default-cities '("College Station" "Colleyville"))
+(after! wttrin
+  (setopt wttrin-default-cities '("College Station" "Colleyville")))
 ;;; ** wttr hacky fix
 ;; Fix: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
 (defadvice! wwtrin-fetch-raw-string (query)

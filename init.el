@@ -59,16 +59,16 @@
        ;; (meow +qwerty +override)  ; yet another modal editor
        ;; (evil +everywhere)               ; come to the dark side, we have cookies
        ;; file-templates                   ; auto-snippets for empty files
-       ;; fold                             ; (nigh) universal code folding
+       fold                             ; (nigh) universal code folding
        format                              ; automated prettiness
        ;; god                              ; run Emacs commands without modifier keys
        ;; lispy                            ; vim for lisp, for people who don't like vim
        multiple-cursors                    ; editing in many places at once
        (objed +manual)   ; text object editing for the innocent
        ;; parinfer                         ; turn lisp into python, sort of
-       ;; rotate-text                      ; cycle region at point between text candidates
+       rotate-text                      ; cycle region at point between text candidates
        ;; snippets                         ; my elves. They type so I don't have to
-       ;; word-wrap                        ; soft wrapping with language-aware indent
+       word-wrap                        ; soft wrapping with language-aware indent
        whitespace
 
        :emacs
@@ -114,13 +114,9 @@
        ;; tmux                             ; an API for interacting with tmux
        ;; upload                           ; map local to remote projects via ssh/ftp
 
-       :os
-       ;;  (:if IS-MAC macos)              ; improve compatibility with macOS
-       ;; tty                              ; improve the terminal Emacs experience
-
        :lang
        ;; agda                             ; types of types of types of types...
-       ;; (cc +lsp +tree-sitter)              ; C/C++/Obj-C madness
+       (cc +lsp +tree-sitter)              ; C/C++/Obj-C madness
        (clojure +lsp +tree-sitter)         ; java with a lisp
        common-lisp                         ; if you've seen one lisp, you've seen them all
        ;; coq                              ; proofs-as-programs
@@ -152,7 +148,7 @@
        ;; factor
        ;; ledger                           ; an accounting system in Emacs
        ;; lua                              ; one-based indices? one-based indices
-       ;; markdown                            ; writing docs for people to ignore
+       markdown                            ; writing docs for people to ignore
        ;; nim                              ; python + lisp at the speed of c
        (nix +lsp)                          ; I hereby declare "nix geht mehr!"
        ;; ocaml                            ; an objective camel
@@ -167,9 +163,9 @@
        ;; rest                             ; Emacs as a REST client
        ;; rst                              ; ReST in peace
        ;; (ruby +rails)                    ; 1.step {|i| p "Ruby is #{i.even? ? 'love' : 'life'}"}
-       ;; (rust +lsp +tree-sitter)            ; Fe2O3.unwrap().unwrap().unwrap().unwrap()
+       (rust +lsp +tree-sitter)            ; Fe2O3.unwrap().unwrap().unwrap().unwrap()
        ;; scala                            ; java, but good
-       ;; scheme                           ; a fully conniving family of lisps
+       scheme                           ; a fully conniving family of lisps
        sh                                  ; she sells {ba,z,fi}sh shells on the C xor
        ;; sml
        ;; solidity                         ; do you need a blockchain? No.
