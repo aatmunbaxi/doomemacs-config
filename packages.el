@@ -24,7 +24,7 @@
         "(provide 'org-version)\n"))))
   :pin nil)
 (package! eldoc-box)
-(package! org-msg :recipe (:host github :repo "jeremy-compostella/org-msg"))
+(package! org-msg :recipe (:host github :repo "jeremy-compostella/org-msg" :branch "main"))
 (package! org-super-agenda)
 (package! uniline :recipe
   (:host github :repo "tbanel/uniline"))
@@ -133,7 +133,9 @@
 (package! nixos-options
   :recipe (:host github :repo "nix-community/nix-emacs"))
 
-
+(package! acp)
+(package! agent-shell)
+(package! shell-maker)
 (package! posframe)
 (package! repeat-help)
 (package! popterm :recipe (:host github :repo "CsBigDataHub/popterm.el"))

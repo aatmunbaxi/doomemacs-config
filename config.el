@@ -33,16 +33,14 @@
 
 
 (when (or (EVA-02-p) (surfacep))
-  (display-battery-mode))
+  (add-hook! 'doom-first-buffer-hook #'display-battery-mode))
 
 (setopt display-time-format "%H:%M %d %b %Y")
-(display-time-mode)
+(add-hook! 'doom-first-buffer-hook #'display-time-mode)
 
 (global-display-line-numbers-mode -1)
 (remove-hook! 'prog-mode-hook #'display-line-numbers-mode)
 ;;; * Setup load path.
-(add-to-list 'load-path "~/.config/doom/")
-(add-to-list 'load-path "~/.doom.d/")
 (setq local-package-path (expand-file-name "lisp/" doom-user-dir))
 
 
@@ -102,8 +100,7 @@
        "<escape>"                                      #'popper-toggle
        "C-<escape>"                                    #'popper-cycle
        "C-M-<escape>"                                  #'popper-toggle-type))
-(popper-mode +1)
-(popper-echo-mode)
+(add-hook! 'doom-first-buffer-hook (popper-mode +1) #'popper-echo-mode)
 ;;; * eat
 ;;; ** eat bindings
 (map! (:map global-map
@@ -200,7 +197,7 @@
         "C-<left>" #'sp-forward-barf-sexp
         "C-M-<right>" #'sp-backward-barf-sexp
         "C-M-<left>" #'sp-backward-slurp-sexp
-        "M-D"        #'sp-unwrap-sexp))
+        "M-D"        #'sp-backward-unwrap-sexp))
 ;;; * Font config
 (setq variable-font "EB Garamond"
       fixed-font "JetBrains Mono"
@@ -223,11 +220,11 @@
              :default-height 135)
             (medium-serif
              :inherit regular-serif
-             :default-height 140)
+             :default-height 130)
             (medium-sans
              :inherit regular-sans
              :variable-pitch-weight light
-             :default-height 140)
+             :default-height 130)
             (large-serif
              :inherit medium-serif
              :default-height 180)
@@ -259,9 +256,9 @@
              :italic-slant italic
              :line-spacing nil)))
   (fontaine-set-preset 'medium-sans)
-  (add-hook! enable-theme-functions #'fontaine-apply-current-preset))
+  (add-hook! enable-theme-functions (fontaine-set-preset 'medium-sans)))
 
-(fontaine-mode)
+(add-hook! 'doom-first-buffer-hook #'fontaine-mode)
 
 (add-hook! 'text-mode-hook #'variable-pitch-mode)
 
@@ -1357,7 +1354,7 @@ to the post-capture hook."
     "k"          #'sp-kill-sexp
     "SPC"        #'sp-mark-sexp
     "n"          #'sp-next-sexp
-    "M-D" #'sp-backward-unwrap-sexp
+    "M-D"       #'sp-backward-unwrap-sexp
     "f"          #'sp-forward-sexp
     "b"          #'sp-backward-sexp
     "p"          #'sp-previous-sexp
@@ -1647,22 +1644,12 @@ to the post-capture hook."
            (violet . magenta-cooler)
            (green . green-warmer)
            (teal . cyan-cooler)))
-  (setq miasma-theme-mappings
-         '((foreground . miasma-light-gray)
-           (background . miasma-light-charcoal)
-           (red . miasma-terracota)
-           (violet . miasma-fire)
-           (blue . miasma-river)
-           (green . miasma-eucalyptus)
-           (teal . miasma-moss)
-           (cyan . miasma-sky)))
-  (after! ef-themes
-    (defun my/get-ef-theme-color (color)
-      (if-let* ((curr-theme doom-theme)
-                (palette-name (intern (format "%s-palette" curr-theme)))
-                (pos (cl-position color (mapcar #'car (symbol-value palette-name)))))
-          (cadr (nth pos (symbol-value palette-name)))
-        'unspecified)))
+  (defun my/get-ef-theme-color (color)
+    (if-let* ((curr-theme (car custom-enabled-themes))
+              (palette-name (intern (format "%s-palette" curr-theme)))
+              (pos (cl-position color (mapcar #'car (symbol-value palette-name)))))
+        (cadr (nth pos (symbol-value palette-name)))
+      'unspecified))
 
   (setopt technicolor-colors '(foreground background
                               red blue
@@ -1682,9 +1669,7 @@ to the post-capture hook."
                                 (background . base)
                                 (magenta . pink)
                                 (violet . mauve)
-                                (cyan . sky)))
-                              ("miasma" miasma-theme-get-color
-                               ,miasma-theme-mappings)))
+                                (cyan . sky)))))
 
   (setq technicolor-org-src-block-faces '(("julia"      (technicolor-relative-darken  'magenta 90))
                                           ("python"     (technicolor-relative-darken  'teal 85))
@@ -1711,7 +1696,7 @@ to the post-capture hook."
 
 ;;; *** customizing general faces
 (custom-theme-set-faces! nil
-  `(region :background ,(technicolor-blend 'background 'violet 60))
+  `(region :background ,(technicolor-blend 'teal 'background 35))
   `(org-drawer :family ,fixed-font)
   `(org-meta-line :inherit t :family ,fixed-font)
   `(org-date :inherit t :family ,fixed-font)
@@ -1755,25 +1740,20 @@ to the post-capture hook."
   (custom-theme-set-faces! nil
     `(org-super-agenda-header   :foreground ,(technicolor-get-color 'blue)
       :background unspecified :box nil :height 1.0)
-    
     `(org-agenda-date   :foreground ,(technicolor-get-color 'foreground)
       :background unspecified :box nil :underline nil :height 1.1)
-    
     `(org-agenda-date-weekend   :foreground ,(technicolor-blend 'foreground 'background 50)
       :background unspecified :box nil :underline nil :height unspecified)
-    
     `(org-agenda-date-weekend-today   :foreground ,(technicolor-blend 'foreground 'background 50)
       :background unspecified :box t :height unspecified)
-    
     `(org-modern-idea  :foreground ,(technicolor-get-color 'background) :background ,(technicolor-lighten 'cyan 10))
     `(org-modern-todo  :foreground ,(technicolor-get-color 'background)
       :background ,(technicolor-blend 'background 'green 10))
     `(org-modern-draft  :foreground ,(technicolor-lighten 'cyan 10))
     `(org-modern-wait  :foreground ,(technicolor-blend 'foreground 'red 20))
     `(org-modern-maybe  :background ,(technicolor-blend 'background 'green 70))
-    `(org-modern-prog  :foreground ,(technicolor-blend 'foreground 'green 10)
-      :background unspecified)
-    
+    `(org-modern-prog  :background ,(technicolor-lighten 'green 30)
+      :foreground ,(technicolor-get-color 'background) )
     `(org-modern-time-inactive  :foreground ,(technicolor-blend 'background 'green 20))
     `(org-modern-date-inactive  :inherit 'org-modern-label
       :background ,(technicolor-blend 'background 'red 95)
@@ -1927,8 +1907,14 @@ MYTAG"
 
 
 ;;; * email
-(when (EVA-02-p)
+(after! notmuch
   (require 'setup-email))
+;;; * LLM
+(after! agent-shell
+  (setopt agent-shell-google-authentication
+          (agent-shell-google-make-authentication :login t)
+          agent-shell-anthropic-authentication
+          (agent-shell-anthropic-make-authentication :login t)))
 
 
 ;; (when init-file-debug
@@ -1941,3 +1927,4 @@ MYTAG"
 ;; Local Variables:
 ;; outline-regexp: ";;; \\(\\*+\\) \\(.*\\)$"
 ;; End:
+
