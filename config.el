@@ -220,11 +220,11 @@
              :default-height 135)
             (medium-serif
              :inherit regular-serif
-             :default-height 130)
+             :default-height 140)
             (medium-sans
              :inherit regular-sans
              :variable-pitch-weight light
-             :default-height 130)
+             :default-height 140)
             (large-serif
              :inherit medium-serif
              :default-height 180)
@@ -256,12 +256,17 @@
              :italic-slant italic
              :line-spacing nil)))
   (fontaine-set-preset 'medium-sans)
-  (add-hook! enable-theme-functions (fontaine-set-preset 'medium-sans)))
+  (add-hook! 'enable-theme-functions (fontaine-set-preset fontaine-current-preset)))
 
 (add-hook! 'doom-first-buffer-hook #'fontaine-mode)
 
 (add-hook! 'text-mode-hook #'variable-pitch-mode)
 
+;;; ** CJK fonts
+(set-fontset-font t 'han "Noto Sans CJK SC")
+(set-fontset-font t 'kana "Noto Sans CJK JP")
+(set-fontset-font t 'hangul "Noto Sans CJK KR")
+(set-fontset-font t 'cjk-misc "Noto Sans CJK KR")
 ;;; * LaTeX
 (after! LaTeX
   (setopt TeX-engine 'xetex))
@@ -948,7 +953,29 @@ to the post-capture hook."
 ;;; * pdf-view mode
 (add-hook! 'pdf-tools-enabled-hook #'pdf-view-themed-minor-mode
 #'pdf-view-auto-slice-minor-mode)
+;;; ** FIX: invalid image specification when sliced
+;; reference: https://github.com/vedang/pdf-tools/issues/339
+(defun +fix-pdf-view-image-size (&optional displayed-p window page)
+  "Return the size in pixel of the current image in WINDOW.
 
+If DISPLAYED-P is non-nil, return the size of the displayed
+image.  These values may be different, if slicing is used.
+
+If PAGE is non-nil return its size instead of current page."
+  (let ((display-prop (if pdf-view-roll-minor-mode
+                          (progn (setq window (if (windowp window) window (selected-window)))
+                                 (setq page (or page (pdf-view-current-page window)))
+                                 (unless (memq page (image-mode-window-get 'displayed-pages window))
+                                   (pdf-view-display-page page window))
+                                 (overlay-get (pdf-roll-page-overlay page window) 'display))
+                        (image-get-display-property))))
+    (if (eq (car display-prop) 'image)
+        (image-size display-prop t)
+      (if displayed-p
+          (image-display-size display-prop t)
+        (image-size (nth 1 display-prop) t)))))
+
+(advice-add 'pdf-view-image-size :override #'+fix-pdf-view-image-size)
 ;;; ** pdf keybindings
 (map! :map pdf-view-mode-map
       "M-m"                                           #'pdf-view-auto-slice-minor-mode
@@ -1425,13 +1452,17 @@ to the post-capture hook."
     "N" #'mc/unmark-next-like-this
     "p" #'mc/mark-previous-like-this
     "P" #'mc/unmark-previous-like-this))
-
+;;; ** repeat-mode
 (after! repeat 
   (setopt repeat-help-popup-type 'which-key
           repeat-help-auto nil)
   (add-hook! 'repeat-mode-hook #'repeat-help-mode))
 
-(add-hook! '(prog-mode-hook text-mode-hook) #'repeat-mode)
+(defun my/repeat-mode ()
+    (let ((inhibit-message t)
+          (message-log-max nil))
+      (repeat-mode)))
+(add-hook! '(prog-mode-hook text-mode-hook) #'my/repeat-mode)
 ;;; * multiple-cursors
 (after! multiple-cursors
   (setopt mc/always-run-for-all nil
@@ -1731,7 +1762,7 @@ to the post-capture hook."
     "Face for org modern IDEA tag")
   (defface org-modern-wait `((t :inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
     "Face for org modern WAIT tag")
-  (defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 20)))
+  (defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 50)))
     "Face for org modern PROG tag")
   (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
     "Face for org modern MAYBE tag"))
@@ -1752,7 +1783,7 @@ to the post-capture hook."
     `(org-modern-draft  :foreground ,(technicolor-lighten 'cyan 10))
     `(org-modern-wait  :foreground ,(technicolor-blend 'foreground 'red 20))
     `(org-modern-maybe  :background ,(technicolor-blend 'background 'green 70))
-    `(org-modern-prog  :background ,(technicolor-lighten 'green 30)
+    `(org-modern-prog  :background ,(technicolor-lighten 'green 50)
       :foreground ,(technicolor-get-color 'background) )
     `(org-modern-time-inactive  :foreground ,(technicolor-blend 'background 'green 20))
     `(org-modern-date-inactive  :inherit 'org-modern-label
