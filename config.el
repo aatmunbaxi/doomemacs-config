@@ -689,9 +689,10 @@ When pressed twice, make the sub/superscript roman."
 
 ;;; ** org keybindings
 (map! :map global-map
-      :desc "Org QL search"                  "C-c s q s"                 #'org-ql-search
-      :desc "Org QL find"                    "C-c s q f"                 #'org-ql-find
-      :desc "Org QL view"                    "C-c s q v"                 #'org-ql-view
+      (:prefix "M-g M-o"
+       :desc "Org QL search"                  "M-s"                 #'org-ql-search
+       :desc "Org QL find"                    "M-f"                 #'org-ql-find
+       :desc "Org QL view"                    "M-v"                 #'org-ql-view)
       (:when (modulep! :lang org +roam2)
         :desc "org-roam-ql search"           "C-c n r q"    #'org-roam-ql-search)
       (:when (modulep! :completion vertico)
@@ -1760,7 +1761,7 @@ If PAGE is non-nil return its size instead of current page."
     "Face for org modern IDEA tag")
   (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10)))
     "Face for org modern IDEA tag")
-  (defface org-modern-wait `((t :inherit org-modern-todo :foreground ,(technicolor-get-color 'red)))
+  (defface org-modern-wait `((t :inherit org-modern-todo :background ,(technicolor-get-color 'red)))
     "Face for org modern WAIT tag")
   (defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 50)))
     "Face for org modern PROG tag")
@@ -1781,7 +1782,9 @@ If PAGE is non-nil return its size instead of current page."
     `(org-modern-todo  :foreground ,(technicolor-get-color 'background)
       :background ,(technicolor-blend 'background 'green 10))
     `(org-modern-draft  :foreground ,(technicolor-lighten 'cyan 10))
-    `(org-modern-wait  :foreground ,(technicolor-blend 'foreground 'red 20))
+    `(org-modern-wait  :background ,(technicolor-blend 'background 'red 20)
+      :foreground ,(technicolor-get-color 'background))
+    `(org-agenda-dimmed-todo-face :foreground ,(technicolor-get-color 'foreground))
     `(org-modern-maybe  :background ,(technicolor-blend 'background 'green 70))
     `(org-modern-prog  :background ,(technicolor-lighten 'green 50)
       :foreground ,(technicolor-get-color 'background) )
@@ -1958,14 +1961,15 @@ Returns a list of the form '(\"overleaf.com\" \"COOKIE_VALUE\" nil)."
         nil)
     (let* ((db (sqlite-open db-path))
            (query "SELECT value FROM moz_cookies 
-                   WHERE host = '.overleaf.com' 
-                   AND name = 'overleaf_session2' 
+                   WHERE host = \'.overleaf.com\' 
+                   AND name = \'overleaf_session2\' 
                    LIMIT 1;")
            (result (sqlite-select db query)))
       (sqlite-close db)
       (if result
           (list "overleaf.com" (format "overleaf_session2=%s" (caar result)) nil)
-        (message "Cookie not found.")))))
+        (message "Cookie not found.")
+        nil))))
   (setopt overleaf-cookies
           (my/get-overleaf-session-cookie "~/.zen/fi10pt8o.default/cookies.sqlite")))
 
