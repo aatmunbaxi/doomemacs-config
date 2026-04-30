@@ -1947,7 +1947,29 @@ MYTAG"
           agent-shell-anthropic-authentication
           (agent-shell-anthropic-make-authentication :login t)))
 
+;;; * overleaf
+(after! (:and overleaf sqlite)
+  (defun my/get-overleaf-session-cookie (db-path)
+  "Extract the overleaf_session2 cookie from the Firefox cookies.sqlite at DB-PATH.
+Returns a list of the form '(\"overleaf.com\" \"COOKIE_VALUE\" nil)."
+  (if (not (file-exists-p db-path))
+      (progn
+        (warn "Database file not found: %s" db-path)
+        nil)
+    (let* ((db (sqlite-open db-path))
+           (query "SELECT value FROM moz_cookies 
+                   WHERE host = '.overleaf.com' 
+                   AND name = 'overleaf_session2' 
+                   LIMIT 1;")
+           (result (sqlite-select db query)))
+      (sqlite-close db)
+      (if result
+          (list "overleaf.com" (format "overleaf_session2=%s" (caar result)) nil)
+        (message "Cookie not found.")))))
+  (setopt overleaf-cookies
+          (my/get-overleaf-session-cookie "~/.zen/fi10pt8o.default/cookies.sqlite")))
 
+;;; * Benchmark init
 ;; (when init-file-debug
 ;;   (use-package! benchmark-init
 ;;     :ensure t
