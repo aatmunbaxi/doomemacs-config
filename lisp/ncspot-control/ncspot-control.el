@@ -9,13 +9,13 @@
   [["Jump to"
     ("ml" "Library" (lambda ()
                       (interactive)
-                      (spotify-focus-control-library)
+                      (ncspot-control-focus-control-library)
                       (ncspot-control))
      :transient transient--do-replace)
     ("ms" "New query" ncspot-control-search :transient transient--do-recurse)
     ("mp" "Prev Search" (lambda ()
                           (interactive)
-                          (spotify-focus-control-search)
+                          (ncspot-control-focus-control-search)
                           (ncspot-control))
      :transient transient--do-replace)]
 
@@ -64,7 +64,7 @@
 ;;;###autoload
 (defun ncspot-control-open-queue-manage ()
   (interactive)
-  (progn (spotify-focus-control-queue)
+  (progn (ncspot-control-focus-control-queue)
          (ncspot-control-queue)))
 
 (transient-define-prefix ncspot-control-search-interaction ()
@@ -82,7 +82,7 @@ another buffer is focused."
   [["Jump to"
     ("ml" "Library" (lambda ()
                               (interactive)
-                              (spotify-focus-control-library)
+                              (ncspot-control-focus-control-library)
                               (ncspot-control))
      :transient transient--do-replace)
     ("mq" "Queue" ncspot-control-open-queue-manage :transient transient--do-replace)
@@ -91,7 +91,7 @@ another buffer is focused."
                      (ncspot-control-search)
                      (ncspot-control))
      :transient transient--do-replace)
-    ("mp" "Prev query" spotify-focus-control-search :transient t)]
+    ("mp" "Prev query" ncspot-control-focus-control-search :transient t)]
    ["Playback"
     ("pp" "Play/Pause" ncspot-control-play/pause :transient t)
 
@@ -110,7 +110,7 @@ another buffer is focused."
    ["ncspot"
     ("F" "Focus" (lambda ()
                    (interactive)
-                   (spotify-focus-control-ncspot)
+                   (ncspot-control-focus-control-ncspot)
                    (ncspot-control))
      :transient transient--do-replace)
 
@@ -126,14 +126,14 @@ ncspot terminal window open and visible, otherwise
 some commands like toggling repeat and shuffle don't make
 much sense."
   [["Jump to"
-    ("ml" "Library" spotify-focus-control-library :transient t)
+    ("ml" "Library" ncspot-control-focus-control-library :transient t)
     ("mq" "Queue" (lambda ()
                     (interactive)
-                    (spotify-focus-control-queue)
+                    (ncspot-control-focus-control-queue)
                     (ncspot-control-queue))
      :transient transient--do-replace)
     ("ms" "Browse new query" ncspot-control-search :transient transient--do-replace)
-    ("mp" "Browse previous search" spotify-focus-control-search :transient t)]
+    ("mp" "Browse previous search" ncspot-control-focus-control-search :transient t)]
 
    ["Selected track..."
     ("sq" "Add to queue"     ncspot-control-queue-up :transient t)
@@ -181,7 +181,7 @@ much sense."
   :description "Browse"
   (interactive (let ((query (read-string "Search query: " nil nil nil nil)))
                  (prog1
-                   (spotify-focus-control-search)
+                   (ncspot-control-focus-control-search)
 	           (eat-term-send-string eat-terminal (kbd "C-z"))
                    (eat-term-send-string eat-terminal query)
                    (eat-term-send-string eat-terminal (kbd "RET"))
