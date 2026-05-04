@@ -50,16 +50,16 @@
 ;; (activities-mode)
 (map! :map global-map
       (:after activities
-         (:prefix-map ("C-x C-a" . "activities")
-          :desc "Switch activity"                       "RET"      #'activities-switch
-          :desc "New"                                   "C-n"      #'activities-new
-          :desc "Define"                                "C-d"      #'activities-define
-          :desc "Kill"                                  "C-k"      #'activities-kill
-          :desc "Suspend"                               "C-s"      #'activities-suspend
-          :desc "Resume activity"                       "C-a"      #'activities-resume
-          :desc "List activities"                       "l"        #'activities-list
-          :desc "Switch to buffer with activity"        "b"        #'activities-switch-buffer
-          :desc "Revert state"                          "g"        #'activities-revert)))
+              (:prefix-map ("C-x C-a" . "activities")
+               :desc "Switch activity"                       "RET"      #'activities-switch
+               :desc "New"                                   "C-n"      #'activities-new
+               :desc "Define"                                "C-d"      #'activities-define
+               :desc "Kill"                                  "C-k"      #'activities-kill
+               :desc "Suspend"                               "C-s"      #'activities-suspend
+               :desc "Resume activity"                       "C-a"      #'activities-resume
+               :desc "List activities"                       "l"        #'activities-list
+               :desc "Switch to buffer with activity"        "b"        #'activities-switch-buffer
+               :desc "Revert state"                          "g"        #'activities-revert)))
 
 ;;; ** dogears
 ;; (after! dogears)(setopt dogears-idle nil)
@@ -80,20 +80,20 @@
 
 ;;; ** popper
 (after! popper
-    (setopt popper-reference-buffers
-         '("\\*Messages\\*"
-           "Output\\*$"
-           "\\*compilation\\*"
-           "\\*Async Shell Command\\*"
-           "\\*cider-repl.*?"
-           "\\*sly-description\\*"
-           "\\*Flycheck errors\\*"
-           "\\*Outline .*?\\*"
-           "\\*nixos-options-doc\\*"
-           pdf-outline-mode
-           help-mode
-           helpful-mode
-           compilation-mode))
+  (setopt popper-reference-buffers
+          '("\\*Messages\\*"
+            "Output\\*$"
+            "\\*compilation\\*"
+            "\\*Async Shell Command\\*"
+            "\\*cider-repl.*?"
+            "\\*sly-description\\*"
+            "\\*Flycheck errors\\*"
+            "\\*Outline .*?\\*"
+            "\\*nixos-options-doc\\*"
+            pdf-outline-mode
+            help-mode
+            helpful-mode
+            compilation-mode))
   (setopt popper-mode-line '(:eval (propertize " 儚 " 'face 'highlight))))
 
 (map! (:after popper
@@ -117,13 +117,8 @@
        "M-u" #'consult-buffer))
 
 ;;; * Editing
-<<<<<<< HEAD
 (setopt kill-whole-line t)
 (add-hook! '(prog-mode-hook text-mode-hook) #'jinx-mode)
-=======
-(setq! kill-whole-line t)
-;; (global-jinx-mode)
->>>>>>> 6b66c5d (Update)
 
 (map! :map global-map
       "M-/"          #'hippie-expand
@@ -205,16 +200,10 @@
         "C-M-<left>" #'sp-backward-slurp-sexp
         "M-D"        #'sp-backward-unwrap-sexp))
 ;;; * Font config
-<<<<<<< HEAD
 (setq variable-serif-font "EB Garamond"
       fixed-font "JetBrains Mono"
       variable-sans-serif "Rosario"
       doom-font fixed-font)
-=======
-(setq! variable-font "Iosevka Nerd Font"
-       fixed-font "FiraMono Nerd Font"
-       variable-sans-serif "Iosevka Aile")
->>>>>>> 6b66c5d (Update)
 
 ;;; ** Fontaine
 (after! fontaine
@@ -397,19 +386,19 @@ When pressed twice, make the sub/superscript roman."
 ;;; ** org-agenda variables
 (after! org-agenda
   (setopt  org-agenda-files '("~/Documents/org/inbox.org"
-                             "~/Documents/org/gtd.org"
-                             "~/Documents/org/tickler.org"
-                             "~/Documents/org/graveyard.org"
-                             "~/Documents/org/maybe.org")
-          org-agenda-include-deadlines t
-          org-agenda-use-time-grid nil
-          org-agenda-block-separator nil
-          org-agenda-compact-blocks t
-          org-agenda-start-day nil ;; i.e. today
-          org-agenda-span 5
-          org-agenda-skip-scheduled-if-done t
-          org-agenda-skip-deadline-if-done t
-          org-agenda-todo-ignore-scheduled 'all))
+                              "~/Documents/org/gtd.org"
+                              "~/Documents/org/tickler.org"
+                              "~/Documents/org/graveyard.org"
+                              "~/Documents/org/maybe.org")
+           org-agenda-include-deadlines t
+           org-agenda-use-time-grid nil
+           org-agenda-block-separator nil
+           org-agenda-compact-blocks t
+           org-agenda-start-day nil ;; i.e. today
+           org-agenda-span 5
+           org-agenda-skip-scheduled-if-done t
+           org-agenda-skip-deadline-if-done t
+           org-agenda-todo-ignore-scheduled 'all))
 ;;; ** org-refile variables
 (after! org-refile
   (setopt org-refile-use-outline-path 'file
@@ -424,64 +413,63 @@ When pressed twice, make the sub/superscript roman."
 ;;; ** org-refile variables
 (after! org-capture
   (setopt org-capture-templates
-      (doct
-       `(("Info/IDEA" :keys "n"
-          :type entry
-          :children
-          (("Info node" :keys "n"
-            :file "~/Documents/org/braindump.org"
-            :headline "Braindump"
-            :template "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-           ("Daily: Today" :keys "t"
-            :file "~/Documents/org/journal.org"
-            :datetree t
-            :template "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
-            :unnarrowed nil)
-           ("Daily: Idea" :keys "i"
-            :file "~/Documents/org/journal.org"
-            :datetree t
-            :template "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-           ("Daily: Commonplace" :keys "c"
-            :file "~/Documents/org/journal.org"
-            :datetree t
-            :template "* %? :commonplace:")))
-         ("Todo" :keys "t"
-          :type entry
-          :file "~/Documents/org/inbox.org"
-          :template "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n")
-         ("research" :keys "r"
-          :type entry
-          :file "~/Documents/org/inbox.org"
-          :template "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n")
-         ("idea" :keys "i"
-          :type entry
-          :file "~/Documents/org/inbox.org"
-          :template "* IDEA %?\n%i\n%a\n")
-         ("Journal entry" :keys "j"
-          :type entry
-          :file "~/Documents/org/journal.org"
-          :datetree t
-          :template "* %? \n%(funcall 'org-timestamp '(16) 't)"
-          :empty-lines 1)
-         ("Email workflow" :keys "m"
-          :type entry
-          :file "~/Documents/org/inbox.org"
-          :contexts (:when ,(lambda () (eq major-mode 'notmuch-show-mode))) 
-          :children
-          (("Follow Up" :keys "f"
-            :template "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
-            :immediate-finish t)
-           ("Action Required" :keys "t"
-            :template "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
-           ("Read Later" :keys "r"
-            :template "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
-            :immediate-finish t)))))))
+          (doct
+           `(("Info/IDEA" :keys "n"
+              :type entry
+              :children
+              (("Info node" :keys "n"
+                :file "~/Documents/org/braindump.org"
+                :headline "Braindump"
+                :template "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+               ("Daily: Today" :keys "t"
+                :file "~/Documents/org/journal.org"
+                :datetree t
+                :template "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
+                :unnarrowed nil)
+               ("Daily: Idea" :keys "i"
+                :file "~/Documents/org/journal.org"
+                :datetree t
+                :template "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+               ("Daily: Commonplace" :keys "c"
+                :file "~/Documents/org/journal.org"
+                :datetree t
+                :template "* %? :commonplace:")))
+             ("Todo" :keys "t"
+              :type entry
+              :file "~/Documents/org/inbox.org"
+              :template "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n")
+             ("research" :keys "r"
+              :type entry
+              :file "~/Documents/org/inbox.org"
+              :template "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n")
+             ("idea" :keys "i"
+              :type entry
+              :file "~/Documents/org/inbox.org"
+              :template "* IDEA %?\n%i\n%a\n")
+             ("Journal entry" :keys "j"
+              :type entry
+              :file "~/Documents/org/journal.org"
+              :datetree t
+              :template "* %? \n%(funcall 'org-timestamp '(16) 't)"
+              :empty-lines 1)
+             ("Email workflow" :keys "m"
+              :type entry
+              :file "~/Documents/org/inbox.org"
+              :contexts (:when ,(lambda () (eq major-mode 'notmuch-show-mode)))
+              :children
+              (("Follow Up" :keys "f"
+                :template "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                :immediate-finish t)
+               ("Action Required" :keys "t"
+                :template "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
+               ("Read Later" :keys "r"
+                :template "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+                :immediate-finish t)))))))
 ;;; ** org variables
 (after! org
-<<<<<<< HEAD
   (setopt org-directory "~/Documents/org/"
           org-default-notes-file "~/Documents/org/notes.org"
-   org-outline-path-complete-in-steps nil
+          org-outline-path-complete-in-steps nil
           org-latex-src-block-backend 'engraved
           org-use-speed-commands t
           org-archive-location ".%s_archive::"
@@ -538,136 +526,17 @@ When pressed twice, make the sub/superscript roman."
 
 (map! (:when (modulep! :app calendar)
         :map org-agenda-mode-map
-=======
-  (setq! org-directory "~/Documents/org/"
-         org-default-notes-file "~/Documents/org/notes.org"
-         org-agenda-files '("~/Documents/org/inbox.org"
-                            "~/Documents/org/journal.org"
-                            "~/Documents/org/gtd.org"
-                            "~/Documents/org/tickler.org"
-                            "~/Documents/org/graveyard.org"
-                            "~/Documents/org/maybe.org")
-
-         org-refile-targets '((("~/Documents/org/journal.org")   :maxlevel . 2)
-                              (("~/Documents/org/gtd.org")   :maxlevel . 2)
-                              (("~/Documents/org/inbox.org")   :maxlevel . 2)
-                              (("~/Documents/org/tickler.org")  :level . 1)
-                              (("~/Documents/org/maybe.org")  :level . 1)
-                              (("~/Documents/org/notes.org")   :maxlevel . 3)
-                              (("~/Documents/org/graveyard.org") :level . 1))
-         org-agenda-include-deadlines t
-         org-agenda-use-time-grid nil
-         org-agenda-block-separator nil
-         org-agenda-compact-blocks t
-         org-agenda-start-day nil ;; i.e. today
-         org-agenda-span 5
-         org-agenda-skip-scheduled-if-done t
-         org-agenda-skip-deadline-if-done t
-         org-agenda-todo-ignore-scheduled 'all
-         org-capture-notes-file "~/Documents/org/notes.org"
-         org-capture-templates '(("n" "Info/IDEA")
-                                 ("nn" "Info node"
-                                  entry
-                                  (file+headline "~/Documents/org/notes.org" "Braindump")
-                                  "** %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-                                 ("nt" "Daily: Today"
-                                  entry
-                                  (file+olp+datetree "~/Documents/org/journal.org")
-                                  "* %?  :research:\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
-                                  :unnarrowed nil)
-                                 ("ni" "Daily: Idea"
-                                  entry
-                                  (file+olp+datetree "~/Documents/org/journal.org")
-                                  "* IDEA %?  :research:\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-                                 ("t" "Todo" entry (file "~/Documents/org/inbox.org")
-                                  "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-
-                                 ("r" "research" entry (file "~/Documents/org/inbox.org")
-                                  "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-
-                                 ("i" "idea" entry (file "~/Documents/org/inbox.org")
-                                  "* IDEA %?\n%i\n%a\n")
-
-                                 ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
-                                  ;; Call with C-u C-u interactive argument to insert inactive stamp
-                                  "* %? \n%(funcall 'org-timestamp '(16) 't)"
-                                  :empty-lines 1)
-                                 ("m" "Email workflow")
-                                 ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
-                                  "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
-                                  :immediate-finish t)
-                                 ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
-                                  "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
-                                 ("mr" "Read Later" entry (file"~/Documents/org/inbox.org")
-                                  "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
-                                  :immediate-finish t))
-         org-refile-use-outline-path 'file))
-
-;;; *** `org' variables
-(after! org
-  (setq! org-outline-path-complete-in-steps nil
-         org-latex-src-block-backend 'engraved
-         org-use-speed-commands t
-         org-archive-location ".%s_archive::"
-         org-file-apps (quote
-                        ((auto-mode . emacs)
-                         ("\\.m\\'" . default)
-                         ("\\.?html?\\'" . /usr/bin/firefox)
-                         ("\\.pdf\\'" . emacs)))
-         org-export-with-drawers '(not "noex")
-         org-structure-template-alist '(("a" . "export ascii")
-                                        ("c" . "center")
-                                        ("C" . "comment")
-                                        ("e" . "equation")
-                                        ("E" . "export")
-                                        ("h" . "export html")
-                                        ("l" . "export latex")
-                                        ("q" . "quote")
-                                        ("s" . "src")
-                                        ("v" . "verse"))
-         org-startup-with-latex-preview nil
-         org-todo-keywords     '((sequence
-                                  "TODO(t)"
-                                  "IDEA(i)"
-                                  "EVENT(e)"
-                                  "WAIT(w)"
-                                  "PROG(g)"
-                                  "MAYBE(m)"
-                                  "DRAFT(D)"
-                                  "|"
-                                  "DONE(d)"
-                                  "CANCELLED(c)"))
-         org-attach-id-dir "~/Documents/org/.attach/"
-         org-latex-pdf-process (list "latexmk -f -pdf -%latex -shell-escape -interaction=nonstopmode -output-directory=%o %f")
-         org-latex-default-packages-alist '(("" "amssymb" t)
-                                            ("" "amsmath" t ("lualatex" "xetex"))
-                                            ("" "fontspec" t ("lualatex" "xetex"))
-                                            ("AUTO" "inputenc" t ("pdflatex"))
-                                            ("T1" "fontenc" t ("pdflatex")))
-         org-highlight-latex-and-related nil
-         org-startup-folded t
-         org-startup-with-inline-images nil
-         org-fontify-whole-heading-line t
-         org-fontify-done-headline t
-         org-fontify-quote-and-verse-blocks nil
-         org-ellipsis "  "
-         org-image-actual-width 400
-         org-hide-emphasis-markers t))
-
-(when (modulep! :app calendar)
-  (map! :map org-agenda-mode-map
->>>>>>> 6b66c5d (Update)
         :desc "Calendar" "C" #'=calendar))
 
 ;;;  bibtex
 (after! (:or bibtex org latex)
   (setopt bibtex-autokey-year-length 4
-         bibtex-autokey-name-year-separator "-"
-         bibtex-autokey-year-title-separator "-"
-         bibtex-autokey-titleword-separator "-"
-         bibtex-autokey-titlewords 2
-         bibtex-autokey-titlewords-stretch 1
-         bibtex-autokey-titleword-length 5))
+          bibtex-autokey-name-year-separator "-"
+          bibtex-autokey-year-title-separator "-"
+          bibtex-autokey-titleword-separator "-"
+          bibtex-autokey-titlewords 2
+          bibtex-autokey-titlewords-stretch 1
+          bibtex-autokey-titleword-length 5))
 
 ;;; ** ox-cv
 (use-package! ox-awesomecv
@@ -677,7 +546,7 @@ When pressed twice, make the sub/superscript roman."
 ;;; ** org-present
 (after! org-present
   (setopt org-present-hide-stars-in-headings t
-         org-present-text-scale 4.5)
+          org-present-text-scale 4.5)
 
   (add-hook! org-present-mode-hook
     (setq-local visual-fill-column-mode 1)
@@ -698,115 +567,115 @@ When pressed twice, make the sub/superscript roman."
 ;;; ** org-super-agenda
 (after! org
   (setopt org-agenda-custom-commands
-         '(("n" "Today's agenda"
-            ((agenda "" ((org-super-agenda-groups
-                          `((:discard (:file-path "graveyard"))
-                            (:discard (:todo "MAYBE"))
-                            (:name "Today"
-                             :scheduled today
-                             :face (:foreground ,(technicolor-get-color 'green) :extend t)
-                             :order 2)
-                            (:name "Due Today"
-                             :face (:background ,(technicolor-relative-darken 'red 90) :extend t)
-                             :deadline today
-                             :order 1)
-                            (:discard anything)))))
-             (alltodo ""
-                      ((org-agenda-overriding-header "")
-                       (org-super-agenda-groups
-                        `((:discard (:file-path "graveyard"))
-                          (:discard (:file-path "maybe"))
-                          (:discard (:todo "MAYBE"))
-                          (:discard (:scheduled t))
-                          (:discard (:deadline  t))
-                          (:name "To Process"
-                           :todo  ("EVENT" "TODO" "PROG" "WAIT")
-                           :order 1
-                           :face (:height 0.9
-                                  :foreground ,(technicolor-relative-darken 'foreground 10)))
-                          (:discard (:anything t))))))))
-           ("w" "Week agenda"
-            ((agenda "" ((org-super-agenda-groups
-                          `((:discard (:file-path "graveyard"))
-                            (:discard (:todo "MAYBE"))
-                            (:discard (:file-path "inbox"))
-                            (:auto-planning t)
-                            (:auto-planning t)))))
-             (alltodo ""
-                      ((org-agenda-overriding-header "")
-                       (org-super-agenda-groups
-                        `((:discard (:file-path "graveyard"))
-                          (:discard (:file-path "maybe"))
-                          (:discard (:todo "MAYBE"))
-                          (:discard (:scheduled t))
-                          (:discard (:deadline  t))
-                          (:name "Unscheduled"
-                           :todo  ("EVENT" "TODO")
-                           :order 0)
-                          (:discard (:anything t))))))))
-           ("d" "Get back to work!"
-            ((alltodo ""
-                      ((org-agenda-overriding-header "")
-                       (org-super-agenda-groups
-                        `((:discard (:file-path "graveyard"))
-                          (:name "Maybe"
-                           :todo "MAYBE"
-                           :face (:foreground ,(technicolor-relative-darken 'foreground 70)
-                                  :height 0.9
-                                  :append t)
-                           :order 100)
-                          (:name "Important"
-                           :priority "A"
-                           :face (:foreground ,(technicolor-saturate 'red 20) :append t)
-                           :order 1)
-                          (:name "Ideas"
-                           :todo "IDEA"
-                           :face (:foreground ,(technicolor-get-color 'cyan)
-                                  :height 0.9
-                                  :append t)
-                           :order 80)
-                          (:name "Quick items"
-                           :effort< "30"
-                           :face (:foreground ,(technicolor-saturate 'blue 20) :append t))
-                          (:auto-priority t)
+          '(("n" "Today's agenda"
+             ((agenda "" ((org-super-agenda-groups
+                           `((:discard (:file-path "graveyard"))
+                             (:discard (:todo "MAYBE"))
+                             (:name "Today"
+                              :scheduled today
+                              :face (:foreground ,(technicolor-get-color 'green) :extend t)
+                              :order 2)
+                             (:name "Due Today"
+                              :face (:background ,(technicolor-relative-darken 'red 90) :extend t)
+                              :deadline today
+                              :order 1)
+                             (:discard anything)))))
+              (alltodo ""
+                       ((org-agenda-overriding-header "")
+                        (org-super-agenda-groups
+                         `((:discard (:file-path "graveyard"))
+                           (:discard (:file-path "maybe"))
+                           (:discard (:todo "MAYBE"))
+                           (:discard (:scheduled t))
+                           (:discard (:deadline  t))
+                           (:name "To Process"
+                            :todo  ("EVENT" "TODO" "PROG" "WAIT")
+                            :order 1
+                            :face (:height 0.9
+                                   :foreground ,(technicolor-relative-darken 'foreground 10)))
+                           (:discard (:anything t))))))))
+            ("w" "Week agenda"
+             ((agenda "" ((org-super-agenda-groups
+                           `((:discard (:file-path "graveyard"))
+                             (:discard (:todo "MAYBE"))
+                             (:discard (:file-path "inbox"))
+                             (:auto-planning t)
+                             (:auto-planning t)))))
+              (alltodo ""
+                       ((org-agenda-overriding-header "")
+                        (org-super-agenda-groups
+                         `((:discard (:file-path "graveyard"))
+                           (:discard (:file-path "maybe"))
+                           (:discard (:todo "MAYBE"))
+                           (:discard (:scheduled t))
+                           (:discard (:deadline  t))
+                           (:name "Unscheduled"
+                            :todo  ("EVENT" "TODO")
+                            :order 0)
+                           (:discard (:anything t))))))))
+            ("d" "Get back to work!"
+             ((alltodo ""
+                       ((org-agenda-overriding-header "")
+                        (org-super-agenda-groups
+                         `((:discard (:file-path "graveyard"))
+                           (:name "Maybe"
+                            :todo "MAYBE"
+                            :face (:foreground ,(technicolor-relative-darken 'foreground 70)
+                                   :height 0.9
+                                   :append t)
+                            :order 100)
+                           (:name "Important"
+                            :priority "A"
+                            :face (:foreground ,(technicolor-saturate 'red 20) :append t)
+                            :order 1)
+                           (:name "Ideas"
+                            :todo "IDEA"
+                            :face (:foreground ,(technicolor-get-color 'cyan)
+                                   :height 0.9
+                                   :append t)
+                            :order 80)
+                           (:name "Quick items"
+                            :effort< "30"
+                            :face (:foreground ,(technicolor-saturate 'blue 20) :append t))
+                           (:auto-priority t)
 
-                          (:order-multi (2 (:name "Research"
-                                            :tag "research"
-                                            :face (:foreground ,(technicolor-get-color 'cyan ) :append t))
-                                           (:name "Teaching"
-                                            :tag "teaching"
-                                            :face (:foreground ,(technicolor-get-color 'green ) :append t))))))))))
-           ("l" "Todos"
-            ((alltodo ""
-                      ((org-agenda-overriding-header "")
-                       (org-super-agenda-groups
-                        `((:discard (:file-path "graveyard"))
-                          (:discard (:file-path "maybe"))
-                          (:auto-planning t)
-                          (:name "Ideas"
-                           :todo "IDEA"
-                           :face (:foreground ,(technicolor-get-color 'cyan)
-                                  :height 0.9
-                                  :append t)
-                           :order 80)
-                          (:name "Important"
-                           :priority "A"
-                           :face (:foreground ,(technicolor-saturate 'red 20) :append t)
-                           :order 1)
-                          (:order-multi (2 (:name "Research"
-                                            :tag "research"
-                                            :face (:foreground ,(technicolor-get-color 'cyan ) :append t))
-                                           (:name "Teaching"
-                                            :tag "teaching"
-                                            :face (:foreground ,(technicolor-get-color 'green ) :append t))))
-                          (:name "Email"
-                           :tag "email"
-                           :order 20)
-                          (:name "Personal"
-                           :tag "personal"
-                           :order 3)
-                          (:auto-tags t
-                           :order 50))))))))))
+                           (:order-multi (2 (:name "Research"
+                                             :tag "research"
+                                             :face (:foreground ,(technicolor-get-color 'cyan ) :append t))
+                                            (:name "Teaching"
+                                             :tag "teaching"
+                                             :face (:foreground ,(technicolor-get-color 'green ) :append t))))))))))
+            ("l" "Todos"
+             ((alltodo ""
+                       ((org-agenda-overriding-header "")
+                        (org-super-agenda-groups
+                         `((:discard (:file-path "graveyard"))
+                           (:discard (:file-path "maybe"))
+                           (:auto-planning t)
+                           (:name "Ideas"
+                            :todo "IDEA"
+                            :face (:foreground ,(technicolor-get-color 'cyan)
+                                   :height 0.9
+                                   :append t)
+                            :order 80)
+                           (:name "Important"
+                            :priority "A"
+                            :face (:foreground ,(technicolor-saturate 'red 20) :append t)
+                            :order 1)
+                           (:order-multi (2 (:name "Research"
+                                             :tag "research"
+                                             :face (:foreground ,(technicolor-get-color 'cyan ) :append t))
+                                            (:name "Teaching"
+                                             :tag "teaching"
+                                             :face (:foreground ,(technicolor-get-color 'green ) :append t))))
+                           (:name "Email"
+                            :tag "email"
+                            :order 20)
+                           (:name "Personal"
+                            :tag "personal"
+                            :order 3)
+                           (:auto-tags t
+                            :order 50))))))))))
 (after! org-agenda
   (org-super-agenda-mode))
 
@@ -996,20 +865,19 @@ INFO is a plist containing export properties."
   (add-hook! text-mode-hook #'tempel-setup-capf)
 
   (setopt tempel-path (directory-files (concat doom-user-dir "templates") t "eld$")
-         tempel-auto-reload t))
+          tempel-auto-reload t))
 
 ;;; ** tempel keybindings
 (map! :map tempel-map
       "M-n"                                           #'tempel-next
       "M-e"                                           #'tempel-previous
       "C-M-k"                                              #'tempel-abort
-                        
+
       :map global-map
-       "M-*"                                           #'tempel-insert
-       "C-<tab>"                                       #'tempel-expand)
+      "M-*"                                           #'tempel-insert
+      "C-<tab>"                                       #'tempel-expand)
 
 
-<<<<<<< HEAD
 ;;; * org-node
 (after! org-mem
   (setopt org-mem-watch-dirs '("~/Documents/org/")
@@ -1017,48 +885,13 @@ INFO is a plist containing export properties."
           org-mem-do-warn-title-collisions nil))
 (after! org-node
   (setopt org-node-creation-fn #'org-capture)
-=======
-;;; * `org-roam'
-;; Will be removed eventually (maybe).
-;; I think I prefer the zen of `org-node',
-;; but some of the `org-roam' features are
-;; really nice to have
-;;; ** `Variables'
 
-(after! org-roam
-  (setq! org-roam-directory "~/Documents/org/roam/"
-         org-roam-dailies-directory "~/Documents/org/roam/daily/"
-         org-roam-node-display-template
-         (concat "${title:*} "
-                 (propertize "${tags:40}" 'face 'org-modern-tag))
-
-         org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag))
-         citar-org-roam-note-title-template "${author} - ${title}"
-         citar-org-roam-capture-template-key "b"))
-(add-hook! org-roam-mode  (visual-line-mode
-                           (org-latex-preview 'buffer)))
-(after! org
-  ;; function to add a citar key to ROAM_REFS property
-  ;; for org-roam nodes
-  (defun citar-org-tag-headline ( &optional rest )
-    (interactive)
-    ;; keep this aroound for posterity
-    (org-node--add-to-property-keep-space "ROAM_REFS" (s-concat  "@" (car (citar--key-at-point))))
-    (org-node--add-to-property-keep-space "REFS" (s-concat  "@" (car (citar--key-at-point)))))
-  (setq! org-node-warn-title-collisions nil
-         org-node-creation-fn #'org-capture
-         org-node-extra-id-dirs org-directory)
-  ;; (org-node-reset)
->>>>>>> 6b66c5d (Update)
   (org-node-cache-mode))
 (after! org
   (org-mem-updater-mode))
 
-<<<<<<< HEAD
-;;; ** org-roam helper functions
-=======
+
 ;;; ** `org-roam' helper functions
->>>>>>> 6b66c5d (Update)
 ;; This code is just  helper stuff that I wrote
 ;; to migrate my org-roam collection to a single big file
 ;; as opposed to many small files. Organizationally, I find
@@ -1099,12 +932,8 @@ format to top level headlines in org buffer BUFF"
              do
              (my/org-roam-file-to-heading file buff))))
 
-<<<<<<< HEAD
-;;; ** Solving org-roam file ID annoyance
-(after! org-roam
-=======
+
 (after! nil
->>>>>>> 6b66c5d (Update)
   (defun my/remove-file-level-org-ID ()
     "Removes file-level org ID property.
 org-roam forces new ID creation at the file level
@@ -1124,7 +953,6 @@ to the post-capture hook."
        :desc "Find node" "f" #'org-node-find
        :desc "Refile node" "w" #'org-node-refile))
 
-<<<<<<< HEAD
 ;;; * citar
 ;;; ** citar variables
 (after! citar
@@ -1132,55 +960,11 @@ to the post-capture hook."
 
 ;;; ** citar related keybindings
 (defun my/citar-embark-update-prefix-suffix (cite)
-=======
-;;; * `citar'
-;;; ** variables
-(after! citar
-  (setq! citar-bibliography '("~/Documents/bib/zotero_refs.bib")
-         ;; citar-org-roam-subdir "~/Documents/org/roam/"
-         bibtex-completion-library-path '("~/Documents/books/" "~/Documents/bib/pdfs/")
-         ;; citar-org-roam-template-fields '((:citar-title "title")
-         ;;                                  (:citar-author "author" "editor")
-         ;;                                  (:citar-date "date" "year" "issued")
-         ;;                                  (:citar-pages "pages")
-         ;;                                  (:citar-type "=type=")
-         ;;                                  (:citar-citekey "citekey")
-         ;;                                  (:citar-file "file"))
-         ;; citar-org-roam-capture-template-key "n")
-  ))
 
-;;; ** `citar' related keybindings
-;;;
-(defun my/citar-embark-update-prefix-suffix ()
->>>>>>> 6b66c5d (Update)
   (citar-org-update-prefix-suffix nil))
 
 (map! :map org-mode-map
-:desc "Find node"         "C-c n r f"       #'org-node-find
-
-<<<<<<< HEAD
-:map global-map
-:desc "Citar open"              "C-c ]"     #'citar-open
-:map citar-embark-map
-:desc "Open entry"              "e"         #'citar-open-entry
-:desc "Open files"              "f"         #'citar-open-files
-:desc "Edit"                    "i"         #'citar-insert-edit
-:desc "Open link"               "l"         #'citar-open-links
-:desc "Open"                    "o"         #'citar-open
-:desc "Copy reference"          "r"         #'citar-copy-reference
-:desc "Add to node refs"        "k"         #'citar-org-roam-tag-headline
-
-:map citar-embark-citation-map
-:desc "Prefix/Suffix"           "p"         #'my/citar-embark-update-prefix-suffix
-:desc "Open entry"              "e"         #'citar-open-entry
-:desc "Open files"              "f"         #'citar-open-files
-:desc "Edit"                    "i"         #'citar-insert-edit
-:desc "Open link"               "l"         #'citar-open-links
-:desc "Open notes"              "n"         #'citar-open-notes
-:desc "Open"                    "o"         #'citar-open
-:desc "Copy reference"          "r"         #'citar-copy-reference
-:desc "Add to node refs"        "k"         #'citar-org-roam-tag-headline)
-=======
+      :desc "Find node"         "C-c n r f"       #'org-node-find
       :map citar-embark-map
       :desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
       :desc "Open entry"              "e"        #'citar-open-entry
@@ -1202,11 +986,10 @@ to the post-capture hook."
       :desc "Open"                    "o"        #'citar-open
       :desc "Copy reference"          "r"        #'citar-copy-reference
       :desc "Add to node refs"        "k"        #'citar-org-tag-headline)
->>>>>>> 6b66c5d (Update)
 
 ;;; * pdf-view mode
 (add-hook! 'pdf-tools-enabled-hook #'pdf-view-themed-minor-mode
-#'pdf-view-auto-slice-minor-mode)
+           #'pdf-view-auto-slice-minor-mode)
 ;;; ** FIX: invalid image specification when sliced
 ;; reference: https://github.com/vedang/pdf-tools/issues/339
 (defun +fix-pdf-view-image-size (&optional displayed-p window page)
@@ -1258,41 +1041,41 @@ If PAGE is non-nil return its size instead of current page."
 ;;; ** avy variables
 (after! avy
   (setopt avy-keys '(?a ?r ?s ?t ?n ?e ?i ?o)
-         avy-timeout-seconds 0.30
-         avy-all-windows t
-         avy-all-windows-alt nil
+          avy-timeout-seconds 0.30
+          avy-all-windows t
+          avy-all-windows-alt nil
 
-         avy-dispatch-alist '((?m . avy-action-mark)
-                              (?. . avy-action-embark)
-                              (?x . avy-action-exchange)
-                              (?, . avy-action-push-mark-no-activate)
-                              (?l . avy-action-kill-line)
-                              (?Y . avy-action-yank-line)
-                              (?k . avy-action-kill-stay)
-                              (?y . avy-action-yank)
-                              (?f . avy-action-teleport)
-                              (?L . avy-action-copy-whole-line)
-                              (?K . avy-action-kill-whole-line)
-                              (?Y . avy-action-yank-whole-line)
-                              (?T . avy-action-teleport-whole-line))))
+          avy-dispatch-alist '((?m . avy-action-mark)
+                               (?. . avy-action-embark)
+                               (?x . avy-action-exchange)
+                               (?, . avy-action-push-mark-no-activate)
+                               (?l . avy-action-kill-line)
+                               (?Y . avy-action-yank-line)
+                               (?k . avy-action-kill-stay)
+                               (?y . avy-action-yank)
+                               (?f . avy-action-teleport)
+                               (?L . avy-action-copy-whole-line)
+                               (?K . avy-action-kill-whole-line)
+                               (?Y . avy-action-yank-whole-line)
+                               (?T . avy-action-teleport-whole-line))))
 ;;; ** avy keybindings
 (map! :map global-map
       (:prefix "M-g"
        :desc "Goto line"                              "M-g"          #'avy-goto-line
        :desc "Goto char"                              "i"            #'avy-goto-char)
 
-       (:prefix "M-s"
-        :desc "Copy line"                             "y"        #'avy-copy-line
-        :desc "Goto isearch"                          "C-s"      #'avy-isearch
-        :desc "Copy region"                           "M-y"      #'avy-copy-region
-        :desc "Kill whole line"                       "M-k"      #'avy-kill-whole-line
-        :desc "Goto line above"                       "M-p"      #'avy-goto-line-above
-        :desc "Goto line below"                       "M-n"      #'avy-goto-line-below
-        :desc "Kill region"                           "C-y"      #'avy-kill-region
-        :desc "Kill region save region"               "M-w"      #'avy-kill-ring-save-region
-        :desc "Move line"                             "t"        #'avy-move-line
-        :desc "Move region"                           "M-t"      #'avy-move-region
-        :desc "End of line"                           "M-t"      #'avy-goto-end-of-line))
+      (:prefix "M-s"
+       :desc "Copy line"                             "y"        #'avy-copy-line
+       :desc "Goto isearch"                          "C-s"      #'avy-isearch
+       :desc "Copy region"                           "M-y"      #'avy-copy-region
+       :desc "Kill whole line"                       "M-k"      #'avy-kill-whole-line
+       :desc "Goto line above"                       "M-p"      #'avy-goto-line-above
+       :desc "Goto line below"                       "M-n"      #'avy-goto-line-below
+       :desc "Kill region"                           "C-y"      #'avy-kill-region
+       :desc "Kill region save region"               "M-w"      #'avy-kill-ring-save-region
+       :desc "Move line"                             "t"        #'avy-move-line
+       :desc "Move region"                           "M-t"      #'avy-move-region
+       :desc "End of line"                           "M-t"      #'avy-goto-end-of-line))
 ;;; * corfu
 ;;; ** corfu  variables
 (after! corfu
@@ -1328,72 +1111,19 @@ If PAGE is non-nil return its size instead of current page."
   "TAB"                                         #'corfu-next
   "S-TAB"                                       #'corfu-previous))
 
-<<<<<<< HEAD
 ;;; * vertico
 ;;; ** vertico bindings
 (map! (:after consult-dir
        :map vertico-map
-              "C-x C-j"                                       #'consult-dir-jump-file
-              "C-x C-d"                                       #'consult-dir))
+       "C-x C-j"                                       #'consult-dir-jump-file
+       "C-x C-d"                                       #'consult-dir))
 ;;; * consult
-;;; ** consult-buffer sources
-=======
-;;; * `consult'
-;;; ** consult-notes
-(setq! consult-notes-org-headings-files
-       '("~/Documents/org/journal.org" "~/Documents/org/notes.org"))
-
-(consult-notes-org-headings-mode)
-;;; ** `consult-buffer' sources
->>>>>>> 6b66c5d (Update)
-(after! (:and consult org-roam)
-  (defvar org-source
-    (list :name     "Org Buffer"
-          :category 'buffer
-          :narrow   ?o
-          :face     'consult-buffer
-          :history  'buffer-name-history
-          :state    #'consult--buffer-state
-          :new
-          (lambda (name)
-            (with-current-buffer (get-buffer-create name)
-              (insert "#+title: " name "\n\n")
-              (org-mode)
-              (consult--buffer-action (current-buffer))))
-          :items
-          (lambda ()
-            (consult--buffer-query :mode 'org-mode :as #'consult--buffer-pair))))
-  ;; TODO: adapt this to use org-node
-  (setopt consult--org-roam-nodes-source
-         (list :name     "org nodes"
-               :category 'org-heading
-               :face 'org-roam-title
-               :narrow   ?n
-               :require-match nil
-               :action (lambda (cand)
-                         (let ((node-name (substring-no-properties cand 2)))
-                           (progn
-                             (org-roam-node-open (org-roam-node-from-title-or-alias
-                                                  node-name t))
-                             (when (org-at-heading-p)
-                               (org-fold-show-entry t)
-                               (recenter-top-bottom 0)))))
-               :new (lambda (name)
-                      (org-capture "nn")
-                      (insert name))
-               :items (lambda ()
-                        (mapcar
-                         (lambda (str)
-                           (concat (nerd-icons-faicon "nf-fae-brain") " " str))
-                         (org-roam--get-titles)))))
-  (add-to-list 'consult-buffer-sources 'consult--org-roam-nodes-source 'append))
-
 ;;; ** consult bindings
 (map! :map global-map
-            :desc "Buffer list"                                   "M-u"                    #'consult-buffer
-            :desc "Buffer other window"                           "M-U"                    #'my/switch-buffer-other-window
-            :desc "Consult Dir"                                   "C-x C-d"                #'consult-dir
-            :desc "Consult mark"                                  "C-M-,"                  #'consult-mark)
+      :desc "Buffer list"                                   "M-u"                    #'consult-buffer
+      :desc "Buffer other window"                           "M-U"                    #'my/switch-buffer-other-window
+      :desc "Consult Dir"                                   "C-x C-d"                #'consult-dir
+      :desc "Consult mark"                                  "C-M-,"                  #'consult-mark)
 ;;; ** fix load-theme issues
 (defadvice! my/consult-theme (theme)
   :override #'consult-theme
@@ -1461,10 +1191,7 @@ If PAGE is non-nil return its size instead of current page."
     (add-to-list 'consult-dir-sources 'consult-dir--source-org-dir)))
 
 
-<<<<<<< HEAD
-;;; ** consult keybindings
-;;; * lasgun
-=======
+
 
 ;;; * `ncspot-control'
 (use-package! ncspot-control
@@ -1480,7 +1207,6 @@ If PAGE is non-nil return its size instead of current page."
 
   (map! :desc "Spotify control" "M-g M-m" #'ncspot-control-dispatch))
 ;;; * `lasgun'
->>>>>>> 6b66c5d (Update)
 (use-package! lasgun
   :defer t
   :commands
@@ -1504,7 +1230,7 @@ If PAGE is non-nil return its size instead of current page."
    lasgun-mark-whitespace-end-below)
   :config
   (setopt lasgun-also-push-mark-ring t
-         lasgun-pop-before-make-multiple-cursors nil)
+          lasgun-pop-before-make-multiple-cursors nil)
   (define-lasgun-action lasgun-action-upcase-word t upcase-word)
   (define-lasgun-action lasgun-action-rotate-text t rotate-text)
   (define-lasgun-action lasgun-action-downcase-word t downcase-word)
@@ -1588,29 +1314,7 @@ If PAGE is non-nil return its size instead of current page."
       (ring-remove lasgun-mark-ring 0))
     (message "No lasgun marks")))
 
-<<<<<<< HEAD
-(after! (:and avy lasgun)
-  (transient-define-prefix lasgun-transient ()
-    "Main transient for lasgun."
-    [["Marks"
-      ("c" "Char timer" lasgun-mark-char-timer :transient t)
-      ("l" "Begin of line" lasgun-mark-line :transient t)
-      ("s" "Symbol" lasgun-mark-symbol-1 :transient t)
-      ("x" "Clear lasgun mark ring" lasgun-clear-lasgun-mark-ring :transient t)
-      ("u" "Undo lasgun mark" lasgun-pop-lasgun-mark :transient t)]
-     ["Actions"
-      ("SPC" "Make cursors" lasgun-make-multiple-cursors)
-      ("." "Embark act" lasgun-embark-act-all)
-      ("$" "Jinx correct" lasgun-action-jinx-correct :transient t)
-      ("r" "Rotate text" lasgun-action-rotate-text :transient t)]
-     ["" :description ""
-      ("m" "Toggle math delims" lasgun-action-toggle-math-delims :transient t)
-      (";" "Comment line" lasgun-action-comment-line :transient t)
-      ("?" "Specify action" lasgun-prompt-action :transient t)]
-     [""
-      ("q" "Quit" transient-quit-one)]])
-  (add-hook! transient-exit-hook #'lasgun-clear-lasgun-mark-ring))
-=======
+
 ;; (after! (:and avy lasgun)
 ;;   (transient-define-prefix lasgun-transient ()
 ;;     "Main transient for lasgun."
@@ -1632,7 +1336,6 @@ If PAGE is non-nil return its size instead of current page."
 ;;       ("q" "Quit" transient-quit-one)]])
 ;;   ;; (add-hook! transient-exit #'lasgun-clear-lasgun-mark-ring)
 ;;   )
->>>>>>> 6b66c5d (Update)
 
 ;;; ** lasgun actions
 (defun my/avy-lg-mark-char-timer (ARG)
@@ -1776,15 +1479,15 @@ If PAGE is non-nil return its size instead of current page."
   (add-hook! 'repeat-mode-hook #'repeat-help-mode))
 
 (defun my/repeat-mode ()
-    (let ((inhibit-message t)
-          (message-log-max nil))
-      (repeat-mode)))
+  (let ((inhibit-message t)
+        (message-log-max nil))
+    (repeat-mode)))
 (add-hook! '(prog-mode-hook text-mode-hook) #'my/repeat-mode)
 ;;; * multiple-cursors
 (after! multiple-cursors
   (setopt mc/always-run-for-all nil
-         mc/always-repeat-command nil
-         mc/cmds-to-run-once (delq #'org-self-insert-command mc/cmds-to-run-once))
+          mc/always-repeat-command nil
+          mc/cmds-to-run-once (delq #'org-self-insert-command mc/cmds-to-run-once))
 
   (add-to-list 'mc/cmds-to-run-for-all #'org-self-insert-command)
 
@@ -1797,34 +1500,16 @@ If PAGE is non-nil return its size instead of current page."
     (add-to-list 'mc/cmds-to-run-once cmd)))
 
 ;;; * Programming language configurations
-<<<<<<< HEAD
-;;; ** julia
-=======
+
 ;;; ** envrc
 (envrc-global-mode)
 ;;; ** Julia
->>>>>>> 6b66c5d (Update)
 (when (modulep! :lang julia +snail)
   (add-hook! julia-mode #'julia-repl-mode)
   (add-hook! julia-mode-hook #'julia-snail-mode))
 
 ;; (add-to-list 'exec-path "~/.juliaup/bin")
 ;; (when (modulep! :lang julia +lsp)
-<<<<<<< HEAD
-;;   (setopt eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
-
-(after! julia-snail
-  (setopt julia-snail-executable "~/.juliaup/bin/julia"
-          julia-snail-extra-args "--threads auto"
-          org-babel-julia-command "~/.juliaup/bin/julia"))
-;;; ** common-lisp 
-;;; *** petalisp indentation fixes
-(after! cl-indent
-  (put 'lazy 'common-lisp-indent-function '(1 &rest 1))
-  (put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
-  (put 'lazy-multiple-value 'common-lisp-indent-function '(1 1 &rest 1))
-  (put 'lazy-reshape 'common-lisp-indent-function '(1 &rest 1)))
-=======
 ;;   (setq! eglot-jl-language-server-project "~/.julia/environments/v1.10/"))
 
 (setq! julia-snail-executable (executable-find "julia")
@@ -1845,7 +1530,6 @@ If PAGE is non-nil return its size instead of current page."
 (put 'lazy-reduce 'common-lisp-indent-function '(1 &rest 1))
 (put 'lazy-multiple-value 'common-lisp-indent-function '(1 1 &rest 1))
 (put 'lazy-reshape 'common-lisp-indent-function '(1 &rest 1))
->>>>>>> 6b66c5d (Update)
 
 
 ;;; ** outli
@@ -1860,17 +1544,12 @@ If PAGE is non-nil return its size instead of current page."
 (map! :map outline-minor-mode-map
       "C-c s ,"                                       #'consult-outline)
 
-<<<<<<< HEAD
-;;; ** gap
-(setopt gap-executable (executable-find "gap"))
-;;; ** haskell
-=======
+
 
 ;;; ** `gap' config
 ;; (setq! gap-executable "/usr/bin/gap")
 
 ;;; ** `haskell'
->>>>>>> 6b66c5d (Update)
 (after! haskell
   (setopt haskell-compile-command "ghc -Wall -ferror-spans -fforce-recomp -dynamic -c %s")
   (add-to-list 'exec-path "/home/aatmun/.ghcup/bin"))
@@ -1882,15 +1561,10 @@ If PAGE is non-nil return its size instead of current page."
 ;;; * Eyecandy
 
 ;;; ** Theme
-<<<<<<< HEAD
 (setopt doom-theme 'ef-light
         modus-themes-mixed-fonts t)
-;;; ** make theme consistent with qtile
-=======
-(setq! doom-theme 'modus-operandi
-       modus-themes-mixed-fonts t)
+
 ;;; ** make theme consistent with `qtile'
->>>>>>> 6b66c5d (Update)
 (after! nil
   (defun my/current-theme-type ()
     "Return type of theme"
@@ -1919,28 +1593,25 @@ If PAGE is non-nil return its size instead of current page."
                                (doom-color 'bg)) "\",\n"))
                (setq res (concat res "}")))
       res))
-<<<<<<< HEAD
 
   (setopt modus-to-universal-palette-translation
-=======
-  (setq! modus-to-universal-palette-translation
->>>>>>> 6b66c5d (Update)
-         '((bg-main . bg)
-           (bg-dim . bg-alt)
-           (border . grey)
-           (red . red)
-           (red-intense . orange)
-           (green . green)
-           (cyan-faint . teal)
-           (yellow . yellow)
-           (blue . blue)
-           (blue-faint . dark-blue)
-           (magenta-faint . magenta)
-           (maroon . violet)
-           (cyan . cyan)
-           (cyan-faint . dark-cyan)
-           (fg-alt . fg-alt)
-           (fg-main . fg)))
+
+          '((bg-main . bg)
+            (bg-dim . bg-alt)
+            (border . grey)
+            (red . red)
+            (red-intense . orange)
+            (green . green)
+            (cyan-faint . teal)
+            (yellow . yellow)
+            (blue . blue)
+            (blue-faint . dark-blue)
+            (magenta-faint . magenta)
+            (maroon . violet)
+            (cyan . cyan)
+            (cyan-faint . dark-cyan)
+            (fg-alt . fg-alt)
+            (fg-main . fg)))
 
   (defun my/gen-modus-colors ()
     "Generates python-formatted doom colors"
@@ -1997,37 +1668,33 @@ If PAGE is non-nil return its size instead of current page."
 (when (not (modulep! :ui modeline))
   (mood-line-mode)
   (setopt mood-line-format '((" "
-                             (mood-line-segment-modal)
-                             " "
-                             (or
-                              (mood-line-segment-buffer-status)
-                              " ")
-                             " "
-                             (mood-line-segment-buffer-name)
-                             "  "
-                             (mood-line-segment-anzu)
-                             "  "
-                             (mood-line-segment-multiple-cursors)
-                             "  ")
-                            ((mood-line-segment-vc)
-                             "  "
-                             (mood-line-segment-major-mode)
-                             "  "
-                             (mood-line-segment-misc-info)
-                             "  "
-                             (mood-line-segment-checker)
-                             "  "
-                             (mood-line-segment-process)
-                             "  " " "))))
+                              (mood-line-segment-modal)
+                              " "
+                              (or
+                               (mood-line-segment-buffer-status)
+                               " ")
+                              " "
+                              (mood-line-segment-buffer-name)
+                              "  "
+                              (mood-line-segment-anzu)
+                              "  "
+                              (mood-line-segment-multiple-cursors)
+                              "  ")
+                             ((mood-line-segment-vc)
+                              "  "
+                              (mood-line-segment-major-mode)
+                              "  "
+                              (mood-line-segment-misc-info)
+                              "  "
+                              (mood-line-segment-checker)
+                              "  "
+                              (mood-line-segment-process)
+                              "  " " "))))
 (spacious-padding-mode)
 (setopt spacious-padding-widths
-       '(:internal-border-width 15 :right-divider-width 5 :scroll-bar-width 0))
+        '(:internal-border-width 15 :right-divider-width 5 :scroll-bar-width 0))
 
 
-<<<<<<< HEAD
-;;; ** technicolor 
-(defun technicolor-relative-darken (color alpha)
-=======
 
 ;;; ** indent-bars
 
@@ -2042,515 +1709,353 @@ If PAGE is non-nil return its size instead of current page."
   (when (EVA-02-p)
     (require 'miasma-utils))
   (defun technicolor-relative-darken (color alpha)
->>>>>>> 6b66c5d (Update)
     (technicolor-blend 'background color alpha))
   (defun technicolor-relative-lighten (color alpha)
     (technicolor-blend 'foreground color alpha))
-(after! emacs
-  (setq prot-theme-mappings
-         '((foreground . fg-main)
-           (background . bg-main)
-           (violet . magenta-cooler)
-           (green . green-warmer)
-           (teal . cyan-cooler)))
-  (defun my/get-ef-theme-color (color)
-    (if-let* ((curr-theme (car custom-enabled-themes))
-              (palette-name (intern (format "%s-palette" curr-theme)))
-              (pos (cl-position color (mapcar #'car (symbol-value palette-name)))))
-        (cadr (nth pos (symbol-value palette-name)))
-      'unspecified))
+  (after! emacs
+    (setq prot-theme-mappings
+          '((foreground . fg-main)
+            (background . bg-main)
+            (violet . magenta-cooler)
+            (green . green-warmer)
+            (teal . cyan-cooler)))
+    (defun my/get-ef-theme-color (color)
+      (if-let* ((curr-theme (car custom-enabled-themes))
+                (palette-name (intern (format "%s-palette" curr-theme)))
+                (pos (cl-position color (mapcar #'car (symbol-value palette-name)))))
+          (cadr (nth pos (symbol-value palette-name)))
+        'unspecified))
 
-  (setopt technicolor-colors '(foreground background
-                              red blue
-                              green magenta
-                              violet teal
-                              cyan)
+    (setopt technicolor-colors '(foreground background
+                                 red blue
+                                 green magenta
+                                 violet teal
+                                 cyan)
 
-         technicolor-themes `(,technicolor-doom-themes-data
-                              ("^modus-.*" modus-themes-get-color-value
-                               ,prot-theme-mappings)
+            technicolor-themes `(,technicolor-doom-themes-data
+                                 ("^modus-.*" modus-themes-get-color-value
+                                  ,prot-theme-mappings)
 
-                              ("^ef-.*" my/get-ef-theme-color
-                               ,prot-theme-mappings)
+                                 ("^ef-.*" my/get-ef-theme-color
+                                  ,prot-theme-mappings)
 
-                              ("^catppuccin" technicolor--get-catppuccin-color
-                               ((foreground . text)
-                                (background . base)
-                                (magenta . pink)
-                                (violet . mauve)
-                                (cyan . sky)))))
+                                 ("^catppuccin" technicolor--get-catppuccin-color
+                                  ((foreground . text)
+                                   (background . base)
+                                   (magenta . pink)
+                                   (violet . mauve)
+                                   (cyan . sky)))))
 
-  (setq technicolor-org-src-block-faces '(("julia"      (technicolor-relative-darken  'magenta 90))
-                                          ("python"     (technicolor-relative-darken  'teal 85))
-                                          ("go"         (technicolor-relative-darken  'cyan 90))
-                                          ("lisp"       (technicolor-relative-darken  'green 90))
-                                          ("emacs-lisp" (technicolor-relative-darken  'magenta 85))
-                                          ("rust"       (technicolor-relative-darken  'red 80))
-                                          ("sh"         (technicolor-relative-darken  'green 85))))
+    (setq technicolor-org-src-block-faces '(("julia"      (technicolor-relative-darken  'magenta 90))
+                                            ("python"     (technicolor-relative-darken  'teal 85))
+                                            ("go"         (technicolor-relative-darken  'cyan 90))
+                                            ("lisp"       (technicolor-relative-darken  'green 90))
+                                            ("emacs-lisp" (technicolor-relative-darken  'magenta 85))
+                                            ("rust"       (technicolor-relative-darken  'red 80))
+                                            ("sh"         (technicolor-relative-darken  'green 85))))
 
-  (defun my/technicolor-update-org-src-block-faces ()
-    "Update org-src-block-faces list"
-    (progn
-      (setq org-src-block-faces
-            (cl-loop for cell in technicolor-org-src-block-faces collect
-                     `(,(car cell) (:background ,(eval (nth 1 cell)) :extend t))))
-      (when (equal major-mode #'org-mode)
-        (font-lock-fontify-buffer t))))
-  (my/technicolor-update-org-src-block-faces)
+    (defun my/technicolor-update-org-src-block-faces ()
+      "Update org-src-block-faces list"
+      (progn
+        (setq org-src-block-faces
+              (cl-loop for cell in technicolor-org-src-block-faces collect
+                       `(,(car cell) (:background ,(eval (nth 1 cell)) :extend t))))
+        (when (equal major-mode #'org-mode)
+          (font-lock-fontify-buffer t))))
+    (my/technicolor-update-org-src-block-faces)
 
-  (defadvice! my/technicolor-reload-org-src-block-faces (THEME &optional NO-CONFIRM NO-ENABLE)
-    "Apply org src block customizations from technicolor"
-    :after #'load-theme
-    (my/technicolor-update-org-src-block-faces)))
+    (defadvice! my/technicolor-reload-org-src-block-faces (THEME &optional NO-CONFIRM NO-ENABLE)
+      "Apply org src block customizations from technicolor"
+      :after #'load-theme
+      (my/technicolor-update-org-src-block-faces)))
 
 ;;; *** customizing general faces
-(custom-theme-set-faces! nil
-  `(region :background ,(technicolor-blend 'teal 'background 35))
-  `(org-drawer :family ,fixed-font)
-  `(org-meta-line :inherit t :family ,fixed-font)
-  `(org-date :inherit t :family ,fixed-font)
-  `(org-property-value :inherit t :family ,fixed-font)
-  `(org-column-title :inherit t :family ,fixed-font)
-  `(org-table :inherit t :family ,fixed-font)
-  `(org-block :inherit t :family ,fixed-font)
-  `(org-block-begin-line :inherit t :family ,fixed-font)
-  `(font-lock-keyword-face :slant italic)
-  `(notmuch-search-unread-face :inherit t :weight ultra-bold)
-  `(font-latex-math-face :slant normal
-    :foreground ,(technicolor-blend 'foreground 'violet 20)
-    :weight bold
-    :height 0.8
-    :family fixed-font
-    :slant normal)
-  '(outline-1 :height 1.2)
-  '(outline-2 :height 1.1)
-  '(outline-3 :height 1.05)
-  '(org-level-1 :height 1.5 :inherit t :weight bold)
-  '(org-level-2 :height 1.3 :inherit t :weight bold)
-  '(org-level-3 :height 1.2 :inherit t :weight bold))
+  (custom-theme-set-faces! nil
+    `(region :background ,(technicolor-blend 'teal 'background 35))
+    `(org-drawer :family ,fixed-font)
+    `(org-meta-line :inherit t :family ,fixed-font)
+    `(org-date :inherit t :family ,fixed-font)
+    `(org-property-value :inherit t :family ,fixed-font)
+    `(org-column-title :inherit t :family ,fixed-font)
+    `(org-table :inherit t :family ,fixed-font)
+    `(org-block :inherit t :family ,fixed-font)
+    `(org-block-begin-line :inherit t :family ,fixed-font)
+    `(font-lock-keyword-face :slant italic)
+    `(notmuch-search-unread-face :inherit t :weight ultra-bold)
+    `(font-latex-math-face :slant normal
+      :foreground ,(technicolor-blend 'foreground 'violet 20)
+      :weight bold
+      :height 0.8
+      :family fixed-font
+      :slant normal)
+    '(outline-1 :height 1.2)
+    '(outline-2 :height 1.1)
+    '(outline-3 :height 1.05)
+    '(org-level-1 :height 1.5 :inherit t :weight bold)
+    '(org-level-2 :height 1.3 :inherit t :weight bold)
+    '(org-level-3 :height 1.2 :inherit t :weight bold))
 
 ;;; *** org-modern face customization
-(after! technicolor
-  (setopt org-modern-block-fringe nil)
-  (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten 'cyan 10 )))
-    "Face for org modern IDEA tag")
-  (defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10)))
-    "Face for org modern IDEA tag")
-  (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10)))
-    "Face for org modern IDEA tag")
-  (defface org-modern-wait `((t :inherit org-modern-todo :background ,(technicolor-get-color 'red)))
-    "Face for org modern WAIT tag")
-  (defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 50)))
-    "Face for org modern PROG tag")
-  (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
-    "Face for org modern MAYBE tag"))
+  (after! technicolor
+    (setopt org-modern-block-fringe nil)
+    (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten 'cyan 10 )))
+      "Face for org modern IDEA tag")
+    (defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10)))
+      "Face for org modern IDEA tag")
+    (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10)))
+      "Face for org modern IDEA tag")
+    (defface org-modern-wait `((t :inherit org-modern-todo :background ,(technicolor-get-color 'red)))
+      "Face for org modern WAIT tag")
+    (defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 50)))
+      "Face for org modern PROG tag")
+    (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
+      "Face for org modern MAYBE tag"))
 
-(after! technicolor
-  (custom-theme-set-faces! nil
-    `(org-super-agenda-header   :foreground ,(technicolor-get-color 'blue)
-      :background unspecified :box nil :height 1.0)
-    `(org-agenda-date   :foreground ,(technicolor-get-color 'foreground)
-      :background unspecified :box nil :underline nil :height 1.1)
-    `(org-agenda-date-weekend   :foreground ,(technicolor-blend 'foreground 'background 50)
-      :background unspecified :box nil :underline nil :height unspecified)
-    `(org-agenda-date-weekend-today   :foreground ,(technicolor-blend 'foreground 'background 50)
-      :background unspecified :box t :height unspecified)
-    `(org-modern-idea  :foreground ,(technicolor-get-color 'background) :background ,(technicolor-lighten 'cyan 10))
-    `(org-modern-todo  :foreground ,(technicolor-get-color 'background)
-      :background ,(technicolor-blend 'background 'green 10))
-    `(org-modern-draft  :foreground ,(technicolor-lighten 'cyan 10))
-    `(org-modern-wait  :background ,(technicolor-blend 'background 'red 20)
-      :foreground ,(technicolor-get-color 'background))
-    `(org-agenda-dimmed-todo-face :foreground ,(technicolor-get-color 'foreground))
-    `(org-modern-maybe  :background ,(technicolor-blend 'background 'green 70))
-    `(org-modern-prog  :background ,(technicolor-lighten 'green 50)
-      :foreground ,(technicolor-get-color 'background) )
-    `(org-modern-time-inactive  :foreground ,(technicolor-blend 'background 'green 20))
-    `(org-modern-date-inactive  :inherit 'org-modern-label
-      :background ,(technicolor-blend 'background 'red 95)
-      :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
-    `(org-modern-date-inactive  :inherit 'org-modern-label
-      :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
-      :foreground ,(technicolor-blend 'foreground 'background 100))
-    `(org-modern-time-active  :inherit 'org-modern-label
-      :background ,(technicolor-blend 'background 'green 85)
-      :foreground ,(technicolor-blend 'foreground 'background 90))
-    `(org-modern-date-active  :inherit 'org-modern-label :
-      background ,(technicolor-blend 'background 'blue 85)
-      :foreground ,(technicolor-blend 'foreground 'background 90))))
+  (after! technicolor
+    (custom-theme-set-faces! nil
+      `(org-super-agenda-header   :foreground ,(technicolor-get-color 'blue)
+        :background unspecified :box nil :height 1.0)
+      `(org-agenda-date   :foreground ,(technicolor-get-color 'foreground)
+        :background unspecified :box nil :underline nil :height 1.1)
+      `(org-agenda-date-weekend   :foreground ,(technicolor-blend 'foreground 'background 50)
+        :background unspecified :box nil :underline nil :height unspecified)
+      `(org-agenda-date-weekend-today   :foreground ,(technicolor-blend 'foreground 'background 50)
+        :background unspecified :box t :height unspecified)
+      `(org-modern-idea  :foreground ,(technicolor-get-color 'background) :background ,(technicolor-lighten 'cyan 10))
+      `(org-modern-todo  :foreground ,(technicolor-get-color 'background)
+        :background ,(technicolor-blend 'background 'green 10))
+      `(org-modern-draft  :foreground ,(technicolor-lighten 'cyan 10))
+      `(org-modern-wait  :background ,(technicolor-blend 'background 'red 20)
+        :foreground ,(technicolor-get-color 'background))
+      `(org-agenda-dimmed-todo-face :foreground ,(technicolor-get-color 'foreground))
+      `(org-modern-maybe  :background ,(technicolor-blend 'background 'green 70))
+      `(org-modern-prog  :background ,(technicolor-lighten 'green 50)
+        :foreground ,(technicolor-get-color 'background) )
+      `(org-modern-time-inactive  :foreground ,(technicolor-blend 'background 'green 20))
+      `(org-modern-date-inactive  :inherit 'org-modern-label
+        :background ,(technicolor-blend 'background 'red 95)
+        :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
+      `(org-modern-date-inactive  :inherit 'org-modern-label
+        :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
+        :foreground ,(technicolor-blend 'foreground 'background 100))
+      `(org-modern-time-active  :inherit 'org-modern-label
+        :background ,(technicolor-blend 'background 'green 85)
+        :foreground ,(technicolor-blend 'foreground 'background 90))
+      `(org-modern-date-active  :inherit 'org-modern-label :
+        background ,(technicolor-blend 'background 'blue 85)
+        :foreground ,(technicolor-blend 'foreground 'background 90))))
 
 ;;; ** org-modern glyphs
-(after! org-modern
-  (setopt org-modern-list '((43 . "➤")
-                            (45 . "–")
-                            (42 . "•"))
-          org-modern-footnote (cons nil (cadr org-script-display))
-          org-modern-block-name
-          '((t . t)
-            ("src" "»" "«")
-            ("example" "»–" "–«")
-            ("quote" "❝" "❞")
-            ("export" "⏩" "⏪"))
-          org-modern-progress nil
-          org-modern-priority nil
-          org-modern-horizontal-rule (make-string 36 ?─)
-          org-modern-keyword
-          '((t . t)
-            ("title" . "𝙏")
-            ("subtitle" . "𝙩")
-            ("author" . "𝘼")
-            ("email" . #("" 0 1 (display (raise -0.14))))
-            ("date" . "𝘿")
-            ("property" . "☸")
-            ("options" . "⌥")
-            ("startup" . "⏻")
-            ("macro" . "𝓜")
-            ("bind" . #("" 0 1 (display (raise -0.1))))
-            ("bibliography" . "")
-            ("print_bibliography" . #("" 0 1 (display (raise -0.1))))
-            ("cite_export" . "⮭")
-            ("print_glossary" . #("ᴬᶻ" 0 1 (display (raise -0.1))))
-            ("glossary_sources" . #("" 0 1 (display (raise -0.14))))
-            ("include" . "⇤")
-            ("setupfile" . "⇚")
-            ("html_head" . "🅷")
-            ("html" . "🅗")
-            ("latex_class" . "🄻")
-            ("latex_class_options" . #("🄻" 1 2 (display (raise -0.14))))
-            ("latex_header" . "🅻")
-            ("latex_header_extra" . "🅻⁺")
-            ("latex" . "🅛")
-            ("beamer_theme" . "🄱")
-            ("beamer_color_theme" . #("🄱" 1 2 (display (raise -0.12))))
-            ("beamer_font_theme" . "🄱𝐀")
-            ("beamer_header" . "🅱")
-            ("beamer" . "🅑")
-            ("attr_latex" . "🄛")
-            ("attr_html" . "🄗")
-            ("attr_org" . "⒪")
-            ("call" . #("" 0 1 (display (raise -0.15))))
-            ("name" . "⁍")
-            ("header" . "›")
-            ("caption" . "☰")
-            ("results" . "⮞")))
+  (after! org-modern
+    (setopt org-modern-list '((43 . "➤")
+                              (45 . "–")
+                              (42 . "•"))
+            org-modern-footnote (cons nil (cadr org-script-display))
+            org-modern-block-name
+            '((t . t)
+              ("src" "»" "«")
+              ("example" "»–" "–«")
+              ("quote" "❝" "❞")
+              ("export" "⏩" "⏪"))
+            org-modern-progress nil
+            org-modern-priority nil
+            org-modern-horizontal-rule (make-string 36 ?─)
+            org-modern-keyword
+            '((t . t)
+              ("title" . "𝙏")
+              ("subtitle" . "𝙩")
+              ("author" . "𝘼")
+              ("email" . #("" 0 1 (display (raise -0.14))))
+              ("date" . "𝘿")
+              ("property" . "☸")
+              ("options" . "⌥")
+              ("startup" . "⏻")
+              ("macro" . "𝓜")
+              ("bind" . #("" 0 1 (display (raise -0.1))))
+              ("bibliography" . "")
+              ("print_bibliography" . #("" 0 1 (display (raise -0.1))))
+              ("cite_export" . "⮭")
+              ("print_glossary" . #("ᴬᶻ" 0 1 (display (raise -0.1))))
+              ("glossary_sources" . #("" 0 1 (display (raise -0.14))))
+              ("include" . "⇤")
+              ("setupfile" . "⇚")
+              ("html_head" . "🅷")
+              ("html" . "🅗")
+              ("latex_class" . "🄻")
+              ("latex_class_options" . #("🄻" 1 2 (display (raise -0.14))))
+              ("latex_header" . "🅻")
+              ("latex_header_extra" . "🅻⁺")
+              ("latex" . "🅛")
+              ("beamer_theme" . "🄱")
+              ("beamer_color_theme" . #("🄱" 1 2 (display (raise -0.12))))
+              ("beamer_font_theme" . "🄱𝐀")
+              ("beamer_header" . "🅱")
+              ("beamer" . "🅑")
+              ("attr_latex" . "🄛")
+              ("attr_html" . "🄗")
+              ("attr_org" . "⒪")
+              ("call" . #("" 0 1 (display (raise -0.15))))
+              ("name" . "⁍")
+              ("header" . "›")
+              ("caption" . "☰")
+              ("results" . "⮞")))
 
-<<<<<<< HEAD
-  (setopt org-modern-todo-faces
-          `(("IDEA" . org-modern-idea)
-            ("EVENT" . org-modern-event)
-            ("TODO" . org-modern-todo)
-            ("WAIT" . org-modern-wait)
-            ("PROG" . org-modern-prog)
-            ("MAYBE" . org-modern-maybe)
-            ("DRAFT" . org-modern-draft))))
+    (setopt org-modern-todo-faces
+            `(("IDEA" . org-modern-idea)
+              ("EVENT" . org-modern-event)
+              ("TODO" . org-modern-todo)
+              ("WAIT" . org-modern-wait)
+              ("PROG" . org-modern-prog)
+              ("MAYBE" . org-modern-maybe)
+              ("DRAFT" . org-modern-draft))))
 
 ;;; ** visual-fill-column-mode
-;; (after! visual-fill-column
-;;   (setopt visual-fill-column-width 130
-;;          visual-fill-column-center-text t))
+  ;; (after! visual-fill-column
+  ;;   (setopt visual-fill-column-width 130
+  ;;          visual-fill-column-center-text t))
 
-;; (add-hook! (text-mode-hook prog-mode-hook) #'visual-fill-column-mode)
-=======
-  (setq! org-modern-list '((43 . "➤")
-                           (45 . "–")
-                           (42 . "•"))
-         org-modern-footnote (cons nil (cadr org-script-display))
-         org-modern-block-name
-         '((t . t)
-           ("src" "»" "«")
-           ("example" "»–" "–«")
-           ("quote" "❝" "❞")
-           ("export" "⏩" "⏪"))
-         org-modern-progress nil
-         org-modern-priority nil
-         org-modern-horizontal-rule (make-string 36 ?─)
-         org-modern-keyword
-         '((t . t)
-           ("title" . "𝙏")
-           ("subtitle" . "𝙩")
-           ("author" . "𝘼")
-           ("email" . #("" 0 1 (display (raise -0.14))))
-           ("date" . "𝘿")
-           ("property" . "☸")
-           ("options" . "⌥")
-           ("startup" . "⏻")
-           ("macro" . "𝓜")
-           ("bind" . #("" 0 1 (display (raise -0.1))))
-           ("bibliography" . "")
-           ("print_bibliography" . #("" 0 1 (display (raise -0.1))))
-           ("cite_export" . "⮭")
-           ("print_glossary" . #("ᴬᶻ" 0 1 (display (raise -0.1))))
-           ("glossary_sources" . #("" 0 1 (display (raise -0.14))))
-           ("include" . "⇤")
-           ("setupfile" . "⇚")
-           ("html_head" . "🅷")
-           ("html" . "🅗")
-           ("latex_class" . "🄻")
-           ("latex_class_options" . #("🄻" 1 2 (display (raise -0.14))))
-           ("latex_header" . "🅻")
-           ("latex_header_extra" . "🅻⁺")
-           ("latex" . "🅛")
-           ("beamer_theme" . "🄱")
-           ("beamer_color_theme" . #("🄱" 1 2 (display (raise -0.12))))
-           ("beamer_font_theme" . "🄱𝐀")
-           ("beamer_header" . "🅱")
-           ("beamer" . "🅑")
-           ("attr_latex" . "🄛")
-           ("attr_html" . "🄗")
-           ("attr_org" . "⒪")
-           ("call" . #("" 0 1 (display (raise -0.15))))
-           ("name" . "⁍")
-           ("header" . "›")
-           ("caption" . "☰")
-           ("results" . "⮞"))))
+  ;; (add-hook! (text-mode-hook prog-mode-hook) #'visual-fill-column-mode)
 
-(global-org-modern-mode)
-
-;;; ** `visual-fill-column-mode'
-(after! visual-fill-column
-  (setq! visual-fill-column-width 130
-         visual-fill-column-center-text t))
-
-(add-hook! text-mode #'visual-fill-column-mode)
-
-;;; * personal stuff
-;; (require 'setup-personal)
-
-;;; * `wttr'
-(setq! wttrin-default-cities '("College Station" "Colleyville"))
->>>>>>> 6b66c5d (Update)
 
 ;;; * wttr
-(after! wttrin
-  (setopt wttrin-default-cities '("College Station" "Colleyville")))
+  (after! wttrin
+    (setopt wttrin-default-cities '("College Station" "Colleyville")))
 ;;; ** wttr hacky fix
-;; Fix: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
-(defadvice! wwtrin-fetch-raw-string (query)
-  "Make sure we fetch the acutual weather view"
-  :override #'wttrin-fetch-raw-string
-  (let ((url-user-agent "curl"))
-    (add-to-list 'url-request-extra-headers wttrin-default-accept-language)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         (concat "http://wttr.in/" query "?A")
-         (lambda (status) (switch-to-buffer (current-buffer))))
-      (decode-coding-string (buffer-string) 'utf-8))))
+  ;; Fix: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
+  (defadvice! wwtrin-fetch-raw-string (query)
+    "Make sure we fetch the acutual weather view"
+    :override #'wttrin-fetch-raw-string
+    (let ((url-user-agent "curl"))
+      (add-to-list 'url-request-extra-headers wttrin-default-accept-language)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           (concat "http://wttr.in/" query "?A")
+           (lambda (status) (switch-to-buffer (current-buffer))))
+        (decode-coding-string (buffer-string) 'utf-8))))
 
-<<<<<<< HEAD
 ;;; * elfeed and elfeed-tube
-(setopt rmh-elfeed-org-files '("notes.org"))
-=======
-;;; * spotify control
-(setq! browse-url-browser-function #'browse-url-firefox)
-(setq! smudge-oauth2-client-id "4cca92de47df47b2b4f2d15f1fb1987a"
-       smudge-oauth2-client-secret "7271a6c2f3574d0aa22f0117fd8cbe54")
+  (setopt rmh-elfeed-org-files '("notes.org"))
 
-
-
-;;; * `elfeed' and `elfeed-tube'
-(setq! rmh-elfeed-org-files '("notes.org"))
->>>>>>> 6b66c5d (Update)
 
 ;;; ** elfeed helper functions
-(after! elfeed
-  (defun elfeed-show-eww-open (&optional use-generic-p)
-    "open with eww"
-    (interactive "P")
-    (let ((browse-url-browser-function #'eww-browse-url))
-      (elfeed-show-visit use-generic-p)))
+  (after! elfeed
+    (defun elfeed-show-eww-open (&optional use-generic-p)
+      "open with eww"
+      (interactive "P")
+      (let ((browse-url-browser-function #'eww-browse-url))
+        (elfeed-show-visit use-generic-p)))
 
-  (defun elfeed-scroll-up-command (&optional arg)
-    "Scroll up or go to next feed item in Elfeed"
-    (interactive "^P")
-    (let ((scroll-error-top-bottom nil))
-      (condition-case-unless-debug nil
-          (scroll-up-command arg)
-        (error (elfeed-show-next)))))
+    (defun elfeed-scroll-up-command (&optional arg)
+      "Scroll up or go to next feed item in Elfeed"
+      (interactive "^P")
+      (let ((scroll-error-top-bottom nil))
+        (condition-case-unless-debug nil
+            (scroll-up-command arg)
+          (error (elfeed-show-next)))))
 
-  (defun elfeed-scroll-down-command (&optional arg)
-    "Scroll up or go to next feed item in Elfeed"
-    (interactive "^P")
-    (let ((scroll-error-top-bottom nil))
-      (condition-case-unless-debug nil
-          (scroll-down-command arg)
-        (error (elfeed-show-prev)))))
+    (defun elfeed-scroll-down-command (&optional arg)
+      "Scroll up or go to next feed item in Elfeed"
+      (interactive "^P")
+      (let ((scroll-error-top-bottom nil))
+        (condition-case-unless-debug nil
+            (scroll-down-command arg)
+          (error (elfeed-show-prev)))))
 
-  (defun elfeed-tag-selection-as (mytag)
-    "Returns a function that tags an elfeed entry or selection as
+    (defun elfeed-tag-selection-as (mytag)
+      "Returns a function that tags an elfeed entry or selection as
 MYTAG"
-    (lambda ()
-      "Toggle a tag on an Elfeed search selection"
-      (interactive)
-      (elfeed-search-toggle-all mytag))))
+      (lambda ()
+        "Toggle a tag on an Elfeed search selection"
+        (interactive)
+        (elfeed-search-toggle-all mytag))))
 ;;; ** elfeed keybindings
-(after! elfeed
-  (map! :map elfeed-show-mode-map
-        "F"       #'elfeed-tube-fetch
-        "C-c C-f" #'elfeed-tube-mpv-follow-mode
-        "B"       #'elfeed-show-eww-open
-        "S-SPC"   #'elfeed-scroll-down-command
-        "SPC"     #'elfeed-scroll-up-command
+  (after! elfeed
+    (map! :map elfeed-show-mode-map
+          "F"       #'elfeed-tube-fetch
+          "C-c C-f" #'elfeed-tube-mpv-follow-mode
+          "B"       #'elfeed-show-eww-open
+          "S-SPC"   #'elfeed-scroll-down-command
+          "SPC"     #'elfeed-scroll-up-command
 
-        :map elfeed-search-mode-map
-        "F"       #'elfeed-tube-fetch
-        "C-c C-w" #'elfeed-tube-mpv-where
-        "B"       #'elfeed-show-eww-open
-        "d"      (elfeed-tag-selection-as 'junk)
-        "l"      (elfeed-tag-selection-as 'readlater)))
+          :map elfeed-search-mode-map
+          "F"       #'elfeed-tube-fetch
+          "C-c C-w" #'elfeed-tube-mpv-where
+          "B"       #'elfeed-show-eww-open
+          "d"      (elfeed-tag-selection-as 'junk)
+          "l"      (elfeed-tag-selection-as 'readlater)))
 
 
-<<<<<<< HEAD
 ;;; * email
-(after! notmuch
-  (require 'setup-email))
+  (after! notmuch
+    (require 'setup-email))
 ;;; * LLM
-(after! agent-shell
-  (setopt agent-shell-google-authentication
-          (agent-shell-google-make-authentication :login t)
-          agent-shell-anthropic-authentication
-          (agent-shell-anthropic-make-authentication :login t)))
-=======
-(map!
- :desc "Buffer list"                                   "M-u"                    #'consult-buffer
- :desc "Buffer other window"                           "M-U"                    #'my/switch-buffer-other-window
- :desc "Consult Dir"                                   "C-x C-d"                #'consult-dir
- :desc "Search notes"                                  "C-c s n"                #'consult-notes
- :desc "Consult mark"                                  "C-M-,"                  #'consult-mark
- :desc "Other window"                                  "M-o"                    #'other-window
- :desc "Avy goto/Lasgun mark"                          "M-n"                    #'my/avy-lg-mark-char-timer
- :desc "Lasgun make multiple cursors"                          "M-g SPC"                #'lasgun-make-multiple-cursors
- :desc "Lasgun mark char timer"                        "M-g M-SPC"                  #'lasgun-mark-char-timer
- :desc "Backward kill sexp"                            "C-M-<backspace>"        #'backward-kill-sexp
- :desc "Move window top/bottom"                        "M-l"                    #'move-to-window-line-top-bottom
- :desc "Hippie expand"                                 "M-/"                    #'hippie-expand
-
- "C-."                                           #'embark-act
- "M-."                                           #'embark-dwim
- "C-h B"                                         #'embark-bindings
-
- "C-c o T"                                       #'eat
- "C-c o t"                                       #'eat
+  (after! agent-shell
+    (setopt agent-shell-google-authentication
+            (agent-shell-google-make-authentication :login t)
+            agent-shell-anthropic-authentication
+            (agent-shell-anthropic-make-authentication :login t)))
 
 
- "C-c ]"                             #'citar-insert-reference
 
- ;; `popper' bindings
- "<escape>"                                      #'popper-toggle
- "C-<escape>"                                    #'popper-cycle
- "C-M-<escape>"                                  #'popper-toggle-type
-
- ;; navigating marks
- "C-M-;"                                         #'better-jumper-set-jump
- "C-,"                                           #'push-mark-no-activate
- "M-,"                                           #'jump-to-mark
-
- "C-;"                                           #'iedit-mode
-
- ;; `easy-mark' and `easy-kill'
- "C-M-SPC"                                       #'easy-mark
- "M-SPC"                                         #'easy-kill
-
- ;; `tempel'
- "M-*"                                           #'tempel-insert
- "C-<tab>"                                       #'tempel-expand
-
- :desc "Lasgun" "C-c t g"                        #'lasgun-transient
-
-
- (:when (featurep 'activities)
-   (:prefix-map ("C-x C-a" . "activities")
-    :desc "Switch activity"                       "RET"      #'activities-switch
-    :desc "New"                                   "C-n"      #'activities-new
-    :desc "Define"                                "C-d"      #'activities-define
-    :desc "Kill"                                  "C-k"      #'activities-kill
-    :desc "Suspend"                               "C-s"      #'activities-suspend
-    :desc "Resume activity"                       "C-a"      #'activities-resume
-    :desc "List activities"                       "l"        #'activities-list
-    :desc "Switch to buffer with activity"        "b"        #'activities-switch-buffer
-    :desc "Revert state"                          "g"        #'activities-revert))
-
-
- (:prefix "C-c w"
-  :desc "Swap window"                           "o"        #'ace-swap-window
-  :desc "Delete other window"                   "0"        #'ace-delete-window)
-
- ;; `avy' stuff
- :desc "Goto line"                              "M-g M-g"          #'avy-goto-line
- :desc "Goto char"                              "M-g i"            #'avy-goto-char
-
- (:prefix "M-s"
-  :desc "Copy line"                             "y"        #'avy-copy-line
-  :desc "Copy region"                           "M-y"      #'avy-copy-region
-  :desc "Kill whole line"                       "M-k"      #'avy-kill-whole-line
-  :desc "Goto line above"                       "M-p"      #'avy-goto-line-above
-  :desc "Goto line below"                       "M-n"      #'avy-goto-line-below
-  :desc "Kill region"                           "C-y"      #'avy-kill-region
-  :desc "Kill region save region"               "M-w"      #'avy-kill-ring-save-region
-  :desc "Move line"                             "t"        #'avy-move-line
-  :desc "Move region"                           "M-t"      #'avy-move-region
-  :desc "End of line"                           "M-t"      #'avy-goto-end-of-line))
-
-
-(map! :map outline-mode-map
-      :leader
-      "s ," #'consult-outline
-      :map outli-mode-map
-      :leader
-      "s ," #'consult-outline)
+  (map! :map outline-mode-map
+        :leader
+        "s ," #'consult-outline
+        :map outli-mode-map
+        :leader
+        "s ," #'consult-outline)
 
 ;;; ** `easy-kill'  keybindings
-(map! :map easy-kill-base-map
-      ","                                             #'easy-kill-expand-region
-      "."                                             #'easy-kill-contract-region)
+  (map! :map easy-kill-base-map
+        ","                                             #'easy-kill-expand-region
+        "."                                             #'easy-kill-contract-region)
 
 ;;; ** `vertico' keybindings
-(map! :map vertico-map
-      "C-x C-j"                                       #'consult-dir-jump-file
-      "C-x C-d"                                       #'consult-dir)
+  (map! :map vertico-map
+        "C-x C-j"                                       #'consult-dir-jump-file
+        "C-x C-d"                                       #'consult-dir)
 
 ;;; ** `outline-minor-mode'  map
-(map! :map outline-minor-mode-map
-      "C-c s ,"                                       #'consult-outline)
+  (map! :map outline-minor-mode-map
+        "C-c s ,"                                       #'consult-outline)
 
 ;;; ** `embark' maps
-(map! :map embark-file-map
-      :desc "Find file read ony" "r"                  #'find-file-read-only
-      :map embark-general-map
-      :desc "Cycle candidates"  "C-."                 #'embark-cycle)
->>>>>>> 6b66c5d (Update)
+  (map! :map embark-file-map
+        :desc "Find file read ony" "r"                  #'find-file-read-only
+        :map embark-general-map
+        :desc "Cycle candidates"  "C-."                 #'embark-cycle)
+  >>>>>>> 6b66c5d (Update)
 
 ;;; * overleaf
-(after!  overleaf
-  (defun my/get-overleaf-session-cookie (db-path)
-  "Extract the overleaf_session2 cookie from the Firefox cookies.sqlite at DB-PATH.
+  (after!  overleaf
+    (defun my/get-overleaf-session-cookie (db-path)
+      "Extract the overleaf_session2 cookie from the Firefox cookies.sqlite at DB-PATH.
 Returns a list of the form '(\"overleaf.com\" \"COOKIE_VALUE\" nil)."
-  (if (not (file-exists-p db-path))
-      (progn
-        (warn "Database file not found: %s" db-path)
-        nil)
-    (let* ((db (sqlite-open db-path))
-           (query "SELECT value FROM moz_cookies 
+      (if (not (file-exists-p db-path))
+          (progn
+            (warn "Database file not found: %s" db-path)
+            nil)
+        (let* ((db (sqlite-open db-path))
+               (query "SELECT value FROM moz_cookies
                    WHERE host = \'.overleaf.com\' 
                    AND name = \'overleaf_session2\' 
                    LIMIT 1;")
-           (result (sqlite-select db query)))
-      (sqlite-close db)
-      (if result
-          (list "overleaf.com" (format "overleaf_session2=%s" (caar result)) nil)
-        (message "Cookie not found.")
-        nil))))
-  (setopt overleaf-cookies
-          (overleaf-read-cookies-from-firefox :firefox-folder "~/.zen" :profile "default")))
+               (result (sqlite-select db query)))
+          (sqlite-close db)
+          (if result
+              (list "overleaf.com" (format "overleaf_session2=%s" (caar result)) nil)
+            (message "Cookie not found.")
+            nil))))
+    (setopt overleaf-cookies
+            (overleaf-read-cookies-from-firefox :firefox-folder "~/.zen" :profile "default")))
 
 ;;; * Benchmark init
-;; (when init-file-debug
-;;   (use-package! benchmark-init
-;;     :ensure t
-;;     :config
-;;     ;; To disable collection of benchmark data after init is done.
-;;     (add-hook 'after-init-hook 'benchmark-init/deactivate)))
+  ;; (when init-file-debug
+  ;;   (use-package! benchmark-init
+  ;;     :ensure t
+  ;;     :config
+  ;;     ;; To disable collection of benchmark data after init is done.
+  ;;     (add-hook 'after-init-hook 'benchmark-init/deactivate)))
 
-;; Local Variables:
-;; outline-regexp: ";;; \\(\\*+\\) \\(.*\\)$"
-;; End:
-
+  ;; Local Variables:
+  ;; outline-regexp: ";;; \\(\\*+\\) \\(.*\\)$"
+  ;; End:
