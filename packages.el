@@ -34,6 +34,7 @@
 (package! org-modern)
 (package! org-web-tools)
 (package! org-protocol-capture-html)
+(package! doct)
 (package! org-pdftools)
 (package! pdftotxt.el
   :recipe (:host github :repo "tecosaur/pdftotext.el"))
@@ -111,7 +112,8 @@
 (package! sage-shell-mode)
 (package! ob-sagemath)
 (package! activities)
-
+(package! oxr
+  :recipe (:host github :repo "bdarcus/oxr"))
 (package! jinx)
 (package! reader
   :recipe (:host codeberg
@@ -125,7 +127,7 @@
 (when (modulep! :email notmuch)
   (package! notmuch-indicator))
 
-;; (package! keycast :recipe (:host github :repo "tarsius/keycast"))
+(package! keycast :recipe (:host github :repo "tarsius/keycast"))
 
 (package! engrave-faces :recipe (:host github :repo "tecosaur/engrave-faces"))
 (package! benchmark-init)
@@ -140,13 +142,13 @@
 (package! repeat-help)
 (package! popterm :recipe (:host github :repo "CsBigDataHub/popterm.el"))
 (package! overleaf :recipe (:host github :repo "vale981/overleaf.el"))
+
 ;;; $ Disable packages
 (unpin! emacs-everywhere)
-(disable-packages! avy-migemo
-                   anaconda-mode
-                   org-noter
-                   org-noter-nov
-                   org-noter-djvu)
+;; (disable-packages! avy-migemo
+;;                    anaconda-mode
+;;                    org-noter-nov
+;;                    org-noter-djvu)
 
 (when (modulep! :ui modeline)
   (package! mood-line :disable t))

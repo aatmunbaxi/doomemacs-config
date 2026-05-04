@@ -19,7 +19,8 @@
 
 ;;; * Some functions
 (after! emacs
-  (setopt warning-minimum-level :error)
+  (setopt warning-minimum-level :error
+          delete-by-moving-to-trash t)
   (defun my/switch-buffer-other-window ()
     (interactive)
     (save-excursion
@@ -199,7 +200,7 @@
         "C-M-<left>" #'sp-backward-slurp-sexp
         "M-D"        #'sp-backward-unwrap-sexp))
 ;;; * Font config
-(setq variable-font "EB Garamond"
+(setq variable-serif-font "EB Garamond"
       fixed-font "JetBrains Mono"
       variable-sans-serif "Rosario"
       doom-font fixed-font)
@@ -208,40 +209,43 @@
 (after! fontaine
   (setopt fontaine-presets
           `((regular-serif
-             :variable-pitch-family ,variable-font
+             :variable-pitch-family ,variable-serif-font
              :fixed-pitch-family ,fixed-font
              :default-height 110)
             (regular-sans
              :variable-pitch-family ,variable-sans-serif
              :fixed-pitch-family ,fixed-font
              :default-height 110)
-            (office-monitor
-             :inherit regular-sans
-             :default-height 135)
             (medium-serif
-             :inherit regular-serif
-             :default-height 140)
+             :variable-pitch-family ,variable-serif-font
+             :fixed-pitch-family ,fixed-font
+             :default-height 150)
             (medium-sans
              :inherit regular-sans
              :variable-pitch-weight light
-             :default-height 140)
+             :default-height 150)
             (large-serif
-             :inherit medium-serif
+             :variable-pitch-family ,variable-serif-font
+             :fixed-pitch-family ,fixed-font
              :default-height 180)
             (large-sans
              :inherit medium-sans
+             :variable-pitch-family ,variable-sans-serif
+             :fixed-pitch-family ,fixed-font
              :default-height 180)
-            (huge-serif
-             :inherit medium-serif
-             :default-height 210)
-            (huge-sans
-             :inherit medium-sans
-             :default-height 210)
+            (massive-serif
+             :variable-pitch-family ,variable-serif-font
+             :fixed-pitch-family ,fixed-font
+             :default-height 240)
+            (massive-sans
+             :variable-pitch-family ,variable-sans-serif
+             :fixed-pitch-family ,fixed-font
+             :default-height 240)
             (t ; our shared fallback properties
              :fixed-pitch-family ,fixed-font
              :fixed-pitch-height 1.0
 
-             :variable-pitch-family ,variable-font
+             :variable-pitch-family ,variable-sans-serif
              :variable-pitch-weight regular
              :variable-pitch-height 1.0
 
@@ -256,7 +260,9 @@
              :italic-slant italic
              :line-spacing nil)))
   (fontaine-set-preset 'medium-sans)
-  (add-hook! 'enable-theme-functions (fontaine-set-preset fontaine-current-preset)))
+  (add-hook! 'enable-theme-functions (fontaine-set-preset fontaine-current-preset))
+  (map! :map global-map
+        :desc "Set fontaine font" "C-h g"   #'fontaine-set-preset))
 
 (add-hook! 'doom-first-buffer-hook #'fontaine-mode)
 
@@ -269,7 +275,13 @@
 (set-fontset-font t 'cjk-misc "Noto Sans CJK KR")
 ;;; * LaTeX
 (after! LaTeX
-  (setopt TeX-engine 'xetex))
+  (setopt TeX-engine 'xetex
+          reftex-default-bibliography "~/Documents/bib/zotero_refs.bib"))
+(after! tex
+  (when (modulep! :tools pdf)
+    (setq +latex-viewers '(pdf-tools)
+          TeX-view-program-selection '((output-pdf "PDF Tools")))
+    (add-hook! 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)))
 
 (after! (:and math-delimiters (:or LaTeX org))
   (setopt math-delimiters-compressed-display-math t))
@@ -281,7 +293,9 @@
              #'laas-mode
              #'org-latex-preview-mode
              #'cdlatex-mode))
-
+;;; ** LaTeX bindings
+(map! :map LaTeX-mode-map
+      "M-m" #'math-delimiters-insert)
 ;;; ** Helper functions
 (use-package! latex-utils
   :after (:and org latex)
@@ -353,7 +367,6 @@ When pressed twice, make the sub/superscript roman."
                     "*" "\\ast"
                     "QQ" "\\mathbb{Q}"))
 
-;;; ** LaTeX bindings
 ;;; * org-mode
 (after! org
   (plist-put org-latex-preview-appearance-options
@@ -399,39 +412,63 @@ When pressed twice, make the sub/superscript roman."
                                (("~/Documents/org/journal.org") :maxlevel . 5))))
 ;;; ** org-refile variables
 (after! org-capture
-  (setopt org-capture-templates '(("n" "Info/IDEA")
-                                  ("nn" "Info node"
-                                   entry
-                                   (file+headline "~/Documents/org/braindump.org" "Braindump")
-                                   "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-                                  ("nt" "Daily: Today"
-                                   entry
-                                   (file+olp+datetree "~/Documents/org/journal.org")
-                                   "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
-                                   :unnarrowed nil)
-                                  ("ni" "Daily: Idea"
-                                   entry
-                                   (file+olp+datetree "~/Documents/org/journal.org")
-                                   "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-                                  ("t" "Todo" entry (file "~/Documents/org/inbox.org")
-                                   "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-                                  ("r" "research" entry (file "~/Documents/org/inbox.org")
-                                   "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-                                  ("i" "idea" entry (file "~/Documents/org/inbox.org")
-                                   "* IDEA %?\n%i\n%a\n")
-                                  ("j" "Journal entry" entry (file+olp+datetree "~/Documents/org/journal.org")
-                                   ;; Call with C-u C-u interactive argument to insert inactive stamp
-                                   "* %? \n%(funcall 'org-timestamp '(16) 't)"
-                                   :empty-lines 1)
-                                  ("m" "Email workflow")
-                                  ("mf" "Follow Up" entry (file "~/Documents/org/inbox.org")
-                                   "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
-                                   :immediate-finish t)
-                                  ("mt" "Action Required" entry (file "~/Documents/org/inbox.org")
-                                   "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
-                                  ("mr" "Read Later" entry (file"~/Documents/org/inbox.org")
-                                   "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
-                                   :immediate-finish t))))
+  (setopt org-capture-templates
+      (doct
+       '(("Info/IDEA" :keys "n"
+          :type entry
+          :children
+          (("Info node" :keys "n"
+            :file "~/Documents/org/braindump.org"
+            :headline "Braindump"
+            :template "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+           
+           ("Daily: Today" :keys "t"
+            :file "~/Documents/org/journal.org"
+            :datetree t
+            :template "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
+            :unnarrowed nil)
+           
+           ("Daily: Idea" :keys "i"
+            :file "~/Documents/org/journal.org"
+            :datetree t
+            :template "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")))
+
+         ("Todo" :keys "t"
+          :type entry
+          :file "~/Documents/org/inbox.org"
+          :template "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
+
+         ("research" :keys "r"
+          :type entry
+          :file "~/Documents/org/inbox.org"
+          :template "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
+
+         ("idea" :keys "i"
+          :type entry
+          :file "~/Documents/org/inbox.org"
+          :template "* IDEA %?\n%i\n%a\n")
+
+         ("Journal entry" :keys "j"
+          :type entry
+          :file "~/Documents/org/journal.org"
+          :datetree t
+          :template "* %? \n%(funcall 'org-timestamp '(16) 't)"
+          :empty-lines 1)
+
+         ("Email workflow" :keys "m"
+          :type entry
+          :file "~/Documents/org/inbox.org"
+          :children
+          (("Follow Up" :keys "f"
+            :template "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+            :immediate-finish t)
+           
+           ("Action Required" :keys "t"
+            :template "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
+           
+           ("Read Later" :keys "r"
+            :template "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
+            :immediate-finish t)))))))
 ;;; ** org variables
 (after! org
   (setopt org-directory "~/Documents/org/"
@@ -848,7 +885,8 @@ INFO is a plist containing export properties."
 ;;; * org-node
 (after! org-mem
   (setopt org-mem-watch-dirs '("~/Documents/org/")
-          org-mem-do-sync-with-org-id t))
+          org-mem-do-sync-with-org-id t
+          org-mem-do-warn-title-collisions nil))
 (after! org-node
   (setopt org-node-creation-fn #'org-capture)
   (org-node-cache-mode))
@@ -982,7 +1020,18 @@ If PAGE is non-nil return its size instead of current page."
       "M-m"                                           #'pdf-view-auto-slice-minor-mode
       "M-f"                                           #'pdf-view-themed-minor-mode
       "n"                                             #'pdf-view-next-line-or-next-page
-      "e"                                             #'pdf-view-previous-line-or-previous-page)
+      "e"                                             #'pdf-view-previous-line-or-previous-page
+      (:prefix "C-c C-a"
+       :desc   "Add highlight annotation"           "h"  #'pdf-annot-add-highlight-markup-annotation          
+       :desc   "Add strike-out annotation"          "o"  #'pdf-annot-add-strikeout-markup-annotation         
+       :desc   "Add underline annotation"           "u"  #'pdf-annot-add-underline-markup-annotation          
+       :desc   "Add squiggly annotation"            "s"   #'pdf-annot-add-squiggly-markup-annotation           
+       :desc   "Add markup annotation"              "m"            #'pdf-annot-add-markup-annotation             
+       :desc   "Add text annotation"                "t"              #'pdf-annot-add-text-annotation
+       :desc   "Delete annotation"                  "D"                           #'pdf-annot-delete                                            
+       :desc   "List attachments in Dired"          "a"                 #'pdf-annot-attachment-dired                         
+       :desc   "List annotations"                   "l"                 #'pdf-annot-list-annotations))
+
 
 ;;; * avy
 ;;; ** avy functions
@@ -1951,7 +2000,7 @@ MYTAG"
           (agent-shell-anthropic-make-authentication :login t)))
 
 ;;; * overleaf
-(after! (:and overleaf sqlite)
+(after!  overleaf
   (defun my/get-overleaf-session-cookie (db-path)
   "Extract the overleaf_session2 cookie from the Firefox cookies.sqlite at DB-PATH.
 Returns a list of the form '(\"overleaf.com\" \"COOKIE_VALUE\" nil)."
@@ -1971,7 +2020,7 @@ Returns a list of the form '(\"overleaf.com\" \"COOKIE_VALUE\" nil)."
         (message "Cookie not found.")
         nil))))
   (setopt overleaf-cookies
-          (my/get-overleaf-session-cookie "~/.zen/fi10pt8o.default/cookies.sqlite")))
+          (overleaf-read-cookies-from-firefox :firefox-folder "~/.zen" :profile "default")))
 
 ;;; * Benchmark init
 ;; (when init-file-debug
