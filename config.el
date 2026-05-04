@@ -414,58 +414,54 @@ When pressed twice, make the sub/superscript roman."
 (after! org-capture
   (setopt org-capture-templates
       (doct
-       '(("Info/IDEA" :keys "n"
+       `(("Info/IDEA" :keys "n"
           :type entry
           :children
           (("Info node" :keys "n"
             :file "~/Documents/org/braindump.org"
             :headline "Braindump"
             :template "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
-           
            ("Daily: Today" :keys "t"
             :file "~/Documents/org/journal.org"
             :datetree t
             :template "* %?\n:PROPERTIES:\n:ID: %(org-id-new)\n:END:\n"
             :unnarrowed nil)
-           
            ("Daily: Idea" :keys "i"
             :file "~/Documents/org/journal.org"
             :datetree t
-            :template "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")))
-
+            :template "* IDEA %?  \n:PROPERTIES:\n:ID: %(org-id-new)\n:CREATED: %(org-insert-time-stamp (current-time))\n:END:\n")
+           ("Daily: Commonplace" :keys "c"
+            :file "~/Documents/org/journal.org"
+            :datetree t
+            :template "* %? :commonplace:")))
          ("Todo" :keys "t"
           :type entry
           :file "~/Documents/org/inbox.org"
-          :template "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-
+          :template "* TODO %?%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n")
          ("research" :keys "r"
           :type entry
           :file "~/Documents/org/inbox.org"
-          :template "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%a\n")
-
+          :template "* RSCH %?\n%i\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n")
          ("idea" :keys "i"
           :type entry
           :file "~/Documents/org/inbox.org"
           :template "* IDEA %?\n%i\n%a\n")
-
          ("Journal entry" :keys "j"
           :type entry
           :file "~/Documents/org/journal.org"
           :datetree t
           :template "* %? \n%(funcall 'org-timestamp '(16) 't)"
           :empty-lines 1)
-
          ("Email workflow" :keys "m"
           :type entry
           :file "~/Documents/org/inbox.org"
+          :contexts (:when ,(lambda () (eq major-mode 'notmuch-show-mode))) 
           :children
           (("Follow Up" :keys "f"
             :template "* TODO Follow up with %:fromname on %a :email:\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
             :immediate-finish t)
-           
            ("Action Required" :keys "t"
             :template "* TODO %? \n:PROPERTIES:\n:REFERENCE: %a\n:END:\n%i")
-           
            ("Read Later" :keys "r"
             :template "* TODO %:subject  :email:\n%a\n:PROPERTIES:\n:ID:  %(org-id-new)\n:END:\n%i"
             :immediate-finish t)))))))
@@ -1577,8 +1573,8 @@ If PAGE is non-nil return its size instead of current page."
 
 ;;; * Eyecandy
 ;;; ** Theme
-(setopt doom-theme 'modus-operandi-tinted
-       modus-themes-mixed-fonts t)
+(setopt doom-theme 'ef-light
+        modus-themes-mixed-fonts t)
 ;;; ** make theme consistent with qtile
 (after! nil
   (defun my/current-theme-type ()
