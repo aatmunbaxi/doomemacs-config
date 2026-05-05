@@ -1,11 +1,18 @@
+;;; ncspot-control.el --- Control for the ncspot program in the eat terminal
 ;; -*- lexical-binding: t; -*-
 ;;
+
+;;; Commentary:
+;; 
+
 (require 'ncspot-control-lib)
-(require 'transient)
+;;; Code:
+
+(eval-when-compile (require 'transient))
 
 ;;;###autoload (autoload 'listen-menu "listen" nil t)
 (transient-define-prefix ncspot-control-queue ()
-  "ncspot queue controller"
+  "Ncspot queue controller."
   [["Jump to"
     ("ml" "Library" (lambda ()
                       (interactive)
@@ -68,12 +75,12 @@
          (ncspot-control-queue)))
 
 (transient-define-prefix ncspot-control-search-interaction ()
-  "Interactive search moving for ncspot-control"
+  "Interactive search moving for ncspot-control."
   [["Nav"
     ("C-r" "Previous occurrence" ncspot-control-prev-search-occurence :transient t)
     ("C-s" "Next occurrence" ncspot-control-next-search-occurence :transient t )]])
 
-;;;###autoload (autoload 'listen-menu "listen" nil t)
+;;;###autoload
 (transient-define-prefix ncspot-control-quick-menu ()
   "Quick ncspot controls.
 
@@ -219,3 +226,7 @@ much sense."
     (ncspot-control-quick-menu)))
 
 (provide 'ncspot-control)
+
+(provide 'ncspot-control)
+
+;;; ncspot-control.el ends here

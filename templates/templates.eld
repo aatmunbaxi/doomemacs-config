@@ -203,7 +203,6 @@ nix-mode
 (installCheckPhasephase > "installCheckPhasePhase= ''" n (p "") n " '';")
 (installphase > "installphase= ''" n p " mkdir -p $out/bin" n> "for f in $(find . -executable -type f);" n> "do" n> "cp $f $out/bin" n> "done}" n> " '';")
 
-<<<<<<< HEAD
 (gitpackage "{ lib" n ", stdenv" n ", fetchFromGitHub" n ", " (p "inputs") n ", " (p "inputs") n "}:" n n>
             "stdenv.mkDerivation rec {" n> "pname = \"" (p "" pkgn nil) "\";" n> "version = \"" p "\";" n n>
             "src = fetchFromGitHub {" n> "owner = \"" (p "" own) "\";" n> "repo = \"" (s pkgn) "\";" n>
@@ -216,8 +215,6 @@ nix-mode
             "maintainers = with maintainers; [ " (s own) " ];" n>
             "platforms = platforms."
             (p (completing-read "Platform: " '("all" "allBut" "arm" "cygwin" "darwin" "freebsd" "gnu" "i686" "illumos" "linux" "mesaPlatforms" "mips" "netbsd" "none" "openbsd" "unix" "x86"))) ";" n> q "};" n> "}")
-=======
-nix-mode
 (rustenv "let
   pkgs = import <nixpkgs> {};
 in
@@ -248,7 +245,6 @@ mkShell {
 
 }
 ")
->>>>>>> 6b66c5d (Update)
 
 
 ;; Local Variables:

@@ -1,8 +1,10 @@
 ;; -*- lexical-binding: t; -*-
-(require 'eat)
-(require 'transient)
 
-(defun open-spotify ()
+(eval-when-compile
+  (require 'eat)
+  (require 'transient))
+
+(defun ncspot-open-spotify ()
   (interactive)
   (save-excursion
     (eat)
@@ -15,7 +17,7 @@
   (interactive)
   (if (get-buffer "spotify")
       (switch-to-buffer "spotify")
-    (open-spotify)))
+    (ncspot-open-spotify)))
 
 (defmacro ncspot-control-define-control (key control)
   (declare (indent 1))
@@ -83,9 +85,9 @@
 ;;;###autoload
 (ncspot-control-define-control "C-n" "navdown")
 ;;;###autoload
-(ncspot-control-define-control "C-b" "move-bottom")
+(ncspot-control-define-control "\e[F" "move-bottom")
 ;;;###autoload
-(ncspot-control-define-control "C-t" "move-top")
+(ncspot-control-define-control "\e[H" "move-top")
 ;;;###autoload
 (ncspot-control-define-control "z" "shuffle")
 ;;;###autoload
@@ -93,7 +95,7 @@
 ;;;###autoload
 (ncspot-control-define-control "f"    "seek+1000")
 ;;;###autoload
-(ncspot-control-define-control "C-q" "back")
+(ncspot-control-define-control "\177" "back")
 ;;;###autoload
 (ncspot-control-define-control "RET" "play-selected")
 ;;;###autoload
@@ -111,11 +113,11 @@
 ;;;###autoload
 (ncspot-control-define-control "N" "prev-search-occurence")
 ;;;###autoload
-(ncspot-control-define-focus-control "C-r" "queue")
+(ncspot-control-define-focus-control "\eOP" "queue")
 ;;;###autoload
-(ncspot-control-define-focus-control "C-d" "library")
+(ncspot-control-define-focus-control "\eOR" "library")
 ;;;###autoload
-(ncspot-control-define-focus-control "C-z" "search")
+(ncspot-control-define-focus-control "\eOQ" "search")
 ;;;###autoload
 (ncspot-control-define-focus-control nil "ncspot")
 ;;;###autoload

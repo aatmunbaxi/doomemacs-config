@@ -960,10 +960,11 @@ to the post-capture hook."
 
 ;;; ** citar related keybindings
 (defun my/citar-embark-update-prefix-suffix (cite)
-
   (citar-org-update-prefix-suffix nil))
 
-(map! :map org-mode-map
+(map! :map global-map
+      :desc "Citar"           "C-c ]"             #'citar-open
+      :map org-mode-map
       :desc "Find node"         "C-c n r f"       #'org-node-find
       :map citar-embark-map
       :desc "Prefix/Suffix"           "p"        #'my/citar-embark-update-prefix-suffix
@@ -1195,17 +1196,17 @@ If PAGE is non-nil return its size instead of current page."
 
 ;;; * `ncspot-control'
 (use-package! ncspot-control
-  :load-path  "~/.config/doom/lisp/ncspot-control"
-  :config
-  (defun ncspot-control-dispatch ()
-    (interactive)
-    (when (not (executable-find "ncspot"))
-      (error "ncspot not installed!"))
-    (if (equal (current-buffer) (get-buffer "spotify"))
-        (ncspot-control)
-      (ncspot-control-quick-menu)))
-
-  (map! :desc "Spotify control" "M-g M-m" #'ncspot-control-dispatch))
+  :defer t)
+(add-to-list 'load-path (concat local-package-path "ncspot-control/"))
+(autoload 'ncspot-control-quick-menu (concat local-package-path "ncspot-control/ncspot-control.el") nil t)
+(defun ncspot-control-dispatch ()
+  (interactive)
+  (when (not (executable-find "ncspot"))
+    (error "ncspot not installed!"))
+  (if (equal (current-buffer) (get-buffer "spotify"))
+      (call-interactively #'ncspot-control)
+    (ncspot-control-quick-menu)))
+(map! :desc "Spotify control" "M-g M-m" #'ncspot-control-dispatch)
 ;;; * `lasgun'
 (use-package! lasgun
   :defer t
@@ -1767,295 +1768,267 @@ If PAGE is non-nil return its size instead of current page."
     (defadvice! my/technicolor-reload-org-src-block-faces (THEME &optional NO-CONFIRM NO-ENABLE)
       "Apply org src block customizations from technicolor"
       :after #'load-theme
-      (my/technicolor-update-org-src-block-faces)))
+      (my/technicolor-update-org-src-block-faces))))
 
 ;;; *** customizing general faces
-  (custom-theme-set-faces! nil
-    `(region :background ,(technicolor-blend 'teal 'background 35))
-    `(org-drawer :family ,fixed-font)
-    `(org-meta-line :inherit t :family ,fixed-font)
-    `(org-date :inherit t :family ,fixed-font)
-    `(org-property-value :inherit t :family ,fixed-font)
-    `(org-column-title :inherit t :family ,fixed-font)
-    `(org-table :inherit t :family ,fixed-font)
-    `(org-block :inherit t :family ,fixed-font)
-    `(org-block-begin-line :inherit t :family ,fixed-font)
-    `(font-lock-keyword-face :slant italic)
-    `(notmuch-search-unread-face :inherit t :weight ultra-bold)
-    `(font-latex-math-face :slant normal
-      :foreground ,(technicolor-blend 'foreground 'violet 20)
-      :weight bold
-      :height 0.8
-      :family fixed-font
-      :slant normal)
-    '(outline-1 :height 1.2)
-    '(outline-2 :height 1.1)
-    '(outline-3 :height 1.05)
-    '(org-level-1 :height 1.5 :inherit t :weight bold)
-    '(org-level-2 :height 1.3 :inherit t :weight bold)
-    '(org-level-3 :height 1.2 :inherit t :weight bold))
+(custom-theme-set-faces! nil
+  `(region :background ,(technicolor-blend 'teal 'background 35))
+  `(org-drawer :family ,fixed-font)
+  `(org-meta-line :inherit t :family ,fixed-font)
+  `(org-date :inherit t :family ,fixed-font)
+  `(org-property-value :inherit t :family ,fixed-font)
+  `(org-column-title :inherit t :family ,fixed-font)
+  `(org-table :inherit t :family ,fixed-font)
+  `(org-block :inherit t :family ,fixed-font)
+  `(org-block-begin-line :inherit t :family ,fixed-font)
+  `(font-lock-keyword-face :slant italic)
+  `(notmuch-search-unread-face :inherit t :weight ultra-bold)
+  `(font-latex-math-face :slant normal
+    :foreground ,(technicolor-blend 'foreground 'violet 20)
+    :weight bold
+    :height 0.8
+    :family fixed-font
+    :slant normal)
+  '(outline-1 :height 1.2)
+  '(outline-2 :height 1.1)
+  '(outline-3 :height 1.05)
+  '(org-level-1 :height 1.5 :inherit t :weight bold)
+  '(org-level-2 :height 1.3 :inherit t :weight bold)
+  '(org-level-3 :height 1.2 :inherit t :weight bold))
 
 ;;; *** org-modern face customization
-  (after! technicolor
-    (setopt org-modern-block-fringe nil)
-    (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten 'cyan 10 )))
-      "Face for org modern IDEA tag")
-    (defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10)))
-      "Face for org modern IDEA tag")
-    (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10)))
-      "Face for org modern IDEA tag")
-    (defface org-modern-wait `((t :inherit org-modern-todo :background ,(technicolor-get-color 'red)))
-      "Face for org modern WAIT tag")
-    (defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 50)))
-      "Face for org modern PROG tag")
-    (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
-      "Face for org modern MAYBE tag"))
+(after! technicolor
+  (setopt org-modern-block-fringe nil)
+  (defface org-modern-idea `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten 'cyan 10 )))
+    "Face for org modern IDEA tag")
+  (defface org-modern-draft `((t :inherit org-modern-todo :foreground ,(technicolor-lighten 'cyan 10)))
+    "Face for org modern IDEA tag")
+  (defface org-modern-event `((t :inherit org-modern-wait :foreground ,(technicolor-lighten 'red 10)))
+    "Face for org modern IDEA tag")
+  (defface org-modern-wait `((t :inherit org-modern-todo :background ,(technicolor-get-color 'red)))
+    "Face for org modern WAIT tag")
+  (defface org-modern-prog `((t :inherit org-modern-todo :foreground ,(technicolor-relative-lighten  'green 50)))
+    "Face for org modern PROG tag")
+  (defface org-modern-maybe `((t :inherit org-modern-todo :foreground ,(technicolor-relative-darken 'green 60)))
+    "Face for org modern MAYBE tag"))
 
-  (after! technicolor
-    (custom-theme-set-faces! nil
-      `(org-super-agenda-header   :foreground ,(technicolor-get-color 'blue)
-        :background unspecified :box nil :height 1.0)
-      `(org-agenda-date   :foreground ,(technicolor-get-color 'foreground)
-        :background unspecified :box nil :underline nil :height 1.1)
-      `(org-agenda-date-weekend   :foreground ,(technicolor-blend 'foreground 'background 50)
-        :background unspecified :box nil :underline nil :height unspecified)
-      `(org-agenda-date-weekend-today   :foreground ,(technicolor-blend 'foreground 'background 50)
-        :background unspecified :box t :height unspecified)
-      `(org-modern-idea  :foreground ,(technicolor-get-color 'background) :background ,(technicolor-lighten 'cyan 10))
-      `(org-modern-todo  :foreground ,(technicolor-get-color 'background)
-        :background ,(technicolor-blend 'background 'green 10))
-      `(org-modern-draft  :foreground ,(technicolor-lighten 'cyan 10))
-      `(org-modern-wait  :background ,(technicolor-blend 'background 'red 20)
-        :foreground ,(technicolor-get-color 'background))
-      `(org-agenda-dimmed-todo-face :foreground ,(technicolor-get-color 'foreground))
-      `(org-modern-maybe  :background ,(technicolor-blend 'background 'green 70))
-      `(org-modern-prog  :background ,(technicolor-lighten 'green 50)
-        :foreground ,(technicolor-get-color 'background) )
-      `(org-modern-time-inactive  :foreground ,(technicolor-blend 'background 'green 20))
-      `(org-modern-date-inactive  :inherit 'org-modern-label
-        :background ,(technicolor-blend 'background 'red 95)
-        :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
-      `(org-modern-date-inactive  :inherit 'org-modern-label
-        :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
-        :foreground ,(technicolor-blend 'foreground 'background 100))
-      `(org-modern-time-active  :inherit 'org-modern-label
-        :background ,(technicolor-blend 'background 'green 85)
-        :foreground ,(technicolor-blend 'foreground 'background 90))
-      `(org-modern-date-active  :inherit 'org-modern-label :
-        background ,(technicolor-blend 'background 'blue 85)
-        :foreground ,(technicolor-blend 'foreground 'background 90))))
+(after! technicolor
+  (custom-theme-set-faces! nil
+    `(org-super-agenda-header   :foreground ,(technicolor-get-color 'blue)
+      :background unspecified :box nil :height 1.0)
+    `(org-agenda-date   :foreground ,(technicolor-get-color 'foreground)
+      :background unspecified :box nil :underline nil :height 1.1)
+    `(org-agenda-date-weekend   :foreground ,(technicolor-blend 'foreground 'background 50)
+      :background unspecified :box nil :underline nil :height unspecified)
+    `(org-agenda-date-weekend-today   :foreground ,(technicolor-blend 'foreground 'background 50)
+      :background unspecified :box t :height unspecified)
+    `(org-modern-idea  :foreground ,(technicolor-get-color 'background) :background ,(technicolor-lighten 'cyan 10))
+    `(org-modern-todo  :foreground ,(technicolor-get-color 'background)
+      :background ,(technicolor-blend 'background 'green 10))
+    `(org-modern-draft  :foreground ,(technicolor-lighten 'cyan 10))
+    `(org-modern-wait  :background ,(technicolor-blend 'background 'red 20)
+      :foreground ,(technicolor-get-color 'background))
+    `(org-agenda-dimmed-todo-face :foreground ,(technicolor-get-color 'foreground))
+    `(org-modern-maybe  :background ,(technicolor-blend 'background 'green 70))
+    `(org-modern-prog  :background ,(technicolor-lighten 'green 50)
+      :foreground ,(technicolor-get-color 'background) )
+    `(org-modern-time-inactive  :foreground ,(technicolor-blend 'background 'green 20))
+    `(org-modern-date-inactive  :inherit 'org-modern-label
+      :background ,(technicolor-blend 'background 'red 95)
+      :foreground ,(technicolor-saturate (technicolor-blend 'foreground 'background 80) 20))
+    `(org-modern-date-inactive  :inherit 'org-modern-label
+      :background ,(technicolor-saturate (technicolor-blend 'background 'blue 95) 20)
+      :foreground ,(technicolor-blend 'foreground 'background 100))
+    `(org-modern-time-active  :inherit 'org-modern-label
+      :background ,(technicolor-blend 'background 'green 85)
+      :foreground ,(technicolor-blend 'foreground 'background 90))
+    `(org-modern-date-active  :inherit 'org-modern-label :
+      background ,(technicolor-blend 'background 'blue 85)
+      :foreground ,(technicolor-blend 'foreground 'background 90))))
 
 ;;; ** org-modern glyphs
-  (after! org-modern
-    (setopt org-modern-list '((43 . "➤")
-                              (45 . "–")
-                              (42 . "•"))
-            org-modern-footnote (cons nil (cadr org-script-display))
-            org-modern-block-name
-            '((t . t)
-              ("src" "»" "«")
-              ("example" "»–" "–«")
-              ("quote" "❝" "❞")
-              ("export" "⏩" "⏪"))
-            org-modern-progress nil
-            org-modern-priority nil
-            org-modern-horizontal-rule (make-string 36 ?─)
-            org-modern-keyword
-            '((t . t)
-              ("title" . "𝙏")
-              ("subtitle" . "𝙩")
-              ("author" . "𝘼")
-              ("email" . #("" 0 1 (display (raise -0.14))))
-              ("date" . "𝘿")
-              ("property" . "☸")
-              ("options" . "⌥")
-              ("startup" . "⏻")
-              ("macro" . "𝓜")
-              ("bind" . #("" 0 1 (display (raise -0.1))))
-              ("bibliography" . "")
-              ("print_bibliography" . #("" 0 1 (display (raise -0.1))))
-              ("cite_export" . "⮭")
-              ("print_glossary" . #("ᴬᶻ" 0 1 (display (raise -0.1))))
-              ("glossary_sources" . #("" 0 1 (display (raise -0.14))))
-              ("include" . "⇤")
-              ("setupfile" . "⇚")
-              ("html_head" . "🅷")
-              ("html" . "🅗")
-              ("latex_class" . "🄻")
-              ("latex_class_options" . #("🄻" 1 2 (display (raise -0.14))))
-              ("latex_header" . "🅻")
-              ("latex_header_extra" . "🅻⁺")
-              ("latex" . "🅛")
-              ("beamer_theme" . "🄱")
-              ("beamer_color_theme" . #("🄱" 1 2 (display (raise -0.12))))
-              ("beamer_font_theme" . "🄱𝐀")
-              ("beamer_header" . "🅱")
-              ("beamer" . "🅑")
-              ("attr_latex" . "🄛")
-              ("attr_html" . "🄗")
-              ("attr_org" . "⒪")
-              ("call" . #("" 0 1 (display (raise -0.15))))
-              ("name" . "⁍")
-              ("header" . "›")
-              ("caption" . "☰")
-              ("results" . "⮞")))
+(after! org-modern
+  (setopt org-modern-list '((43 . "➤")
+                            (45 . "–")
+                            (42 . "•"))
+          org-modern-footnote (cons nil (cadr org-script-display))
+          org-modern-block-name
+          '((t . t)
+            ("src" "»" "«")
+            ("example" "»–" "–«")
+            ("quote" "❝" "❞")
+            ("export" "⏩" "⏪"))
+          org-modern-progress nil
+          org-modern-priority nil
+          org-modern-horizontal-rule (make-string 36 ?─)
+          org-modern-keyword
+          '((t . t)
+            ("title" . "𝙏")
+            ("subtitle" . "𝙩")
+            ("author" . "𝘼")
+            ("email" . #("" 0 1 (display (raise -0.14))))
+            ("date" . "𝘿")
+            ("property" . "☸")
+            ("options" . "⌥")
+            ("startup" . "⏻")
+            ("macro" . "𝓜")
+            ("bind" . #("" 0 1 (display (raise -0.1))))
+            ("bibliography" . "")
+            ("print_bibliography" . #("" 0 1 (display (raise -0.1))))
+            ("cite_export" . "⮭")
+            ("print_glossary" . #("ᴬᶻ" 0 1 (display (raise -0.1))))
+            ("glossary_sources" . #("" 0 1 (display (raise -0.14))))
+            ("include" . "⇤")
+            ("setupfile" . "⇚")
+            ("html_head" . "🅷")
+            ("html" . "🅗")
+            ("latex_class" . "🄻")
+            ("latex_class_options" . #("🄻" 1 2 (display (raise -0.14))))
+            ("latex_header" . "🅻")
+            ("latex_header_extra" . "🅻⁺")
+            ("latex" . "🅛")
+            ("beamer_theme" . "🄱")
+            ("beamer_color_theme" . #("🄱" 1 2 (display (raise -0.12))))
+            ("beamer_font_theme" . "🄱𝐀")
+            ("beamer_header" . "🅱")
+            ("beamer" . "🅑")
+            ("attr_latex" . "🄛")
+            ("attr_html" . "🄗")
+            ("attr_org" . "⒪")
+            ("call" . #("" 0 1 (display (raise -0.15))))
+            ("name" . "⁍")
+            ("header" . "›")
+            ("caption" . "☰")
+            ("results" . "⮞")))
 
-    (setopt org-modern-todo-faces
-            `(("IDEA" . org-modern-idea)
-              ("EVENT" . org-modern-event)
-              ("TODO" . org-modern-todo)
-              ("WAIT" . org-modern-wait)
-              ("PROG" . org-modern-prog)
-              ("MAYBE" . org-modern-maybe)
-              ("DRAFT" . org-modern-draft))))
+  (setopt org-modern-todo-faces
+          `(("IDEA" . org-modern-idea)
+            ("EVENT" . org-modern-event)
+            ("TODO" . org-modern-todo)
+            ("WAIT" . org-modern-wait)
+            ("PROG" . org-modern-prog)
+            ("MAYBE" . org-modern-maybe)
+            ("DRAFT" . org-modern-draft))))
 
 ;;; ** visual-fill-column-mode
-  ;; (after! visual-fill-column
-  ;;   (setopt visual-fill-column-width 130
-  ;;          visual-fill-column-center-text t))
+;; (after! visual-fill-column
+;;   (setopt visual-fill-column-width 130
+;;          visual-fill-column-center-text t))
 
-  ;; (add-hook! (text-mode-hook prog-mode-hook) #'visual-fill-column-mode)
+;; (add-hook! (text-mode-hook prog-mode-hook) #'visual-fill-column-mode)
 
 
 ;;; * wttr
-  (after! wttrin
-    (setopt wttrin-default-cities '("College Station" "Colleyville")))
+(after! wttrin
+  (setopt wttrin-default-cities '("College Station" "Colleyville")))
 ;;; ** wttr hacky fix
-  ;; Fix: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
-  (defadvice! wwtrin-fetch-raw-string (query)
-    "Make sure we fetch the acutual weather view"
-    :override #'wttrin-fetch-raw-string
-    (let ((url-user-agent "curl"))
-      (add-to-list 'url-request-extra-headers wttrin-default-accept-language)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           (concat "http://wttr.in/" query "?A")
-           (lambda (status) (switch-to-buffer (current-buffer))))
-        (decode-coding-string (buffer-string) 'utf-8))))
+;; Fix: https://github.com/bcbcarl/emacs-wttrin/issues/16#issuecomment-658987903
+(defadvice! wwtrin-fetch-raw-string (query)
+  "Make sure we fetch the acutual weather view"
+  :override #'wttrin-fetch-raw-string
+  (let ((url-user-agent "curl"))
+    (add-to-list 'url-request-extra-headers wttrin-default-accept-language)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         (concat "http://wttr.in/" query "?A")
+         (lambda (status) (switch-to-buffer (current-buffer))))
+      (decode-coding-string (buffer-string) 'utf-8))))
 
 ;;; * elfeed and elfeed-tube
-  (setopt rmh-elfeed-org-files '("notes.org"))
+(setopt rmh-elfeed-org-files '("notes.org"))
 
 
 ;;; ** elfeed helper functions
-  (after! elfeed
-    (defun elfeed-show-eww-open (&optional use-generic-p)
-      "open with eww"
-      (interactive "P")
-      (let ((browse-url-browser-function #'eww-browse-url))
-        (elfeed-show-visit use-generic-p)))
+(after! elfeed
+  (defun elfeed-show-eww-open (&optional use-generic-p)
+    "open with eww"
+    (interactive "P")
+    (let ((browse-url-browser-function #'eww-browse-url))
+      (elfeed-show-visit use-generic-p)))
 
-    (defun elfeed-scroll-up-command (&optional arg)
-      "Scroll up or go to next feed item in Elfeed"
-      (interactive "^P")
-      (let ((scroll-error-top-bottom nil))
-        (condition-case-unless-debug nil
-            (scroll-up-command arg)
-          (error (elfeed-show-next)))))
+  (defun elfeed-scroll-up-command (&optional arg)
+    "Scroll up or go to next feed item in Elfeed"
+    (interactive "^P")
+    (let ((scroll-error-top-bottom nil))
+      (condition-case-unless-debug nil
+          (scroll-up-command arg)
+        (error (elfeed-show-next)))))
 
-    (defun elfeed-scroll-down-command (&optional arg)
-      "Scroll up or go to next feed item in Elfeed"
-      (interactive "^P")
-      (let ((scroll-error-top-bottom nil))
-        (condition-case-unless-debug nil
-            (scroll-down-command arg)
-          (error (elfeed-show-prev)))))
+  (defun elfeed-scroll-down-command (&optional arg)
+    "Scroll up or go to next feed item in Elfeed"
+    (interactive "^P")
+    (let ((scroll-error-top-bottom nil))
+      (condition-case-unless-debug nil
+          (scroll-down-command arg)
+        (error (elfeed-show-prev)))))
 
-    (defun elfeed-tag-selection-as (mytag)
-      "Returns a function that tags an elfeed entry or selection as
+  (defun elfeed-tag-selection-as (mytag)
+    "Returns a function that tags an elfeed entry or selection as
 MYTAG"
-      (lambda ()
-        "Toggle a tag on an Elfeed search selection"
-        (interactive)
-        (elfeed-search-toggle-all mytag))))
+    (lambda ()
+      "Toggle a tag on an Elfeed search selection"
+      (interactive)
+      (elfeed-search-toggle-all mytag))))
 ;;; ** elfeed keybindings
-  (after! elfeed
-    (map! :map elfeed-show-mode-map
-          "F"       #'elfeed-tube-fetch
-          "C-c C-f" #'elfeed-tube-mpv-follow-mode
-          "B"       #'elfeed-show-eww-open
-          "S-SPC"   #'elfeed-scroll-down-command
-          "SPC"     #'elfeed-scroll-up-command
+(after! elfeed
+  (map! :map elfeed-show-mode-map
+        "F"       #'elfeed-tube-fetch
+        "C-c C-f" #'elfeed-tube-mpv-follow-mode
+        "B"       #'elfeed-show-eww-open
+        "S-SPC"   #'elfeed-scroll-down-command
+        "SPC"     #'elfeed-scroll-up-command
 
-          :map elfeed-search-mode-map
-          "F"       #'elfeed-tube-fetch
-          "C-c C-w" #'elfeed-tube-mpv-where
-          "B"       #'elfeed-show-eww-open
-          "d"      (elfeed-tag-selection-as 'junk)
-          "l"      (elfeed-tag-selection-as 'readlater)))
+        :map elfeed-search-mode-map
+        "F"       #'elfeed-tube-fetch
+        "C-c C-w" #'elfeed-tube-mpv-where
+        "B"       #'elfeed-show-eww-open
+        "d"      (elfeed-tag-selection-as 'junk)
+        "l"      (elfeed-tag-selection-as 'readlater)))
 
 
 ;;; * email
-  (after! notmuch
-    (require 'setup-email))
+(after! notmuch
+  (require 'setup-email))
 ;;; * LLM
-  (after! agent-shell
-    (setopt agent-shell-google-authentication
-            (agent-shell-google-make-authentication :login t)
-            agent-shell-anthropic-authentication
-            (agent-shell-anthropic-make-authentication :login t)))
+(after! agent-shell
+  (setopt agent-shell-google-authentication
+          (agent-shell-google-make-authentication :login t)
+          agent-shell-anthropic-authentication
+          (agent-shell-anthropic-make-authentication :login t)))
 
-
-
-  (map! :map outline-mode-map
-        :leader
-        "s ," #'consult-outline
-        :map outli-mode-map
-        :leader
-        "s ," #'consult-outline)
-
-;;; ** `easy-kill'  keybindings
-  (map! :map easy-kill-base-map
-        ","                                             #'easy-kill-expand-region
-        "."                                             #'easy-kill-contract-region)
-
-;;; ** `vertico' keybindings
-  (map! :map vertico-map
-        "C-x C-j"                                       #'consult-dir-jump-file
-        "C-x C-d"                                       #'consult-dir)
-
-;;; ** `outline-minor-mode'  map
-  (map! :map outline-minor-mode-map
-        "C-c s ,"                                       #'consult-outline)
-
-;;; ** `embark' maps
-  (map! :map embark-file-map
-        :desc "Find file read ony" "r"                  #'find-file-read-only
-        :map embark-general-map
-        :desc "Cycle candidates"  "C-."                 #'embark-cycle)
-  >>>>>>> 6b66c5d (Update)
 
 ;;; * overleaf
-  (after!  overleaf
-    (defun my/get-overleaf-session-cookie (db-path)
-      "Extract the overleaf_session2 cookie from the Firefox cookies.sqlite at DB-PATH.
+(after!  overleaf
+  (defun my/get-overleaf-session-cookie (db-path)
+    "Extract the overleaf_session2 cookie from the Firefox cookies.sqlite at DB-PATH.
 Returns a list of the form '(\"overleaf.com\" \"COOKIE_VALUE\" nil)."
-      (if (not (file-exists-p db-path))
-          (progn
-            (warn "Database file not found: %s" db-path)
-            nil)
-        (let* ((db (sqlite-open db-path))
-               (query "SELECT value FROM moz_cookies
+    (if (not (file-exists-p db-path))
+        (progn
+          (warn "Database file not found: %s" db-path)
+          nil)
+      (let* ((db (sqlite-open db-path))
+             (query "SELECT value FROM moz_cookies
                    WHERE host = \'.overleaf.com\' 
                    AND name = \'overleaf_session2\' 
                    LIMIT 1;")
-               (result (sqlite-select db query)))
-          (sqlite-close db)
-          (if result
-              (list "overleaf.com" (format "overleaf_session2=%s" (caar result)) nil)
-            (message "Cookie not found.")
-            nil))))
-    (setopt overleaf-cookies
-            (overleaf-read-cookies-from-firefox :firefox-folder "~/.zen" :profile "default")))
+             (result (sqlite-select db query)))
+        (sqlite-close db)
+        (if result
+            (list "overleaf.com" (format "overleaf_session2=%s" (caar result)) nil)
+          (message "Cookie not found.")
+          nil))))
+  (setopt overleaf-cookies
+          (overleaf-read-cookies-from-firefox :firefox-folder "~/.zen" :profile "default")))
+
 
 ;;; * Benchmark init
-  ;; (when init-file-debug
-  ;;   (use-package! benchmark-init
-  ;;     :ensure t
-  ;;     :config
-  ;;     ;; To disable collection of benchmark data after init is done.
-  ;;     (add-hook 'after-init-hook 'benchmark-init/deactivate)))
+;; (when init-file-debug
+;;   (use-package! benchmark-init
+;;     :ensure t
+;;     :config
+;;     ;; To disable collection of benchmark data after init is done.
+;;     (add-hook 'after-init-hook 'benchmark-init/deactivate)))
 
-  ;; Local Variables:
-  ;; outline-regexp: ";;; \\(\\*+\\) \\(.*\\)$"
-  ;; End:
+;; Local Variables:
+;; outline-regexp: ";;; \\(\\*+\\) \\(.*\\)$"
+;; End:

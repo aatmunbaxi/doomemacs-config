@@ -38,6 +38,7 @@
 (package! org-web-tools)
 (package! org-protocol-capture-html)
 (package! doct)
+(package! smudge)
 (package! org-pdftools)
 (package! pdftotxt.el
   :recipe (:host github :repo "tecosaur/pdftotext.el"))
